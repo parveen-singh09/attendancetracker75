@@ -1,0 +1,42 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import { t as translate } from '../lib/i18n';
+---
+<MarketingLayout
+  title="Contact us"
+  description="Get in touch with the Attendance Tracker team."
+>
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <h1 class="text-3xl font-semibold tracking-tight" data-i18n="contact.h1">{translate('en', 'contact.h1')}</h1>
+    <p class="mt-3" style="color: var(--color-text-muted);" data-i18n="contact.p1">{translate('en', 'contact.p1')}</p>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="contact.emailLabel">Email</div>
+        <a class="mt-1 block text-base font-medium hover:underline" href="mailto:hello@attendancetrack75.com">
+          hello@attendancetrack75.com
+        </a>
+        <p class="mt-1 text-xs" style="color: var(--color-text-subtle);" data-i18n="contact.emailResponse">{translate('en', 'contact.emailResponse')}</p>
+      </div>
+
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="contact.bugLabel">Report a bug</div>
+        <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="contact.bugBody">{translate('en', 'contact.bugBody')}</p>
+      </div>
+
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="contact.featureLabel">Feature request</div>
+        <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="contact.featureBody">{translate('en', 'contact.featureBody')}</p>
+      </div>
+
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="contact.privacyLabel">Privacy &amp; data</div>
+        <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n-emph="contact.privacyBody">For data deletion, export, or any privacy question, see our <a class="hover:underline" href="/legal/privacy">Privacy Policy</a> or email us.</p>
+      </div>
+    </div>
+
+    <div class="mt-10 rounded-md border p-4 text-sm" style="border-color: var(--color-border); background-color: var(--color-surface-2); color: var(--color-text-muted);" data-i18n-emph="contact.headsUp">
+      <strong>Heads-up:</strong> the Attendance Tracker is a small, student-built project. We do our best to respond quickly, but if your issue is blocking an exam or a deadline, please fall back to your institution's official record first.
+    </div>
+  </div>
+</MarketingLayout>

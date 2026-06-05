@@ -1,0 +1,164 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Logo from '../../components/Logo.astro';
+import { db, AcademicSession, eq, and, desc } from 'astro:db';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/onboarding/session');
+
+if (user.onboardingStep === 'done') {
+  return Astro.redirect('/app/today');
+}
+
+const existing = await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1);
+
+if (existing.length > 0 && !Astro.url.searchParams.get('back')) {
+  return Astro.redirect('/onboarding/timetable?sessionId=' + existing[0]!.id);
+}
+
+const reviewMode = Astro.url.searchParams.get('back') === '1' && existing.length > 0;
+const reviewSession = reviewMode ? existing[0]! : null;
+const sessionIdForBack = Astro.url.searchParams.get('sessionId') ?? reviewSession?.id ?? '';
+
+const now = new Date();
+const yyyy = now.getFullYear();
+const mm = String(now.getMonth() + 1).padStart(2, '0');
+const todayStr = `${yyyy}-${mm}-${String(now.getDate()).padStart(2, '0')}`;
+const end = new Date(now);
+end.setMonth(end.getMonth() + 4);
+const eyyyy = end.getFullYear();
+const emm = String(end.getMonth() + 1).padStart(2, '0');
+const eday = String(end.getDate()).padStart(2, '0');
+const defaultEnd = `${eyyyy}-${emm}-${eday}`;
+
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const suggestedName = reviewSession?.name ?? `${monthNames[now.getMonth()]} ${now.getMonth() < 5 ? 'Spring' : now.getMonth() < 8 ? 'Summer' : 'Fall'} ${now.getFullYear()}`;
+const startValue = reviewSession?.startDate ?? todayStr;
+const endValue = reviewSession?.endDate ?? defaultEnd;
+const targetValue = reviewSession?.targetPct ?? 75;
+---
+<BaseLayout title="Set up your session" description="Create your first academic session.">
+  <div class="grid min-h-screen place-items-center px-4 py-8">
+    <div class="w-full max-w-md">
+      <div class="mb-6 flex items-center justify-between gap-2">
+        <a href="/onboarding/welcome" class="inline-flex items-center gap-1 text-sm hover:underline" style="color: var(--color-text-muted);" data-astro-reload>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back
+        </a>
+        <div class="flex items-center gap-2 font-semibold">
+          <Logo class="h-7 w-7" />
+          <span>Attendance Tracker</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="text-sm font-medium" style="color: var(--color-brand-600);" data-i18n="onboarding.session.step">
+          {reviewMode ? 'Reviewing step 1' : 'Step 1 of 2'}
+        </p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight" data-i18n="onboarding.session.title">Name your session</h1>
+        <p class="mt-2" style="color: var(--color-text-muted);" data-i18n="onboarding.session.body">
+          {reviewMode
+            ? "Here's the session you set up. You can head back to step 2 when you're ready."
+            : 'A session is one academic term — like “Fall 2026”. You can keep multiple sessions and switch between them.'}
+        </p>
+
+        <form id="session-form" class="mt-5 space-y-4" novalidate>
+          <div class="field">
+            <label class="field-label" for="name" data-i18n="onboarding.session.nameLabel">Session name</label>
+            <input id="name" name="name" type="text" class="input" required value={suggestedName} maxlength="80" readonly={reviewMode} disabled={reviewMode} />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="field">
+              <label class="field-label" for="startDate" data-i18n="onboarding.session.startDate">Start date</label>
+              <div class="relative">
+                <input id="startDate" name="startDate" type="date" class="input num pr-10" required value={startValue} readonly={reviewMode} disabled={reviewMode} />
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3" style="color: var(--color-text-subtle);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="endDate" data-i18n="onboarding.session.endDate">End date</label>
+              <div class="relative">
+                <input id="endDate" name="endDate" type="date" class="input num pr-10" required value={endValue} readonly={reviewMode} disabled={reviewMode} />
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3" style="color: var(--color-text-subtle);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="targetPct">Target percentage: <span id="t-val" class="num">{targetValue}</span>%</label>
+            <input id="targetPct" name="targetPct" type="range" min="50" max="100" step="1" value={String(targetValue)} class="w-full" disabled={reviewMode} />
+            <p class="field-hint" data-i18n="onboarding.session.targetPctHint">The cutoff your college enforces. Most Indian colleges use 75%; most US universities use 80%.</p>
+          </div>
+          <p id="err" class="field-error" role="alert" hidden></p>
+          {reviewMode ? (
+            <div class="flex gap-2">
+              <a href="/onboarding/welcome" class="btn btn-secondary" data-i18n="btn.back">Back</a>
+              <a href={`/onboarding/timetable?sessionId=${sessionIdForBack}`} class="btn btn-primary flex-1" data-i18n="onboarding.welcome.backToStep2">Back to step 2</a>
+            </div>
+          ) : (
+            <div class="flex gap-2">
+              <a href="/onboarding/welcome" class="btn btn-secondary" data-i18n="btn.back">Back</a>
+              <button type="submit" class="btn btn-primary flex-1" data-i18n="onboarding.session.continue">Continue</button>
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const t = document.getElementById('targetPct') as HTMLInputElement;
+  const tv = document.getElementById('t-val');
+  if (t && tv) t.addEventListener('input', () => (tv.textContent = t.value));
+
+  const form = document.getElementById('session-form') as HTMLFormElement;
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('err') as HTMLElement;
+    err.hidden = true;
+    const data = {
+      name: (form.elements.namedItem('name') as HTMLInputElement).value.trim(),
+      startDate: (form.elements.namedItem('startDate') as HTMLInputElement).value,
+      endDate: (form.elements.namedItem('endDate') as HTMLInputElement).value,
+      targetPct: parseInt((form.elements.namedItem('targetPct') as HTMLInputElement).value, 10),
+    };
+    if (!data.name || !data.startDate || !data.endDate) {
+      err.textContent = 'All fields are required.';
+      err.hidden = false;
+      return;
+    }
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating…';
+    const res = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json() as any;
+    if (!res.ok) {
+      err.textContent = json?.error?.message || 'Something went wrong.';
+      err.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Continue';
+      return;
+    }
+    window.location.href = `/onboarding/timetable?sessionId=${json.data.id}`;
+  });
+</script>

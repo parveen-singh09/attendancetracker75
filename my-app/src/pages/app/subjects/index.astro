@@ -1,0 +1,122 @@
+---
+export const prerender = false;
+import AppLayout from '../../../layouts/AppLayout.astro';
+import PercentageBar from '../../../components/ui/PercentageBar.astro';
+import EmptyState from '../../../components/ui/EmptyState.astro';
+import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and, desc, lte } from 'astro:db';
+import { computeStats, toDateString } from '../../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/subjects');
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+if (!sess) return Astro.redirect('/onboarding/session');
+
+const today = toDateString(new Date());
+
+const [subjRows, logs, dayOverrides] = await Promise.all([
+  db.select().from(Subject).where(eq(Subject.sessionId, sess.id)),
+  db.select().from(AttendanceLog).where(and(eq(AttendanceLog.sessionId, sess.id), lte(AttendanceLog.date, today))),
+  db.select().from(Day).where(eq(Day.sessionId, sess.id))
+]);
+
+const dayArr = dayOverrides.map((d: any) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+
+// Group logs by subjectId for performance
+const logsBySubj = new Map<string, any[]>();
+for (const l of logs) {
+  const arr = logsBySubj.get(l.subjectId) ?? [];
+  arr.push({ date: l.date, status: l.status as any });
+  logsBySubj.set(l.subjectId, arr);
+}
+
+const enriched = subjRows.map((s: any) => {
+  const sLogs = logsBySubj.get(s.id) ?? [];
+  return { ...s, stats: computeStats(sLogs, dayArr, sess.targetPct) };
+}).sort((a: any, b: any) => b.stats.pct - a.stats.pct);
+
+const subjectsOnly = enriched.filter(s => !s.isLab);
+const labsOnly = enriched.filter(s => s.isLab);
+
+const subTotal = {
+  attended: subjectsOnly.reduce((acc, s) => acc + s.stats.attended, 0),
+  held: subjectsOnly.reduce((acc, s) => acc + s.stats.held, 0),
+};
+const labTotal = {
+  attended: labsOnly.reduce((acc, s) => acc + s.stats.attended, 0),
+  held: labsOnly.reduce((acc, s) => acc + s.stats.held, 0),
+};
+
+const subPct = subTotal.held === 0 ? 0 : (subTotal.attended / subTotal.held) * 100;
+const labPct = labTotal.held === 0 ? 0 : (labTotal.attended / labTotal.held) * 100;
+---
+<AppLayout title="Subjects">
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <div class="flex items-baseline justify-between">
+      <h1 class="text-2xl font-semibold tracking-tight">Subjects</h1>
+      <a class="btn btn-secondary btn-sm" href={`/app/sessions/${sess.id}`}>View session rollup</a>
+    </div>
+
+    {enriched.length > 0 && (
+      <div class="mt-6 grid grid-cols-2 gap-4">
+        <div class="card flex flex-col gap-1">
+          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);">Total Subject Attendance</div>
+          <div class="flex items-baseline gap-2">
+            <span class="num text-2xl font-bold">{subPct.toFixed(1)}%</span>
+            <span class="text-xs" style="color: var(--color-text-subtle);">{subTotal.attended}/{subTotal.held} attended</span>
+          </div>
+          <div class="mt-1">
+            <PercentageBar pct={subPct} target={sess.targetPct} size="sm" />
+          </div>
+        </div>
+        <div class="card flex flex-col gap-1">
+          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);">Total Lab Attendance</div>
+          <div class="flex items-baseline gap-2">
+            <span class="num text-2xl font-bold">{labPct.toFixed(1)}%</span>
+            <span class="text-xs" style="color: var(--color-text-subtle);">{labTotal.attended}/{labTotal.held} attended</span>
+          </div>
+          <div class="mt-1">
+            <PercentageBar pct={labPct} target={sess.targetPct} size="sm" />
+          </div>
+        </div>
+      </div>
+    )}
+
+    {enriched.length === 0 ? (
+      <div class="mt-6">
+        <EmptyState
+          title="No subjects yet"
+          description="Add subjects by editing your timetable."
+          ctaLabel="Edit timetable"
+          ctaHref={`/onboarding/timetable?sessionId=${sess.id}`}
+        />
+      </div>
+    ) : (
+      <ul class="mt-6 space-y-2">
+        {enriched.map((s) => (
+          <li class="card flex items-center gap-4">
+            <span aria-hidden="true" style={`width: 6px; align-self: stretch; border-radius: 4px; background-color: ${s.color};`}></span>
+            <div class="flex-1">
+              <a href={`/app/subjects/${s.id}`} class="font-medium hover:underline">{s.name}</a>
+              {s.code && <span class="ml-2 text-sm" style="color: var(--color-text-subtle);">{s.code}</span>}
+              {s.isLab && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase" style="background-color: var(--color-surface-2); color: var(--color-text-subtle);">Lab</span>}
+              <div class="mt-2">
+                <PercentageBar pct={s.stats.pct} target={sess.targetPct} size="sm" />
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase tracking-wider" style="color: var(--color-text-subtle);">Attendance till date</div>
+              <div class="num text-xl font-semibold">{s.stats.pct.toFixed(1)}%</div>
+              <div class="text-xs" style="color: var(--color-text-subtle);">{s.stats.attended}/{s.stats.held}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</AppLayout>

@@ -1,0 +1,159 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import DailyLogGrid from '../../components/attendance/DailyLogGrid';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import { db, AcademicSession, Subject, TimetableSlot, AttendanceLog, Day, eq, and, desc } from 'astro:db';
+import { toDateString, addDays, parseDate } from '../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/history');
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+if (!sess) return Astro.redirect('/onboarding/session');
+
+const today = toDateString(new Date());
+
+// Validate the requested date. If missing or out of [startDate, today], snap to today.
+const requested = Astro.url.searchParams.get('date') ?? today;
+const isValid = /^\d{4}-\d{2}-\d{2}$/.test(requested) &&
+  requested >= sess.startDate &&
+  requested <= today;
+const date = isValid ? requested : today;
+
+const jsDow = parseDate(date).getDay();
+
+const slotsRows = await db
+  .select({ slot: TimetableSlot, subject: Subject })
+  .from(TimetableSlot)
+  .innerJoin(Subject, eq(TimetableSlot.subjectId, Subject.id))
+  .where(eq(TimetableSlot.sessionId, sess.id));
+
+const todays = slotsRows.filter((r) => r.slot.dayOfWeek === jsDow);
+
+const dayRow = await db
+  .select()
+  .from(Day)
+  .where(and(eq(Day.sessionId, sess.id), eq(Day.date, date)))
+  .limit(1);
+const dayStatus = (dayRow[0]?.status as 'normal' | 'holiday' | 'sick' | 'event') ?? 'normal';
+
+const logs = await db
+  .select()
+  .from(AttendanceLog)
+  .where(and(eq(AttendanceLog.sessionId, sess.id), eq(AttendanceLog.date, date)));
+
+const items = todays.map((r: any) => {
+  const log = logs.find((l) => l.subjectId === r.subject.id);
+  return {
+    id: r.slot.id,
+    subjectId: r.subject.id,
+    subjectName: r.subject.name,
+    subjectColor: r.subject.color,
+    startTime: r.slot.startTime,
+    endTime: r.slot.endTime,
+    location: r.slot.location,
+    isLab: r.subject.isLab,
+    status: (log?.status ?? null) as 'present' | 'absent' | 'extra' | 'off' | null,
+  };
+});
+
+// Build prev/next day links (prev is always in range if date > startDate;
+// next is allowed only if next date <= today).
+const prevDate = toDateString(addDays(parseDate(date), -1));
+const nextDate = toDateString(addDays(parseDate(date), 1));
+const canGoPrev = prevDate >= sess.startDate;
+const canGoNext = nextDate <= today;
+
+const isToday = date === today;
+const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }).format(parseDate(date));
+---
+<AppLayout title="Edit attendance">
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <nav class="text-sm" style="color: var(--color-text-subtle);">
+      <a href="/app/today" class="hover:underline">Today</a> <span aria-hidden="true">/</span> <span>Edit a past day</span>
+    </nav>
+
+    <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">Edit attendance</h1>
+    </div>
+    <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+      Backfill or correct attendance for any past date in this session.
+    </p>
+
+    <!-- Date picker + prev/next/today -->
+    <div class="card mt-5">
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          href={canGoPrev ? `/app/history?date=${prevDate}` : undefined}
+          class="btn btn-secondary btn-sm"
+          aria-disabled={!canGoPrev}
+          aria-label="Previous day"
+          style={canGoPrev ? '' : 'opacity: 0.5; pointer-events: none;'}
+        >
+          ← Prev
+        </a>
+        <a
+          href="/app/today"
+          class="btn btn-secondary btn-sm"
+          aria-current={isToday ? 'page' : undefined}
+        >
+          Today
+        </a>
+        <a
+          href={canGoNext ? `/app/history?date=${nextDate}` : undefined}
+          class="btn btn-secondary btn-sm"
+          aria-disabled={!canGoNext}
+          aria-label="Next day"
+          style={canGoNext ? '' : 'opacity: 0.5; pointer-events: none;'}
+        >
+          Next →
+        </a>
+
+        <div class="ml-auto flex items-center gap-2">
+          <label for="date" class="text-sm font-medium">Jump to:</label>
+          <div class="relative">
+            <input
+              id="date"
+              type="date"
+              class="input num pr-10"
+              style="width: 11rem;"
+              min={sess.startDate}
+              max={today}
+              value={date}
+              onchange="if(this.value){window.location.href='/app/history?date='+this.value;}"
+            />
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3" style="color: var(--color-text-subtle);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mt-3 text-sm" style="color: var(--color-text-subtle);">
+        Editing <strong>{longDate}</strong>{isToday ? ' (today)' : ''}.
+      </p>
+    </div>
+
+    {items.length === 0 ? (
+      <div class="mt-6">
+        <EmptyState
+          title="No classes scheduled on this day"
+          description="Your timetable has no classes for the selected weekday. Pick another date or edit your timetable."
+          ctaLabel="Pick another date"
+          ctaHref={`/app/history?date=${today}`}
+        />
+      </div>
+    ) : (
+      <div class="mt-6">
+        <DailyLogGrid client:load date={date} slots={items} dayStatus={dayStatus} />
+      </div>
+    )}
+  </div>
+</AppLayout>

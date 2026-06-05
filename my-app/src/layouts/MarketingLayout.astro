@@ -1,0 +1,77 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import Logo from '../components/Logo.astro';
+import LocaleSwitcher from '../components/LocaleSwitcher.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  keywords?: string;
+  image?: string;
+}
+
+const { title, description, keywords, image } = Astro.props;
+const path = Astro.url.pathname;
+---
+<BaseLayout title={title} description={description} keywords={keywords} image={image}>
+  <header class="border-b" style="border-color: var(--color-border); background-color: color-mix(in oklab, var(--color-bg) 80%, transparent); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10;">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <a href="/" class="flex shrink-0 items-center gap-2 font-semibold tracking-tight" aria-label="Attendance Tracker home">
+        <Logo class="h-7 w-7" />
+        <span class="hidden text-base sm:inline">Attendance Tracker</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Site pages">
+        <a href="/about" class="btn btn-ghost btn-sm" aria-current={path === '/about' ? 'page' : undefined}>About</a>
+        <a href="/contact" class="btn btn-ghost btn-sm" aria-current={path === '/contact' ? 'page' : undefined}>Contact</a>
+        <a href="/legal/privacy" class="btn btn-ghost btn-sm" aria-current={path === '/legal/privacy' ? 'page' : undefined}>Privacy</a>
+        <a href="/legal/terms" class="btn btn-ghost btn-sm" aria-current={path === '/legal/terms' ? 'page' : undefined}>T&amp;C</a>
+      </nav>
+      <nav class="flex items-center gap-1 sm:gap-2" aria-label="Account">
+        <LocaleSwitcher />
+        <ThemeToggle />
+        <a href="/login" class="btn btn-secondary btn-sm">Log in</a>
+        <a href="/signup" class="btn btn-primary btn-sm">Sign up</a>
+      </nav>
+    </div>
+  </header>
+
+  <slot />
+
+  <footer class="border-t mt-24" style="border-color: var(--color-border);">
+    <div class="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-8 px-4 py-10 sm:px-6 md:grid-cols-4">
+      <div class="col-span-2 md:col-span-1">
+        <div class="flex items-center gap-2 font-semibold"><Logo class="h-6 w-6" /> Attendance Tracker</div>
+        <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">
+          Free, forever. Made for everyone.
+        </p>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold">Product</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a class="hover:underline" href="/#features">Features</a></li>
+          <li><a class="hover:underline" href="/signup">Get started</a></li>
+          <li><a class="hover:underline" href="/about">About</a></li>
+          <li><a class="hover:underline" href="/contact">Contact us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold">Company</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a class="hover:underline" href="/about">About</a></li>
+          <li><a class="hover:underline" href="/contact">Contact us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold">Legal</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a class="hover:underline" href="/legal/privacy">Privacy Policy</a></li>
+          <li><a class="hover:underline" href="/legal/terms">Terms &amp; Conditions</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t py-4 text-center text-xs" style="border-color: var(--color-border); color: var(--color-text-subtle);">
+      © {new Date().getFullYear()} Attendance Tracker. Made for everyone.
+    </div>
+  </footer>
+</BaseLayout>

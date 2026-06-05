@@ -1,0 +1,151 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Logo from '../../components/Logo.astro';
+import WeeklyGrid from '../../components/timetable/WeeklyGrid';
+import { db, AcademicSession, eq, and } from 'astro:db';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/onboarding/timetable');
+
+if (user.onboardingStep === 'done') {
+  return Astro.redirect('/app/today');
+}
+
+const sessionId = Astro.url.searchParams.get('sessionId');
+if (!sessionId) return Astro.redirect('/onboarding/session');
+
+const owned = (await db
+  .select({ id: AcademicSession.id })
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.id, sessionId), eq(AcademicSession.userId, user.id)))
+  .limit(1))[0];
+if (!owned) return Astro.redirect('/onboarding/session');
+---
+<BaseLayout title="Add your timetable" description="Add your weekly classes.">
+  <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div class="mb-6 flex items-center justify-between gap-2">
+      <a href={`/onboarding/session?back=1&sessionId=${sessionId}`} class="inline-flex items-center gap-1 text-sm hover:underline" style="color: var(--color-text-muted);" data-astro-reload>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back
+      </a>
+      <div class="flex items-center gap-2 font-semibold">
+        <Logo class="h-7 w-7" />
+        <span>Attendance Tracker</span>
+      </div>
+    </div>
+
+    <p class="text-sm font-medium" style="color: var(--color-brand-600);" data-i18n="onboarding.timetable.step">Step 2 of 2</p>
+    <h1 class="mt-1 text-2xl font-semibold tracking-tight" data-i18n="onboarding.timetable.title">Add your weekly timetable</h1>
+    <p class="mt-2 max-w-2xl" style="color: var(--color-text-muted);" data-i18n="onboarding.timetable.body">
+      Add your subjects, then click cells to add classes. Drag to move. You can also paste a plain-text timetable below and we&apos;ll fill the grid for you.
+    </p>
+
+    <!-- Paste-text disclosure sits above the weekly grid: it's a fast
+         shortcut for users who already have a timetable in plain text,
+         and putting it first lets them skip the manual subject-entry
+         step entirely. -->
+    <details class="card mt-6 [[open]]:mb-4">
+      <summary class="cursor-pointer font-semibold">📋 Paste timetable text</summary>
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">
+        Load your timetable in the given format below, or ask your AI to format it for you: <code class="num">Day Start-End Subject (Lab)</code>.
+      </p>
+      <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="tt-input" class="field-label">Input</label>
+          <textarea id="tt-input" class="textarea font-mono text-sm" rows="8" placeholder="Mon 9:00-10:00 Calculus 101&#10;Mon 10:00-11:00 Data Structures (Lab)&#10;Tue 9:00-10:00 English"></textarea>
+        </div>
+        <div>
+          <label for="tt-warn" class="field-label">Preview</label>
+          <div id="tt-warn" class="textarea text-sm" style="min-height: 8rem; overflow: auto; background-color: var(--color-surface-2); white-space: pre-wrap;"></div>
+        </div>
+      </div>
+      <div class="mt-3 flex justify-end">
+        <button id="tt-apply" class="btn btn-primary btn-sm" type="button">Apply Schedule</button>
+      </div>
+    </details>
+
+    <WeeklyGrid client:load initialSlots={[]} initialSubjects={[]} sessionId={sessionId} />
+  </div>
+</BaseLayout>
+
+<script>
+  // Tiny client glue: textarea → /api/timetable/parse → preview → apply
+  const input = document.getElementById('tt-input') as HTMLTextAreaElement;
+  const preview = document.getElementById('tt-warn') as HTMLElement;
+  const apply = document.getElementById('tt-apply') as HTMLButtonElement;
+  let lastResult: { slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; subjectName: string; isLab: boolean; location?: string }>; warnings: string[]; needsReview: boolean } | null = null;
+
+  function toMin(t: string): number {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  function fmt12(t: string): string {
+    if (!t) return '';
+    const m = toMin(t);
+    const h24 = Math.floor(m / 60);
+    const mm = m % 60;
+    const ap = h24 >= 12 ? 'PM' : 'AM';
+    let h12 = h24 % 12;
+    if (h12 === 0) h12 = 12;
+    return mm === 0 ? `${h12} ${ap}` : `${h12}:${String(mm).padStart(2, '0')} ${ap}`;
+  }
+
+  function formatTimeRange(start: string, end: string) {
+    const s = fmt12(start);
+    const e = fmt12(end);
+    if (!s || !e) return '';
+    const sAP = s.slice(-2);
+    const eAP = e.slice(-2);
+    if (sAP === eAP) {
+      return `${s.slice(0, -3)}–${e}`;
+    }
+    return `${s}–${e}`;
+  }
+
+  function render() {
+    if (!lastResult) { preview.textContent = 'Click "Parse" to preview.'; return; }
+    const lines: string[] = [];
+    if (lastResult.slots.length) {
+      lines.push(`${lastResult.slots.length} class${lastResult.slots.length === 1 ? '' : 'es'} parsed:`);
+      for (const s of lastResult.slots) {
+        const timeRange = formatTimeRange(s.startTime, s.endTime);
+        const loc = s.location ? `  📍 ${s.location}` : '';
+        lines.push(`  • ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][s.dayOfWeek]} ${timeRange}  ${s.subjectName}${s.isLab ? ' (Lab)' : ''}${loc}`);
+      }
+    } else {
+      lines.push('No classes parsed.');
+    }
+    if (lastResult.warnings.length) {
+      lines.push('');
+      lines.push('Warnings:');
+      for (const w of lastResult.warnings) lines.push(`  ! ${w}`);
+    }
+    preview.textContent = lines.join('\n');
+  }
+
+  let parseTimer: number | undefined;
+  input?.addEventListener('input', () => {
+    if (parseTimer) window.clearTimeout(parseTimer);
+    parseTimer = window.setTimeout(async () => {
+      if (!input.value.trim()) { lastResult = null; render(); return; }
+      const res = await fetch('/api/timetable/parse', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: input.value }),
+      });
+      const json = await res.json() as any;
+      lastResult = json.data;
+      render();
+    }, 400);
+  });
+
+  apply?.addEventListener('click', () => {
+    if (!lastResult || lastResult.slots.length === 0) return;
+    // Dispatch a custom event the WeeklyGrid island listens for.
+    window.dispatchEvent(new CustomEvent('at75:import-slots', { detail: lastResult.slots }));
+  });
+</script>

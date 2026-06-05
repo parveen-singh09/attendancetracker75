@@ -1,0 +1,453 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Logo from '../components/Logo.astro';
+
+// Already logged in? Bounce straight to the app (or ?next=) so users
+// never see the form again after authenticating.
+if (Astro.locals.user) {
+  const next = Astro.url.searchParams.get('next') ?? '/app/today';
+  return Astro.redirect(next);
+}
+---
+<BaseLayout title="Log in" description="Log in to your Attendance Tracker account.">
+  <div class="auth-shell">
+    <!-- Left: brand / value panel -->
+    <aside class="auth-brand" aria-hidden="true">
+      <div class="auth-brand-inner">
+        <a href="/" class="auth-brand-logo">
+          <Logo class="h-8 w-8" />
+          <span>Attendance Tracker</span>
+        </a>
+
+        <div class="auth-brand-pitch">
+          <h2>Track smarter. Skip the math.</h2>
+          <p>
+            Your daily 30-second habit for keeping every subject above the 75% rule.
+            Tap Present, Absent, or Off — we'll handle the rest.
+          </p>
+        </div>
+
+        <ul class="auth-brand-points">
+          <li>
+            <span class="auth-brand-check" style="background-color: color-mix(in oklab, var(--color-safe) 18%, transparent); color: var(--color-safe);">✓</span>
+            <div>
+              <div class="auth-brand-point-title">Bunk calculator</div>
+              <div class="auth-brand-point-body">See exactly how many classes you can miss per subject.</div>
+            </div>
+          </li>
+          <li>
+            <span class="auth-brand-check" style="background-color: color-mix(in oklab, var(--color-safe) 18%, transparent); color: var(--color-safe);">✓</span>
+            <div>
+              <div class="auth-brand-point-title">Holidays handled</div>
+              <div class="auth-brand-point-body">Mark a day off and it doesn't count against you.</div>
+            </div>
+          </li>
+          <li>
+            <span class="auth-brand-check" style="background-color: color-mix(in oklab, var(--color-safe) 18%, transparent); color: var(--color-safe);">✓</span>
+            <div>
+              <div class="auth-brand-point-title">Private by default</div>
+              <div class="auth-brand-point-body">Your data, your export, your delete. No ads.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="auth-brand-foot">
+          <span aria-hidden="true">🎓</span>
+          Built for everyone.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: form panel -->
+    <section class="auth-form-wrap">
+      <div class="auth-form-top">
+        <a href="/" class="auth-form-back" aria-label="Back to home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span class="hidden xs:inline" data-i18n="btn.back">Back</span>
+        </a>
+        <a href="/" class="auth-form-logo" aria-label="Home">
+          <Logo class="h-7 w-7" />
+          <span class="hidden sm:inline">Attendance Tracker</span>
+        </a>
+      </div>
+
+      <div class="auth-card card">
+        <header class="auth-head">
+          <h1 data-i18n="auth.login.title">Welcome back</h1>
+          <p data-i18n="auth.login.subtitle">Log in to keep your streak going.</p>
+        </header>
+
+        <form id="login-form" class="auth-form" novalidate>
+          <div class="field">
+            <label for="email" class="field-label" data-i18n="auth.login.emailLabel">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              placeholder="you@example.com"
+              class="input"
+              data-i18n-attr="placeholder:auth.login.emailPlaceholder"
+            />
+          </div>
+
+          <div class="field">
+            <div class="auth-row-between">
+              <label for="password" class="field-label" data-i18n="auth.login.passwordLabel">Password</label>
+              <a href="/forgot-password" class="auth-link" data-i18n="auth.login.forgotPassword">Forgot password?</a>
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              placeholder="••••••••"
+              class="input"
+              data-i18n-attr="placeholder:auth.login.passwordPlaceholder"
+            />
+          </div>
+
+          <div id="form-error" class="auth-error" role="alert" hidden></div>
+
+          <button id="submit-btn" type="button" class="btn btn-primary auth-submit" data-i18n="btn.logIn">
+            Log in
+          </button>
+        </form>
+
+        <p class="auth-foot">
+          <span data-i18n="auth.login.newHere">New here?</span>
+          <a href="/signup" class="auth-link auth-link-strong" data-i18n="auth.login.createAccount">Create a free account</a>
+        </p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .auth-shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Brand panel — hidden on small screens, gradient panel on lg+ */
+  .auth-brand {
+    display: none;
+    background:
+      radial-gradient(1200px 600px at 0% 0%, color-mix(in oklab, var(--color-brand-400) 35%, transparent), transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, color-mix(in oklab, var(--color-brand-700) 60%, transparent), transparent 60%),
+      linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-800) 100%);
+    color: white;
+  }
+  .auth-brand-inner {
+    position: relative;
+    height: 100%;
+    padding: 3rem 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    max-width: 36rem;
+  }
+  .auth-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    text-decoration: none;
+  }
+  .auth-brand-logo :global(svg) { color: white; }
+  .auth-brand-pitch h2 {
+    font-size: clamp(1.75rem, 2.2vw + 0.5rem, 2.5rem);
+    line-height: 1.15;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+  }
+  .auth-brand-pitch p {
+    margin: 0.75rem 0 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 32rem;
+  }
+  .auth-brand-points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .auth-brand-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .auth-brand-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+  }
+  .auth-brand-point-title {
+    font-weight: 600;
+    color: white;
+    font-size: 0.9375rem;
+  }
+  .auth-brand-point-body {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+  }
+  .auth-brand-foot {
+    margin-top: auto;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.85);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Form panel */
+  .auth-form-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+    background-color: var(--color-bg);
+  }
+  .auth-form-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: nowrap;
+  }
+  .auth-form-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: color 150ms ease, background-color 150ms ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .auth-form-back:hover {
+    color: var(--color-text);
+    background-color: color-mix(in oklab, var(--color-text) 5%, transparent);
+  }
+  .auth-form-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .auth-form-wrap { padding: 3rem 2rem; }
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 26rem;
+    margin: 0 auto;
+    padding: 1.75rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12);
+  }
+  @media (min-width: 640px) {
+    .auth-card { padding: 2rem; }
+  }
+
+  .auth-head h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+  }
+  .auth-head p {
+    margin: 0.375rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .auth-form {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .auth-row-between {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .auth-link {
+    color: var(--color-brand-600);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .auth-link:hover { text-decoration: underline; }
+  .auth-link-strong { font-weight: 600; }
+
+  .auth-error {
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    background-color: color-mix(in oklab, var(--color-danger) 10%, transparent);
+    color: var(--color-danger);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 30%, transparent);
+    font-size: 0.8125rem;
+  }
+  .auth-error[hidden] { display: none; }
+
+  .auth-submit { width: 100%; }
+  .auth-submit:disabled { opacity: 0.7; }
+
+  .auth-divider {
+    margin: 1.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text-subtle);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .auth-divider::before,
+  .auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--color-border);
+  }
+
+  .auth-foot {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Two-column layout on larger screens */
+  @media (min-width: 1024px) {
+    .auth-shell { grid-template-columns: 1.05fr 1fr; }
+    .auth-brand { display: block; }
+    .auth-form-wrap { padding: 3rem 3.5rem; }
+  }
+</style>
+
+<script>
+  import { authClient } from '../lib/auth-client';
+  import { t, STORAGE_KEY, resolveLocale, type Locale } from '../lib/i18n';
+
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const errorDiv = document.getElementById('form-error') as HTMLDivElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const next = new URLSearchParams(window.location.search).get('next') || '/app/today';
+
+  // Re-read the locale every time we need to translate a string, so
+  // the user changing languages mid-flow sees the new copy.
+  const currentLocale = (): Locale => {
+    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+    catch { return 'en'; }
+  };
+  const tr = (key: string): string => t(currentLocale(), key);
+
+  const setError = (msg: string) => {
+    errorDiv.textContent = msg;
+    errorDiv.hidden = false;
+  };
+  const clearError = () => {
+    errorDiv.textContent = '';
+    errorDiv.hidden = true;
+  };
+  const setSubmitting = (btn: HTMLButtonElement, submitting: boolean, label: string) => {
+    btn.disabled = submitting;
+    btn.textContent = submitting ? tr('btn.pleaseWait') : label;
+  };
+
+  // Pick the right destination after a successful login.
+  // We can't decide purely from the URL: the server knows the user's
+  // onboarding state. Always honour an explicit `?next=...`, otherwise
+  // skip onboarding for completed users and route fresh ones into it.
+  const resolveDestination = async (): Promise<string> => {
+    if (next && next !== '/app/today' && next !== '/login') return next;
+    try {
+      const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
+      if (res.ok) {
+        const body = (await res.json()) as { user?: { onboardingStep?: string } };
+        if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
+          return '/onboarding/welcome';
+        }
+      }
+    } catch {
+      // Fall through to the default.
+    }
+    return next || '/app/today';
+  };
+
+  form?.addEventListener('submit', (e) => e.preventDefault());
+
+
+  submitBtn?.addEventListener('click', async () => {
+    clearError();
+    setSubmitting(submitBtn, true, tr('btn.logIn'));
+
+    const formData = new FormData(form);
+    const email = (formData.get('email') as string).trim();
+    const password = formData.get('password') as string;
+
+    if (!email || !password) {
+      setError(tr('auth.login.error.missingFields'));
+      setSubmitting(submitBtn, false, tr('btn.logIn'));
+      return;
+    }
+
+    try {
+      const { data, error } = await authClient.signIn({ email, password });
+
+      if (error) {
+        // Server-provided errors may already be in English. Keep them
+        // as-is — we don't translate backend strings in phase 1.
+        setError(error.message || tr('auth.login.error.generic'));
+        setSubmitting(submitBtn, false, tr('btn.logIn'));
+        return;
+      }
+      if (data) {
+        const dest = await resolveDestination();
+        window.location.href = dest;
+      } else {
+        setError(tr('auth.login.error.generic'));
+        setSubmitting(submitBtn, false, tr('btn.logIn'));
+      }
+    } catch (err) {
+      console.error('[login] signIn failed', err);
+      setError(tr('error.network'));
+      setSubmitting(submitBtn, false, tr('btn.logIn'));
+    }
+  });
+</script>

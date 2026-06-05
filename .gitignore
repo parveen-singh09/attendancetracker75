@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Cloudflare / Wrangler state (account ID, deploy config, etc.)
+.wrangler/
+
+# Editor / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code / agent per-user settings
+.claude/
+.agents/
+skills-lock.json

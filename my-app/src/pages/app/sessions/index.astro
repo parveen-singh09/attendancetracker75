@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+import AppLayout from '../../../layouts/AppLayout.astro';
+import PercentageBar from '../../../components/ui/PercentageBar.astro';
+import { db, AcademicSession, Subject, AttendanceLog, Day, eq, desc } from 'astro:db';
+import { computeStats, overallStats } from '../../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/sessions');
+
+const sessions = await db
+  .select()
+  .from(AcademicSession)
+  .where(eq(AcademicSession.userId, user.id))
+  .orderBy(desc(AcademicSession.createdAt));
+
+async function rollup(sessId: string, target: number) {
+  const subjRows = await db.select().from(Subject).where(eq(Subject.sessionId, sessId));
+  const logs = await db.select().from(AttendanceLog).where(eq(AttendanceLog.sessionId, sessId));
+  const dayOverrides = await db.select().from(Day).where(eq(Day.sessionId, sessId));
+  const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+  const perSubj: Record<string, ReturnType<typeof computeStats>> = {};
+  for (const s of subjRows) {
+    const sLogs = logs.filter((l: any) => l.subjectId === s.id).map((l: any) => ({ date: l.date, status: l.status as 'present' | 'absent' | 'extra' | 'off' }));
+    perSubj[s.id] = computeStats(sLogs, dayArr, target);
+  }
+  return { overall: overallStats(perSubj), subjects: subjRows.length };
+}
+---
+<AppLayout title="Sessions">
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <div class="flex items-baseline justify-between">
+      <h1 class="text-2xl font-semibold tracking-tight">Sessions</h1>
+      <a href="/onboarding/session" class="btn btn-primary btn-sm">+ New session</a>
+    </div>
+
+    {sessions.length === 0 ? (
+      <p class="mt-6 text-sm" style="color: var(--color-text-subtle);">No sessions yet.</p>
+    ) : (
+      <ul class="mt-6 space-y-3">
+        {await Promise.all(sessions.map(async (s) => {
+          const r = await rollup(s.id, s.targetPct);
+          return (
+            <li class="card">
+              <div class="flex flex-wrap items-baseline justify-between gap-3">
+                <div>
+                  <a href={`/app/sessions/${s.id}`} class="font-semibold hover:underline">{s.name}</a>
+                  <div class="text-xs num" style="color: var(--color-text-subtle);">
+                    {s.startDate} → {s.endDate} · {r.subjects} subjects · target {s.targetPct}%
+                    {s.isArchived && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase" style="background-color: var(--color-surface-2);">Archived</span>}
+                  </div>
+                </div>
+                <div class="num text-2xl font-semibold">{r.overall.pct.toFixed(1)}%</div>
+              </div>
+              <div class="mt-3">
+                <PercentageBar pct={r.overall.pct} target={s.targetPct} size="sm" />
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <a href={`/app/sessions/${s.id}`} class="btn btn-secondary btn-sm">View rollup</a>
+                {!s.isArchived && (
+                  <form method="post" action={`/api/sessions/${s.id}/archive`} onsubmit="return confirm('Archive this session? You can still view its rollup.')">
+                    <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
+                  </form>
+                )}
+              </div>
+            </li>
+          );
+        }))}
+      </ul>
+    )}
+  </div>
+</AppLayout>

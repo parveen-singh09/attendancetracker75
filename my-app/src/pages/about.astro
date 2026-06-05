@@ -1,0 +1,18 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import { t as translate } from '../lib/i18n';
+---
+<MarketingLayout title="About" description="Why we built Attendance Tracker.">
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <h1 class="text-3xl font-semibold tracking-tight" data-i18n="about.h1">{translate('en', 'about.h1')}</h1>
+    <p class="mt-3 text-lg" style="color: var(--color-text-muted);" data-i18n="about.p1">{translate('en', 'about.p1')}</p>
+    <p class="mt-4" style="color: var(--color-text-muted);" data-i18n="about.p2">{translate('en', 'about.p2')}</p>
+    <h2 class="mt-10 text-xl font-semibold" data-i18n="about.principles.h2">{translate('en', 'about.principles.h2')}</h2>
+    <ul class="mt-3 space-y-2" style="color: var(--color-text-muted);">
+      <li data-i18n-emph="about.principle1"><strong>Free, forever.</strong> No paywall, no Pro tier, no ads.</li>
+      <li data-i18n-emph="about.principle2"><strong>Private by default.</strong> Your data is yours. Export and delete with one click.</li>
+      <li data-i18n-emph="about.principle3"><strong>Fast and accessible.</strong> Works on a 2G connection, on a low-end Android, with a screen reader.</li>
+      <li data-i18n-emph="about.principle4"><strong>Honest math.</strong> We show our assumptions (target %, day overrides) instead of hiding them.</li>
+    </ul>
+  </div>
+</MarketingLayout>

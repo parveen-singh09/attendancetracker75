@@ -1,0 +1,220 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description?: string;
+  keywords?: string;
+  image?: string;
+  showNav?: boolean;
+}
+
+const {
+  title,
+  description = 'Attendance Tracker is the easiest way to track attendance for students. A 100% free student attendance tracking system with daily logging, bunk calculator, and subject-wise percentages.',
+  keywords = 'attendance tracker, attendance tracker app, my attendance tracker, student attendance tracker, free attendance tracker, online attendance tracker, attendance tracker for students, attendance online free, online attendance system, online attendance for students, free online attendance monitoring system, tracking student attendance',
+  image = '/web-app-manifest-512x512.png',
+  showNav = false,
+} = Astro.props;
+
+const fullTitle = title === 'Attendance Tracker' ? title : `${title} | Attendance Tracker`;
+const url = Astro.url.toString();
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendancetracker.com');
+---
+<!doctype html>
+<html lang="en" class="dark no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0a0f1c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <!-- Primary Meta Tags -->
+    <title>{fullTitle}</title>
+    <meta name="title" content={fullTitle} />
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={url} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, url)} />
+    <meta property="og:site_name" content="Attendance Tracker" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={url} />
+    <meta property="twitter:title" content={fullTitle} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, url)} />
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Tracker" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Google tag (gtag.js) — GA4 measurement ID G-LD2PJN4TXN. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LD2PJN4TXN"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LD2PJN4TXN');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script is:inline>
+      // Theme and Sidebar bootstrap — runs before paint to prevent FOUC
+      (function () {
+        document.documentElement.classList.remove('no-js');
+
+        function applyTheme(t) {
+          var dark =
+            t === 'dark' ||
+            (t === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        }
+
+        try {
+          var t = localStorage.getItem('at75:theme') || 'system';
+          applyTheme(t);
+        } catch (_) {
+          document.documentElement.classList.add('dark');
+        }
+
+        // Sidebar state detection
+        try {
+          var sidebarState = localStorage.getItem('sidebar-state');
+          if (sidebarState === 'closed' && window.innerWidth >= 768) {
+            document.documentElement.classList.add('sidebar-init-closed');
+          }
+        } catch (_) {}
+
+        // i18n early bootstrap. Set <html lang>/dir from saved locale so
+        // the browser applies the right font/style before paint and so
+        // the LocaleSwitcher can read it back. The full text swap is
+        // done by i18n-runtime on astro:page-load.
+        try {
+          var savedLocale = localStorage.getItem('at75_locale') || 'en';
+          var rtlCodes = { ar: 1 };
+          document.documentElement.setAttribute('lang', savedLocale);
+          document.documentElement.setAttribute('dir', rtlCodes[savedLocale] ? 'rtl' : 'ltr');
+        } catch (_) {}
+
+        // Global theme toggle listener
+        document.addEventListener('click', function(e) {
+          var btn = e.target.closest('.theme-toggle-btn');
+          if (btn) {
+            var html = document.documentElement;
+            var isDark = html.classList.toggle('dark');
+            try { localStorage.setItem('at75:theme', isDark ? 'dark' : 'light'); } catch (_) {}
+          }
+        });
+
+        // Re-apply theme on View Transitions navigation
+        document.addEventListener('astro:after-swap', function() {
+          var t = localStorage.getItem('at75:theme') || 'system';
+          applyTheme(t);
+          try {
+            var l = localStorage.getItem('at75_locale') || 'en';
+            var rtl2 = { ar: 1 };
+            document.documentElement.setAttribute('lang', l);
+            document.documentElement.setAttribute('dir', rtl2[l] ? 'rtl' : 'ltr');
+          } catch (_) {}
+        });
+
+        // Navigation Progress and Logging
+        var navTimeout;
+        document.addEventListener('astro:before-preparation', function() {
+          console.log('[Nav] Preparation started...');
+          var bar = document.getElementById('nav-progress');
+          if (bar) {
+            bar.style.transition = 'transform 10s cubic-bezier(0, 0.4, 0.4, 1)';
+            bar.style.transform = 'translateX(-5%)';
+          }
+          // If navigation takes > 8s, show a hint
+          navTimeout = setTimeout(function() {
+             console.warn('[Nav] Navigation is taking a long time. Check server status.');
+          }, 8000);
+        });
+        document.addEventListener('astro:after-preparation', function() {
+          console.log('[Nav] Preparation complete.');
+        });
+        document.addEventListener('astro:before-swap', function() {
+          console.log('[Nav] Swapping content...');
+          clearTimeout(navTimeout);
+          var bar = document.getElementById('nav-progress');
+          if (bar) {
+            bar.style.transition = 'transform 0.4s ease-out';
+            bar.style.transform = 'translateX(0)';
+          }
+        });
+        document.addEventListener('astro:after-swap', function() {
+          console.log('[Nav] Swap complete.');
+          setTimeout(function() {
+            var bar = document.getElementById('nav-progress');
+            if (bar) {
+              bar.style.transform = 'translateX(100%)';
+              setTimeout(function() {
+                bar.style.transition = 'none';
+                bar.style.transform = 'translateX(-100%)';
+              }, 300);
+            }
+          }, 100);
+        });
+      })();
+    </script>
+    <ClientRouter />
+    <style is:global>
+      #nav-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--color-brand-600);
+        z-index: 9999;
+        transform: translateX(-100%);
+        pointer-events: none;
+        will-change: transform;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--color-brand-600);
+        color: white;
+        padding: 8px;
+        z-index: 100;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="nav-progress"></div>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    {showNav && <slot name="nav" />}
+    <main id="main">
+      <slot />
+    </main>
+  </body>
+</html>

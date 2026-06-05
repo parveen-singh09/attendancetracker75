@@ -1,0 +1,290 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import SubjectQuickMarks from '../../components/attendance/SubjectQuickMarks';
+import PercentageBar from '../../components/ui/PercentageBar.astro';
+import Stat from '../../components/ui/Stat.astro';
+import { db, AcademicSession, Subject, TimetableSlot, AttendanceLog, Day, eq, and, desc, lte } from 'astro:db';
+import { computeStats, overallStats, toDateString } from '../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/today');
+
+if (user.onboardingStep !== 'done') {
+  if (user.onboardingStep === 'welcome') {
+    return Astro.redirect('/onboarding/welcome');
+  }
+  const sess = (await db
+    .select()
+    .from(AcademicSession)
+    .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+    .orderBy(desc(AcademicSession.createdAt))
+    .limit(1))[0];
+
+  if (!sess) {
+    return Astro.redirect('/onboarding/session');
+  }
+  if (user.onboardingStep === 'timetable') {
+    return Astro.redirect('/onboarding/timetable?sessionId=' + sess.id);
+  }
+}
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+
+if (!sess) {
+  // This fallback handles edge cases where step is 'done' but no active session is found
+  return Astro.redirect('/onboarding/session');
+}
+
+const today = toDateString(new Date());
+const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+
+// Which subjects have a regular timetable slot scheduled for today?
+// Also load the *slots themselves* (with subject + location) so we can
+// render "Today's schedule" with class times.
+const [allSlots, logs, dayOverrides, allSubjects] = await Promise.all([
+  db
+    .select({ slot: TimetableSlot, subject: Subject })
+    .from(TimetableSlot)
+    .innerJoin(Subject, eq(TimetableSlot.subjectId, Subject.id))
+    .where(eq(TimetableSlot.sessionId, sess.id)),
+  db
+    .select()
+    .from(AttendanceLog)
+    .where(
+      and(
+        eq(AttendanceLog.sessionId, sess.id),
+        lte(AttendanceLog.date, today)
+      )
+    ),
+  db.select().from(Day).where(eq(Day.sessionId, sess.id)),
+  db.select().from(Subject).where(eq(Subject.sessionId, sess.id))
+]);
+
+const subjectsWithRegularSlotToday = new Set(
+  allSlots.filter((s: any) => s.slot.dayOfWeek === jsDow).map((s: any) => s.slot.subjectId)
+);
+
+// Today's classes (subject/lab), sorted by start time.
+interface TodayClass {
+  slotId: string;
+  subjectId: string;
+  name: string;
+  color: string;
+  isLab: boolean;
+  startTime: string; // HH:MM
+  endTime: string;
+  location: string | null;
+}
+const todaysClasses: TodayClass[] = allSlots
+  .filter((s: any) => s.slot.dayOfWeek === jsDow)
+  .map((s: any) => ({
+    slotId: s.slot.id,
+    subjectId: s.subject.id,
+    name: s.subject.name,
+    color: s.subject.color,
+    isLab: s.subject.isLab,
+    startTime: s.slot.startTime,
+    endTime: s.slot.endTime,
+    location: s.slot.location,
+  }))
+  .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+const perSubjectStats: Record<string, ReturnType<typeof computeStats>> = {};
+const subjById = new Map<string, typeof Subject.$inferSelect>();
+for (const s of allSubjects) {
+  subjById.set(s.id, s);
+}
+
+// Per-(subject, today) counters by status.
+const todaysCounts = new Map<string, { regular: number; absent: number; extra: number; off: boolean }>();
+for (const sid of subjById.keys()) {
+  todaysCounts.set(sid, { regular: 0, absent: 0, extra: 0, off: false });
+}
+for (const l of logs) {
+  if (l.date !== today) continue;
+  if (!todaysCounts.has(l.subjectId)) continue;
+  const c = todaysCounts.get(l.subjectId)!;
+  if (l.status === 'present') c.regular += 1;
+  else if (l.status === 'absent') c.absent += 1;
+  else if (l.status === 'extra') c.extra += 1;
+  else if (l.status === 'off') c.off = true;
+}
+
+// Group logs by subjectId for performance
+const logsBySubj = new Map<string, any[]>();
+for (const l of logs) {
+  const arr = logsBySubj.get(l.subjectId) ?? [];
+  arr.push({ date: l.date, status: l.status as any });
+  logsBySubj.set(l.subjectId, arr);
+}
+
+const dayArr = dayOverrides.map((d: any) => ({ date: d.date, status: d.status as any }));
+
+for (const sid of subjById.keys()) {
+  const subjLogs = logsBySubj.get(sid) ?? [];
+  perSubjectStats[sid] = computeStats(
+    subjLogs,
+    dayArr,
+    sess.targetPct
+  );
+  // Default-absent: a subject with a regular slot today and 0 rows yet
+  // counts as 1 held, 0 attended.
+  const hasRegularToday = subjectsWithRegularSlotToday.has(sid);
+  const counts = todaysCounts.get(sid)!;
+  const totalRows = counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
+  if (hasRegularToday && totalRows === 0) {
+    perSubjectStats[sid]!.held += 1;
+    perSubjectStats[sid]!.pct = perSubjectStats[sid]!.held === 0
+      ? 0
+      : (perSubjectStats[sid]!.attended / perSubjectStats[sid]!.held) * 100;
+  }
+}
+
+  // Filter overall stats based on session preference.
+  const filteredStats: Record<string, ReturnType<typeof computeStats>> = {};
+  for (const [sid, stats] of Object.entries(perSubjectStats)) {
+    const isLab = subjById.get(sid)?.isLab;
+    const mode = sess.overallCalcMode;
+    if (mode === 'both') {
+      filteredStats[sid] = stats;
+    } else if (mode === 'lab') {
+      if (isLab) filteredStats[sid] = stats;
+    } else {
+      if (!isLab) filteredStats[sid] = stats;
+    }
+  }
+  const overall = overallStats(filteredStats, sess.targetPct);
+
+  const subjectsToShowInQuickMark = Array.from(subjById.values())
+    .map((s) => {
+      const stats = perSubjectStats[s.id]!;
+      const counts = todaysCounts.get(s.id)!;
+      return {
+        id: s.id,
+        name: s.name,
+        color: s.color,
+        code: s.code,
+        location: todaysClasses.find(c => c.subjectId === s.id)?.location,
+        isLab: s.isLab,
+        pct: stats.pct,
+        held: stats.held,
+        attended: stats.attended,
+        regular: counts.regular,
+        absent: counts.absent,
+        extra: counts.extra,
+        off: counts.off,
+        hasRegularSlot: subjectsWithRegularSlotToday.has(s.id),
+      };
+    })
+    .filter((s) => s.hasRegularSlot || s.regular > 0 || s.absent > 0 || s.extra > 0 || s.off);
+
+  const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).format(new Date());
+const dayInto = Math.max(0, Math.floor((new Date(today).getTime() - new Date(sess.startDate).getTime()) / 86400000));
+
+const overallColor =
+  overall.safe === 'safe' ? 'var(--color-safe)' :
+  overall.safe === 'warn' ? 'var(--color-warn)' :
+  overall.safe === 'danger' ? 'var(--color-danger)' :
+  'var(--color-text)';
+---
+<AppLayout title="Today">
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <div class="flex items-baseline justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight" data-i18n="today.title">Today</h1>
+        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+          {longDate} · {sess.name} · Day {dayInto + 1}
+        </p>
+      </div>
+      <div class="text-right">
+        <div id="today-overall-pct" class="num text-3xl font-semibold" style={`color: ${overallColor};`}>
+          {Math.floor(overall.pct)}%
+        </div>
+        <div class="text-xs" style="color: var(--color-text-subtle);">
+          <span data-i18n="today.overall">Overall Attendance</span> · <span id="today-overall-fraction">{overall.attended}/{overall.held} attended</span>
+          {overall.extra > 0 && <span id="today-overall-extra" style="color: var(--color-brand-600);"> · +{overall.extra} extra</span>}
+        </div>
+      </div>
+    </div>
+
+    <div id="today-overall-bar" class="mt-4">
+      <PercentageBar pct={overall.pct} target={sess.targetPct} />
+    </div>
+
+    <span class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Stat id="stat-held" label="Regular held" value={overall.held} />
+      <Stat id="stat-attended" label="Attended" value={overall.attended} />
+      <Stat id="stat-extra" label="Extra" value={overall.extra} />
+      <Stat label="Subjects" value={Object.values(filteredStats).filter((s) => s.held > 0 || s.extra > 0).length} />
+    </span>
+
+    <section class="mt-8">
+      <h2 class="text-base font-semibold tracking-tight" data-i18n="today.scheduleTitle">Today&apos;s schedule</h2>
+
+      {todaysClasses.length === 0 ? (
+        <div class="card mt-2 flex flex-col items-center gap-1 py-6 text-center">
+          <div class="text-2xl" aria-hidden="true">🎉</div>
+          <p class="text-sm font-medium" data-i18n="today.empty.title">No classes today</p>
+          <p class="text-sm font-bold" style="color: var(--color-brand-600);" data-i18n="today.empty.body">Enjoy your day off</p>
+          <p class="text-[10px]" style="color: var(--color-text-subtle);">
+            Add classes to your weekly schedule to see them here.
+          </p>
+        </div>
+      ) : (
+        <ul class="mt-2 space-y-1">
+          {todaysClasses.map((c) => {
+            return (
+              <li class="card flex items-center gap-2.5 py-1 px-3">
+                <span aria-hidden="true" style={`width:3.5px;height:18px;border-radius:2px;background-color:${c.color};flex-shrink:0`}></span>
+                <span class="flex flex-1 items-center justify-between gap-2 min-w-0">
+                  <span class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-sm font-semibold truncate">{c.name}</span>
+                    {c.isLab && (
+                      <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase shrink-0" style="background-color:color-mix(in oklab, var(--color-brand-500) 15%, transparent);color:var(--color-brand-600)">
+                        Lab
+                      </span>
+                    )}
+                  </span>
+                  <span class="flex items-center gap-2 text-[11px] shrink-0" style="color:var(--color-text-subtle)">
+                    <span class="num font-medium">{c.startTime}–{c.endTime}</span>
+                    {c.location && (
+                      <span class="flex items-center gap-1">
+                        <span aria-hidden="true" class="opacity-40">·</span>
+                        <span class="truncate max-w-17.5 sm:max-w-none">{c.location}</span>
+                      </span>
+                    )}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+
+    {subjectsToShowInQuickMark.length > 0 && (
+      <section class="mt-8">
+        <h2 class="text-base font-semibold tracking-tight" data-i18n="today.markTitle">Mark Attendance</h2>
+        <div class="mt-2">
+          <SubjectQuickMarks
+            client:load
+            date={today}
+            subjects={subjectsToShowInQuickMark}
+            targetPct={sess.targetPct}
+            calcMode={sess.overallCalcMode as any}
+            initialOverall={{ held: overall.held, attended: overall.attended, extra: overall.extra }}
+          />
+        </div>
+      </section>
+    )}
+  </div>
+</AppLayout>
+
+<style>
+</style>

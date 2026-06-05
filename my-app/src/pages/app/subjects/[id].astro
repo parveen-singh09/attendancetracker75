@@ -1,0 +1,98 @@
+---
+export const prerender = false;
+import AppLayout from '../../../layouts/AppLayout.astro';
+import PercentageBar from '../../../components/ui/PercentageBar.astro';
+import WhatIfSimulator from '../../../components/attendance/WhatIfSimulator';
+import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and, desc } from 'astro:db';
+import { computeStats } from '../../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/subjects');
+
+const subjectId = Astro.params.id!;
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+if (!sess) return Astro.redirect('/onboarding/session');
+
+const subj = (await db.select().from(Subject).where(eq(Subject.id, subjectId)).limit(1))[0];
+if (!subj || subj.sessionId !== sess.id) return Astro.redirect('/app/subjects');
+
+const logs = await db.select().from(AttendanceLog).where(eq(AttendanceLog.subjectId, subjectId));
+const dayOverrides = await db.select().from(Day).where(eq(Day.sessionId, sess.id));
+const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+const logArr = logs.map((l) => ({ date: l.date, status: l.status as 'present' | 'absent' | 'extra' | 'off' }));
+const stats = computeStats(logArr, dayArr, sess.targetPct);
+
+// Recent 7 days strip
+const recent = [...logs]
+  .sort((a, b) => b.date.localeCompare(a.date))
+  .slice(0, 14);
+---
+<AppLayout title={subj.name}>
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <nav class="text-sm" style="color: var(--color-text-subtle);">
+      <a href="/app/subjects" class="hover:underline">Subjects</a> <span aria-hidden="true">/</span> <span>{subj.name}</span>
+    </nav>
+
+    <div class="mt-3 flex items-center gap-3">
+      <span aria-hidden="true" style={`width: 8px; height: 32px; border-radius: 4px; background-color: ${subj.color};`}></span>
+      <h1 class="text-2xl font-semibold tracking-tight">{subj.name}</h1>
+      {subj.code && <span class="text-sm" style="color: var(--color-text-subtle);">{subj.code}</span>}
+    </div>
+
+    <div class="card mt-5">
+      <div class="flex flex-wrap items-baseline justify-between gap-4">
+        <div>
+          <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Attendance</div>
+          <div class="num text-4xl font-semibold">{stats.pct.toFixed(1)}%</div>
+          <div class="text-sm" style="color: var(--color-text-subtle);">
+            {stats.attended} of {stats.held} classes attended
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-right sm:flex sm:gap-6">
+          <div>
+            <div class="num text-2xl font-semibold">{stats.canMiss}</div>
+            <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);">Can miss</div>
+          </div>
+          <div>
+            <div class="num text-2xl font-semibold">{stats.mustAttend}</div>
+            <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);">Need to attend</div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <PercentageBar pct={stats.pct} target={sess.targetPct} />
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <WhatIfSimulator
+        client:load
+        base={stats}
+        target={sess.targetPct}
+        logs={logArr}
+        days={dayArr}
+      />
+    </div>
+
+    <h2 class="mt-10 text-lg font-semibold">Recent logs</h2>
+    {recent.length === 0 ? (
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">No logs yet. Mark today on the Today page.</p>
+    ) : (
+      <ul class="mt-3 space-y-1">
+        {recent.map((l) => (
+          <li class="card flex items-center justify-between py-2 text-sm">
+            <span class="num">{l.date}</span>
+            <span class="font-medium" style={`color: ${l.status === 'present' ? 'var(--color-safe)' : l.status === 'absent' ? 'var(--color-danger)' : 'var(--color-text-subtle)'};`}>
+              {l.status}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</AppLayout>

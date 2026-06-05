@@ -1,0 +1,245 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import Logo from '../components/Logo.astro';
+import FaqSection from '../components/marketing/FaqSection.astro';
+import { db, AcademicSession, eq, and, desc } from 'astro:db';
+
+// If the visitor is signed in AND has finished onboarding, send them
+// straight to the dashboard. Mid-onboarding users (e.g. a guest who
+// pressed "Continue as Guest" and is now on step 1) are allowed to see
+// the landing — otherwise the Back button on the onboarding pages would
+// loop them right back into onboarding via / -> /app/today -> /onboarding.
+const authedUser = Astro.locals.user;
+if (authedUser && authedUser.onboardingStep === 'done') {
+  return Astro.redirect('/app/today');
+}
+
+// If a mid-onboarding user comes back to /, we need their active session
+// id so the guest button can route them back to the timetable step
+// (which requires ?sessionId=...).
+let activeSessionIdForAuthed: string | null = null;
+if (authedUser && (authedUser.onboardingStep === 'session' || authedUser.onboardingStep === 'timetable')) {
+  const rows = await db
+    .select({ id: AcademicSession.id })
+    .from(AcademicSession)
+    .where(and(eq(AcademicSession.userId, authedUser.id), eq(AcademicSession.isArchived, false)))
+    .orderBy(desc(AcademicSession.createdAt))
+    .limit(1);
+  activeSessionIdForAuthed = rows[0]?.id ?? null;
+}
+
+const features = [
+  { icon: '📅', title: 'Daily habit loop', body: 'Open the app, see today\'s classes, tap one button. Done in 30 seconds.' },
+  { icon: '🧮', title: 'Subject-wise math', body: 'Per-subject percentage and a weighted overall — the way you actually think about it.' },
+  { icon: '🛌', title: 'Holidays handled', body: 'Mark a day off and it doesn\'t count against you. Sick leave, college events, real life.' },
+  { icon: '📊', title: 'Bunk calculator', body: 'See how many classes you can miss per subject, and what-if next class.' },
+  { icon: '🗂', title: 'Session-based', body: 'One "Fall 2026", one "Spring 2027". Archive old sessions, keep your history.' },
+  { icon: '🔒', title: 'Private by default', body: 'Your data, your export, your delete button. No tracking, no ads, no surprises.' },
+];
+---
+<MarketingLayout 
+  title="Attendance Tracker | Easiest Way to Track Student Attendance Online" 
+  description="Use our 100% free student attendance tracker app to manage your timetable, calculate bunk budget, and stay above the 75% rule. The easiest way to track attendance online free."
+  keywords="attendance tracker, attendance tracker app, my attendance tracker, student attendance tracker, free attendance tracker, online attendance tracker, homeschool attendance tracker, attendance tracker for students, attendance online free, online attendance system, online attendance for students, free online attendance monitoring system, tracking student attendance, 100% free student attendance, attendance tracker for school free, easiest way to track attendance"
+>
+  <section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-24">
+    <!-- Mobile order: "Built for everyone" intro → CTAs → Today card. -->
+    <!-- Desktop order: intro on the left, Today card on the right, CTAs at the bottom of the left column. -->
+    <div class="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
+      <!-- Top row on mobile: the "Built for everyone" intro (badge + headline + subheadline). -->
+      <div class="order-1 lg:order-1">
+        <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium" style="border-color: var(--color-border); color: var(--color-text-muted);">
+          <span aria-hidden="true">🎓</span> <span data-i18n="landing.badge">Built for everyone</span>
+        </span>
+        <h1 class="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+          <span data-i18n="landing.headline1">The Easiest Way to</span> <br class="hidden sm:block"/><span class="text-brand-500" style="color: var(--color-brand-600);" data-i18n="landing.headline2">Track Attendance.</span>
+        </h1>
+        <p class="mt-4 max-w-xl text-base sm:text-lg" style="color: var(--color-text-muted);" data-i18n="landing.subheadline">
+          Attendance Tracker turns your timetable into a daily 30-second habit. Tap Present, Absent, or Off for each class. The best free student attendance tracker for busy students.
+        </p>
+      </div>
+
+      <!-- Middle row on mobile: the two CTAs, full-width, easy access. -->
+      <!-- Desktop: the two CTAs sit side by side (horizontal) under the intro. -->
+      <div class="order-2 flex flex-row flex-wrap gap-3 lg:order-3">
+        <a href="/signup" class="btn btn-primary flex-1 sm:flex-none text-center justify-center" data-i18n="landing.ctaPrimary">Start Tracking</a>
+        <button id="guest-btn" class="btn btn-secondary flex-1 sm:flex-none text-center justify-center" data-authed={authedUser ? '1' : '0'} data-onboarding-step={authedUser?.onboardingStep ?? ''} data-onboarding-session-id={activeSessionIdForAuthed ?? ''} data-i18n={authedUser ? 'btn.loginAsGuest' : 'btn.continueAsGuest'}>
+          {authedUser ? 'Login as Guest' : 'Continue as Guest'}
+        </button>
+      </div>
+
+      <!-- Bottom row on mobile: the Today card. -->
+      <div class="order-3 card relative overflow-hidden p-0 mx-auto w-full max-w-md lg:max-w-none lg:order-2">
+        <div class="flex items-center gap-2 border-b px-4 py-3 text-xs" style="border-color: var(--color-border); color: var(--color-text-subtle);">
+          <span class="size-2 rounded-full" style="background-color: var(--color-danger)"></span>
+          <span class="size-2 rounded-full" style="background-color: var(--color-warn)"></span>
+          <span class="size-2 rounded-full" style="background-color: var(--color-safe)"></span>
+          <span class="ml-2" data-i18n="landing.urlLabel">/today</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-baseline justify-between">
+            <div>
+              <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Today</div>
+              <div class="text-lg font-semibold">Monday, Sept 8</div>
+            </div>
+            <div class="num text-2xl font-semibold" style="color: var(--color-safe);">84%</div>
+          </div>
+          <ul class="mt-4 space-y-2">
+            <li class="flex items-center justify-between rounded-lg border p-3" style="border-color: var(--color-border);">
+              <div>
+                <div class="font-medium">Calculus 101</div>
+                <div class="num text-xs" style="color: var(--color-text-subtle);">09:00–10:00</div>
+              </div>
+              <div class="flex gap-1">
+                <span class="rounded px-2 py-1 text-xs font-medium text-white" style="background-color: var(--color-safe);">Present</span>
+              </div>
+            </li>
+            <li class="flex items-center justify-between rounded-lg border p-3" style="border-color: var(--color-border);">
+              <div>
+                <div class="font-medium">Data Structures <span class="rounded bg-slate-200 px-1 text-[10px] font-semibold uppercase dark:bg-slate-700">Lab</span></div>
+                <div class="num text-xs" style="color: var(--color-text-subtle);">10:00–11:00</div>
+              </div>
+              <div class="flex gap-1">
+                <span class="rounded border px-2 py-1 text-xs font-medium">Present</span>
+                <span class="rounded border px-2 py-1 text-xs font-medium">Absent</span>
+                <span class="rounded px-2 py-1 text-xs font-medium text-white" style="background-color: var(--color-text-subtle);">Off</span>
+              </div>
+            </li>
+            <li class="flex items-center justify-between rounded-lg border p-3" style="border-color: var(--color-border);">
+              <div>
+                <div class="font-medium">English</div>
+                <div class="num text-xs" style="color: var(--color-text-subtle);">11:00–12:00</div>
+              </div>
+              <div class="flex gap-1">
+                <span class="rounded border px-2 py-1 text-xs font-medium">Present</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="border-y" style="border-color: var(--color-border); background-color: var(--color-surface);">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
+      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl text-center sm:text-left">Why Students Love Our Free Attendance Tracker</h2>
+      <p class="mt-2 max-w-2xl text-center sm:text-left mx-auto sm:mx-0 text-sm sm:text-base" style="color: var(--color-text-muted);">
+        Don't rely on a manual attendance tracking sheet. Upgrade to a modern, free student attendance tracking system.
+      </p>
+      <div class="mt-8 sm:mt-10 grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((f) => (
+          <div class="card p-5 sm:p-6">
+            <div class="text-2xl" aria-hidden="true">{f.icon}</div>
+            <h3 class="mt-3 text-base font-semibold">{f.title}</h3>
+            <p class="mt-1 text-sm" style="color: var(--color-text-muted);">{f.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20">
+    <div class="prose dark:prose-invert mx-auto max-w-none">
+      <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-center" data-i18n="seo.h2">The Ultimate Online Attendance Tracker for Students</h2>
+
+      <p class="mt-6 sm:mt-8 text-base sm:text-lg leading-7 sm:leading-8" style="color: var(--color-text-muted);" data-i18n-emph="seo.p1">Finding the <strong>easiest way to track attendance</strong> shouldn't be a chore. Whether you are a college student dealing with strict cutoff rules or a parent looking for a <strong>homeschool attendance tracker</strong>, our tool is built to simplify your academic life. In today's fast-paced educational environment, <strong>tracking student attendance</strong> manually using paper logs or complicated spreadsheets is outdated and prone to errors. Our <strong>online attendance system</strong> provides a seamless, digital alternative that fits right in your pocket.</p>
+
+      <div class="grid gap-8 sm:gap-12 mt-12 sm:mt-16 grid-cols-1 sm:grid-cols-2">
+        <div>
+          <h3 class="text-xl sm:text-2xl font-semibold" data-i18n="seo.h3.app">Why Use a Student Attendance Tracker App?</h3>
+          <p class="mt-3 sm:mt-4 text-sm sm:text-base" style="color: var(--color-text-muted);" data-i18n-emph="seo.p2">Most universities enforce a mandatory 75% attendance rule. Falling below this can mean being barred from exams or losing scholarships. Our <strong>student attendance tracker</strong> is designed specifically for this challenge. It doesn't just count days; it performs the heavy-duty math for you. By using <strong>my attendance tracker</strong>, you can see at a glance exactly how many classes you can afford to miss for each subject without dropping below your target percentage.</p>
+        </div>
+        <div>
+          <h3 class="text-xl sm:text-2xl font-semibold" data-i18n="seo.h3.free">100% Free Student Attendance</h3>
+          <p class="mt-3 sm:mt-4 text-sm sm:text-base" style="color: var(--color-text-muted);" data-i18n-emph="seo.p3">We believe that a <strong>free attendance tracker</strong> should actually be free. You won't find hidden paywalls, annoying ads, or credit card requirements here. Our mission is to provide a <strong>free student attendance tracking system</strong> that helps students succeed without adding another subscription to their monthly bills. With <strong>attendance online free</strong>, you can access your dashboard from any device, anywhere.</p>
+        </div>
+      </div>
+
+      <div class="mt-12 sm:mt-16">
+        <h3 class="text-xl sm:text-2xl font-semibold" data-i18n="seo.h3.features">Features of Our Online Attendance for Students</h3>
+        <ul class="mt-5 sm:mt-6 space-y-4 text-sm sm:text-base" style="color: var(--color-text-muted);">
+          <li class="flex gap-3 items-start">
+            <span class="text-brand-500 font-bold shrink-0 mt-0.5" style="color: var(--color-brand-600);">✓</span>
+            <span><strong data-i18n="seo.feature1.title">Free Student Attendance Tracking System:</strong> <span data-i18n-emph="seo.feature1.body">Get started without paying a dime. We offer a <strong>free student attendance tracker</strong> that is more powerful than paid alternatives.</span></span>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="text-brand-500 font-bold shrink-0 mt-0.5" style="color: var(--color-brand-600);">✓</span>
+            <span><strong data-i18n="seo.feature2.title">Daily Habit Loop:</strong> <span data-i18n-emph="seo.feature2.body">Log your classes in under 30 seconds. Our <strong>online attendance for students</strong> is optimized for speed and daily use.</span></span>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="text-brand-500 font-bold shrink-0 mt-0.5" style="color: var(--color-brand-600);">✓</span>
+            <span><strong data-i18n="seo.feature3.title">Bunk Calculator:</strong> <span data-i18n-emph="seo.feature3.body">The most loved feature by students. See your "bunk budget" per subject. No more manual calculations on the back of your notebook.</span></span>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="text-brand-500 font-bold shrink-0 mt-0.5" style="color: var(--color-brand-600);">✓</span>
+            <span><strong data-i18n="seo.feature4.title">Comprehensive Online Attendance Monitoring System:</strong> <span data-i18n-emph="seo.feature4.body">View detailed logs, subject-wise percentages, and overall progress bars. It is a <strong>free online attendance monitoring system</strong> that keeps you informed.</span></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-12 sm:mt-16 bg-surface-2 p-6 sm:p-8 rounded-2xl border" style="border-color: var(--color-border); background-color: var(--color-surface);">
+        <h3 class="text-xl sm:text-2xl font-semibold" data-i18n="seo.h3.school">The Best Attendance Tracker for School Free</h3>
+        <p class="mt-3 sm:mt-4 text-sm sm:text-base" style="color: var(--color-text-muted);" data-i18n-emph="seo.p4">Unlike a static <strong>attendance tracking sheet</strong>, our app is dynamic. If a class is cancelled or you have a holiday, you can mark the day as "Off," and it won't negatively impact your attendance percentage. This makes it an ideal <strong>attendance tracker for school free</strong> of cost and full of features. For those studying from home, it serves as a robust <strong>homeschool attendance tracker</strong>, allowing you to maintain discipline and track progress across various subjects and activities.</p>
+      </div>
+
+      <div class="mt-12 sm:mt-16 text-center">
+        <h3 class="text-xl sm:text-2xl font-semibold" data-i18n="seo.h3.conclusion">Conclusion: Start Using Your Online Attendance Tracker Today</h3>
+        <p class="mt-3 sm:mt-4 max-w-2xl mx-auto text-sm sm:text-base" style="color: var(--color-text-muted);" data-i18n-emph="seo.p5">Stop worrying about the math and start focusing on what matters. Use the <strong>easiest way to track attendance</strong> and keep your record clean. Built for everyone — join thousands who have made <strong>my attendance tracker</strong> their daily companion.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
+    <div class="card flex flex-col items-center gap-4 sm:gap-3 p-8 sm:p-10 text-center" style="background: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-700) 100%); color: white;">
+      <h2 class="text-2xl sm:text-3xl font-semibold leading-tight" style="color: white;" data-i18n="landing.ctaBottomTitle">Get Started with Your Free Student Attendance Tracker</h2>
+      <p class="max-w-xl text-sm sm:text-base" style="color: rgba(255,255,255,0.9);" data-i18n="landing.ctaBottomBody">
+        Sign up in seconds, add your timetable, and take control of your academic life today.
+      </p>
+      <a href="/signup" class="btn bg-white text-brand-600 hover:bg-slate-100 mt-2 sm:mt-3 w-full sm:w-auto text-center justify-center" style="background-color: white; color: var(--color-brand-600); border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;" data-i18n="landing.ctaBottomButton">Start Tracking for Free</a>
+    </div>
+  </section>
+
+  <FaqSection />
+</MarketingLayout>
+
+<script>
+  import { authClient } from '../lib/auth-client';
+
+  const btn = document.getElementById('guest-btn') as HTMLButtonElement | null;
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const isAuthed = btn.dataset.authed === '1';
+      const step = btn.dataset.onboardingStep || '';
+      btn.textContent = 'Continuing…';
+      if (isAuthed) {
+        // Already signed in (e.g. a guest who pressed Back from onboarding).
+        // Don't create a second guest row — just send them back to where
+        // they were in the onboarding flow.
+        if (step === 'timetable') {
+          // Need the sessionId for the timetable step. Read it from the
+          // button's data attribute (set server-side from
+          // authedUser.onboardingSessionId) — fall back to a query-param
+          // version of the same.
+          const sid = (btn as HTMLElement).dataset.onboardingSessionId || '';
+          window.location.href = '/onboarding/timetable' + (sid ? '?sessionId=' + encodeURIComponent(sid) : '');
+        } else if (step === 'session') {
+          window.location.href = '/onboarding/session';
+        } else {
+          window.location.href = '/onboarding/welcome';
+        }
+        return;
+      }
+      try {
+        const { data, error } = await authClient.signInAnonymous();
+        if (data) {
+          window.location.href = '/onboarding/welcome';
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        window.location.href = '/login';
+      }
+    });
+  }
+</script>

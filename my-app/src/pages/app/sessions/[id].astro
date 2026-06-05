@@ -1,0 +1,103 @@
+---
+export const prerender = false;
+import AppLayout from '../../../layouts/AppLayout.astro';
+import PercentageBar from '../../../components/ui/PercentageBar.astro';
+import Stat from '../../../components/ui/Stat.astro';
+import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and } from 'astro:db';
+import { computeStats, overallStats } from '../../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/sessions');
+
+const sessId = Astro.params.id!;
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.id, sessId), eq(AcademicSession.userId, user.id)))
+  .limit(1))[0];
+if (!sess) return Astro.redirect('/app/sessions');
+
+const subjRows = await db.select().from(Subject).where(eq(Subject.sessionId, sess.id));
+const logs = await db.select().from(AttendanceLog).where(eq(AttendanceLog.sessionId, sess.id));
+const dayOverrides = await db.select().from(Day).where(eq(Day.sessionId, sess.id));
+const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+
+const perSubject: Record<string, { name: string; color: string; isLab: boolean; stats: ReturnType<typeof computeStats> }> = {};
+for (const s of subjRows) {
+  const sLogs = logs.filter((l: any) => l.subjectId === s.id).map((l: any) => ({ date: l.date, status: l.status as 'present' | 'absent' | 'extra' | 'off' }));
+  perSubject[s.id] = { name: s.name, color: s.color, isLab: s.isLab, stats: computeStats(sLogs, dayArr, sess.targetPct) };
+}
+
+const overall = overallStats(
+  Object.fromEntries(
+    Object.entries(perSubject)
+      .filter(([_, v]) => !v.isLab)
+      .map(([k, v]) => [k, v.stats])
+  )
+);
+const daysCount = logs.length > 0
+  ? new Set(logs.map((l) => l.date)).size
+  : 0;
+---
+<AppLayout title={sess.name}>
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    <nav class="text-sm" style="color: var(--color-text-subtle);">
+      <a href="/app/sessions" class="hover:underline">Sessions</a> <span aria-hidden="true">/</span> <span>{sess.name}</span>
+    </nav>
+
+    <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{sess.name}</h1>
+      <div class="flex flex-wrap gap-2">
+        <a href={`/api/export.csv?sessionId=${sess.id}`} class="btn btn-secondary btn-sm">Export CSV</a>
+        <a href={`/api/export.json?sessionId=${sess.id}`} class="btn btn-secondary btn-sm">Export JSON</a>
+      </div>
+    </div>
+
+    <p class="num mt-1 text-sm" style="color: var(--color-text-subtle);">
+      {sess.startDate} → {sess.endDate} · target {sess.targetPct}%
+      {sess.isArchived && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase" style="background-color: var(--color-surface-2);">Archived</span>}
+    </p>
+
+    <div class="mt-4 card">
+      <div class="flex items-baseline justify-between">
+        <div>
+          <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Overall Attendance Till Date</div>
+          <div class="num text-3xl font-semibold">{overall.pct.toFixed(1)}%</div>
+        </div>
+        <div class="text-right num text-sm" style="color: var(--color-text-subtle);">
+          {overall.attended} / {overall.held} · {daysCount} days
+        </div>
+      </div>
+      <div class="mt-3">
+        <PercentageBar pct={overall.pct} target={sess.targetPct} />
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-3">
+      <Stat label="Subjects tracked" value={subjRows.length} />
+      <Stat label="Day overrides" value={dayOverrides.length} />
+      <Stat label="Logs total" value={logs.length} />
+    </div>
+
+    <h2 class="mt-10 text-lg font-semibold">By subject</h2>
+    {subjRows.length === 0 ? (
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">No subjects in this session.</p>
+    ) : (
+      <ul class="mt-3 space-y-2">
+        {subjRows.map((s) => {
+          const item = perSubject[s.id]!;
+          return (
+            <li class="card flex items-center gap-3">
+              <span aria-hidden="true" style={`width: 4px; align-self: stretch; border-radius: 4px; background-color: ${s.color};`}></span>
+              <div class="flex-1">
+                <a href={`/app/subjects/${s.id}`} class="font-medium hover:underline">{s.name}</a>
+                <div class="mt-1"><PercentageBar pct={item.stats.pct} target={sess.targetPct} size="sm" /></div>
+              </div>
+              <div class="num text-xl font-semibold">{item.stats.pct.toFixed(1)}%</div>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </div>
+</AppLayout>

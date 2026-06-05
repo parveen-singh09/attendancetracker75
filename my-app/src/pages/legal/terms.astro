@@ -1,0 +1,21 @@
+---
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import { t as translate } from '../../lib/i18n';
+---
+<MarketingLayout title="Terms of Service" description="Our terms of service.">
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <h1 class="text-3xl font-semibold tracking-tight" data-i18n="terms.h1">{translate('en', 'terms.h1')}</h1>
+    <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">Last updated: June 2026</p>
+
+    <p class="mt-6" style="color: var(--color-text-muted);" data-i18n="terms.intro">{translate('en', 'terms.intro')}</p>
+
+    <h2 class="mt-8 text-xl font-semibold" data-i18n="terms.h2.warranty">{translate('en', 'terms.h2.warranty')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n="terms.warrantyP">{translate('en', 'terms.warrantyP')}</p>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="terms.h2.acceptable">{translate('en', 'terms.h2.acceptable')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n="terms.acceptableP">{translate('en', 'terms.acceptableP')}</p>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="terms.h2.changes">{translate('en', 'terms.h2.changes')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n="terms.changesP">{translate('en', 'terms.changesP')}</p>
+  </div>
+</MarketingLayout>

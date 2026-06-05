@@ -1,0 +1,130 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import BunkCalculator from '../../components/attendance/BunkCalculator';
+import PercentageBar from '../../components/ui/PercentageBar.astro';
+import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and, desc } from 'astro:db';
+import { computeStats, overallStats } from '../../lib/attendance';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/calculator');
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+if (!sess) return Astro.redirect('/onboarding/session');
+
+const [subjRows, logs, dayOverrides] = await Promise.all([
+  db.select().from(Subject).where(eq(Subject.sessionId, sess.id)),
+  db.select().from(AttendanceLog).where(eq(AttendanceLog.sessionId, sess.id)),
+  db.select().from(Day).where(eq(Day.sessionId, sess.id))
+]);
+
+const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+
+// Group logs by subjectId for performance
+const logsBySubj = new Map<string, any[]>();
+for (const l of logs) {
+  const arr = logsBySubj.get(l.subjectId) ?? [];
+  arr.push({ date: l.date, status: l.status as any });
+  logsBySubj.set(l.subjectId, arr);
+}
+
+const perSubject: Record<string, { name: string; color: string; stats: ReturnType<typeof computeStats> }> = {};
+for (const s of subjRows) {
+  const sLogs = logsBySubj.get(s.id) ?? [];
+  perSubject[s.id] = {
+    name: s.name,
+    color: s.color,
+    stats: computeStats(sLogs, dayArr, sess.targetPct),
+  };
+}
+
+const filtered: Record<string, ReturnType<typeof computeStats>> = {};
+const mode = sess.overallCalcMode;
+for (const s of subjRows) {
+  const stats = perSubject[s.id]!.stats;
+  if (mode === 'both') {
+    filtered[s.id] = stats;
+  } else if (mode === 'lab') {
+    if (s.isLab) filtered[s.id] = stats;
+  } else {
+    if (!s.isLab) filtered[s.id] = stats;
+  }
+}
+const overall = overallStats(filtered, sess.targetPct);
+---
+<AppLayout title="Calculator" description="Quick and subject-wise attendance calculator.">
+  <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+    <h1 class="text-2xl font-semibold tracking-tight">Calculator</h1>
+    <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">Two-number tool, plus per-subject live stats for {sess.name}.</p>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+      <BunkCalculator
+        client:load
+        target={sess.targetPct}
+        logs={[]}
+        days={[]}
+      />
+
+      <div class="card">
+        <h2 class="text-base font-semibold">This session — live</h2>
+        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">Pulled from your logged attendance.</p>
+        <div class="mt-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Overall</div>
+            <div class="num text-3xl font-semibold">{overall.pct.toFixed(1)}%</div>
+          </div>
+          <div class="text-right text-sm" style="color: var(--color-text-subtle);">
+            {overall.attended} / {overall.held} classes
+          </div>
+        </div>
+        <div class="mt-3">
+          <PercentageBar pct={overall.pct} target={sess.targetPct} />
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-lg font-semibold">Per subject</h2>
+    {subjRows.length === 0 ? (
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">No subjects yet. Add them in your timetable.</p>
+    ) : (
+      <ul class="mt-3 space-y-2">
+        {subjRows.map((s) => {
+          const item = perSubject[s.id]!;
+          return (
+            <li class="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex items-center gap-3">
+                <span aria-hidden="true" style={`width: 4px; height: 32px; border-radius: 4px; background-color: ${s.color};`}></span>
+                <div>
+                  <a href={`/app/subjects/${s.id}`} class="font-medium hover:underline">{s.name}</a>
+                  {s.code && <span class="ml-2 text-xs" style="color: var(--color-text-subtle);">{s.code}</span>}
+                </div>
+              </div>
+              <div class="flex-1 sm:mx-6">
+                <PercentageBar pct={item.stats.pct} target={sess.targetPct} size="sm" />
+              </div>
+              <div class="grid grid-cols-3 gap-4 text-right sm:flex sm:gap-6">
+                <div>
+                  <div class="num text-lg font-semibold">{item.stats.pct.toFixed(1)}%</div>
+                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);">Pct</div>
+                </div>
+                <div>
+                  <div class="num text-lg font-semibold">{item.stats.canMiss}</div>
+                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);">Can miss</div>
+                </div>
+                <div>
+                  <div class="num text-lg font-semibold">{item.stats.mustAttend}</div>
+                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);">Need</div>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </div>
+</AppLayout>

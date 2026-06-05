@@ -1,0 +1,27 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+---
+
+<MarketingLayout
+  title="Something went wrong"
+  description="The server hit an unexpected error. Please try again in a moment."
+  keywords=""
+>
+  <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24 text-center">
+    <p class="num text-7xl font-semibold tracking-tight sm:text-8xl" style="color: var(--color-danger);" aria-hidden="true">500</p>
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Something went wrong</h1>
+    <p class="mt-3 text-base sm:text-lg" style="color: var(--color-text-muted);">
+      The server hit an unexpected error. Your data is safe — please try again in a moment.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a href="/" class="btn btn-primary">Go home</a>
+      <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Try again</button>
+      <a href="/contact" class="btn btn-ghost">Report this</a>
+    </div>
+
+    <p class="mt-10 text-xs" style="color: var(--color-text-subtle);">
+      If the problem keeps happening, please include the time and what you were doing when you contacted support.
+    </p>
+  </section>
+</MarketingLayout>

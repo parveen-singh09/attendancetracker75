@@ -1,0 +1,478 @@
+import { useState, useEffect } from 'react';
+
+type DbStatus = 'present' | 'absent' | 'extra' | 'off';
+
+type CounterKind = 'regular' | 'absent' | 'extra' | 'off';
+
+interface Subject {
+  id: string;
+  name: string;
+  color: string;
+  code?: string | null;
+  location?: string | null;
+  isLab: boolean;
+  regular: number;
+  absent: number;
+  extra: number;
+  off: boolean;
+  hasRegularSlot: boolean;
+  pct: number;
+  held: number;
+  attended: number;
+}
+
+interface Props {
+  date: string;
+  subjects: Subject[];
+  targetPct: number;
+  calcMode: 'subject' | 'lab' | 'both';
+  initialOverall: { held: number; attended: number; extra: number };
+}
+
+function kindToDbStatus(k: CounterKind): DbStatus {
+  return k === 'regular' ? 'present' : (k as DbStatus);
+}
+
+export default function SubjectQuickMarks({ date, subjects: initial, targetPct, calcMode, initialOverall }: Props) {
+  const [subjects, setSubjects] = useState<Subject[]>(initial);
+  const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null);
+
+  useEffect(() => {
+    let deltaHeld = 0;
+    let deltaAttended = 0;
+    let deltaExtra = 0;
+
+    subjects.forEach((s) => {
+      const init = initial.find((x) => x.id === s.id);
+      if (init) {
+        const shouldInclude =
+          calcMode === 'both' ||
+          (calcMode === 'lab' && s.isLab) ||
+          (calcMode === 'subject' && !s.isLab);
+
+        if (shouldInclude) {
+          deltaHeld += (s.held - init.held);
+          deltaAttended += (s.attended - init.attended);
+          deltaExtra += (s.extra - init.extra);
+        }
+      }
+    });
+
+    const newHeld = initialOverall.held + deltaHeld;
+    const newAttended = initialOverall.attended + deltaAttended;
+    const newExtra = initialOverall.extra + deltaExtra;
+    const newPct = newHeld === 0 ? 0 : Math.min(100, (newAttended / newHeld) * 100);
+
+    const pctStr = newPct.toFixed(1) + '%';
+    
+    const sideEl = document.getElementById('sidebar-session-pct');
+    if (sideEl) sideEl.textContent = pctStr;
+    const sideCollapsedEl = document.getElementById('sidebar-session-pct-collapsed');
+    if (sideCollapsedEl) sideCollapsedEl.textContent = Math.floor(newPct) + '%';
+
+    // Update Today Page Pct
+    const todayPctEl = document.getElementById('today-overall-pct');
+    if (todayPctEl) {
+      todayPctEl.textContent = pctStr;
+      // Update color based on target
+      if (newHeld > 0) {
+        if (newPct >= targetPct) todayPctEl.style.color = 'var(--color-safe)';
+        else if (newPct >= targetPct - 5) todayPctEl.style.color = 'var(--color-warn)';
+        else todayPctEl.style.color = 'var(--color-danger)';
+      }
+    }
+
+    // Update Today Page Fraction
+    const todayFracEl = document.getElementById('today-overall-fraction');
+    if (todayFracEl) todayFracEl.textContent = `${newAttended}/${newHeld} attended`;
+
+    // Update Today Page Extra
+    const todayExtraEl = document.getElementById('today-overall-extra');
+    if (todayExtraEl) {
+      if (newExtra > 0) {
+        todayExtraEl.textContent = ` · +${newExtra} extra`;
+        todayExtraEl.style.display = 'inline';
+      } else {
+        todayExtraEl.style.display = 'none';
+      }
+    }
+
+    // Update Stats Cards
+    const heldEl = document.getElementById('stat-held');
+    if (heldEl) heldEl.textContent = String(newHeld);
+    const attendedEl = document.getElementById('stat-attended');
+    if (attendedEl) attendedEl.textContent = String(newAttended);
+    const extraEl = document.getElementById('stat-extra');
+    if (extraEl) extraEl.textContent = String(newExtra);
+
+    // Update Progress Bar
+    const barContainer = document.getElementById('today-overall-bar');
+    if (barContainer) {
+      const progressBar = barContainer.querySelector('[role="progressbar"]');
+      const progressFill = barContainer.querySelector('.absolute.inset-y-0.left-0');
+      if (progressBar && progressFill) {
+        const clamped = Math.max(0, Math.min(100, newPct));
+        progressBar.setAttribute('aria-valuenow', String(Math.round(clamped)));
+        progressBar.setAttribute('aria-label', `Attendance ${newPct.toFixed(1)} percent`);
+        (progressFill as HTMLElement).style.width = `${clamped}%`;
+        
+        // Update bar color
+        let barTone = 'var(--color-danger)';
+        if (newHeld > 0) {
+          if (newPct >= targetPct) barTone = 'var(--color-safe)';
+          else if (newPct >= targetPct - 5) barTone = 'var(--color-warn)';
+        }
+        (progressFill as HTMLElement).style.backgroundColor = barTone;
+      }
+    }
+  }, [subjects, initial, initialOverall, targetPct]);
+
+  function showToast(message: string, undo?: () => void) {
+    setToast({ message, undo });
+    window.setTimeout(() => setToast(null), 4000);
+  }
+
+  function recompute(s: Subject): Subject {
+   const explicitHeld = s.regular + s.absent;
+    const held = s.off
+      ? 0
+      : (s.regular + s.absent + s.extra === 0 && s.hasRegularSlot ? explicitHeld + 1 : explicitHeld);
+    const attended = s.regular + s.extra;
+    const pct = held === 0 ? 0 : (attended / held) * 100;
+    return { ...s, pct, held, attended };
+  }
+
+  function adjust(s: Subject, kind: CounterKind, delta: 1 | -1): Subject {
+    if (kind === 'off') {
+      // Off is a single toggle. delta=+1 flips it; delta=-1 no-op.
+      if (delta !== 1) return s;
+      const nextOff = !s.off;
+      if (nextOff) {
+        // If turning OFF on, reset all other counters to 0
+        return recompute({ ...s, off: nextOff, regular: 0, absent: 0, extra: 0 });
+      }
+      return recompute({ ...s, off: nextOff });
+    }
+    if (kind === 'regular') {
+      const next = Math.max(0, s.regular + delta);
+      if (next === s.regular) return s;
+      return recompute({ ...s, regular: next });
+    }
+    if (kind === 'absent') {
+      const next = Math.max(0, s.absent + delta);
+      if (next === s.absent) return s;
+      return recompute({ ...s, absent: next });
+    }
+    // extra
+    const next = Math.max(0, s.extra + delta);
+    if (next === s.extra) return s;
+    return recompute({ ...s, extra: next });
+  }
+
+  async function callApi(s: Subject, kind: CounterKind, op: 'add' | 'remove' | 'clear') {
+    const res = await fetch('/api/attendance', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        subjectId: s.id,
+        date,
+        status: kindToDbStatus(kind),
+        op,
+      }),
+    });
+    if (!res.ok) throw new Error('Save failed');
+  }
+
+  async function change(s: Subject, kind: CounterKind, delta: 1 | -1) {
+    if (kind === 'off') {
+      if (delta !== 1) return; // no decrement for off
+      const prev = s;
+      const optimistic = adjust(s, kind, 1);
+      setSubjects((arr) => arr.map((x) => x.id === s.id ? optimistic : x));
+      try {
+        if (optimistic.off) {
+          // If turning OFF on, clear existing logs first
+          await callApi(s, kind, 'clear');
+          await callApi(s, kind, 'add');
+        } else {
+          await callApi(s, kind, 'remove');
+        }
+        showToast(`${s.name} marked ${optimistic.off ? 'Off' : 'no longer Off'}.`, () => change(prev, kind, 1));
+      } catch (e) {
+        setSubjects((arr) => arr.map((x) => x.id === s.id ? prev : x));
+        showToast('Couldn\'t save. Please try again.');
+      }
+      return;
+    }
+
+    // Defense-in-depth: if the class is marked Off, don't fire the request.
+    // The server would reject it with 409, but skipping saves a round trip.
+    if (s.off) {
+      showToast(`${s.name} is marked Off. Clear Off first.`);
+      return;
+    }
+
+    // Floor at 0.
+    if (delta === -1) {
+      if (kind === 'regular' && s.regular === 0) return;
+      if (kind === 'absent' && s.absent === 0) return;
+      if (kind === 'extra' && s.extra === 0) return;
+    }
+
+    const prev = s;
+    const optimistic = adjust(s, kind, delta);
+    setSubjects((arr) => arr.map((x) => x.id === s.id ? optimistic : x));
+    try {
+      await callApi(s, kind, delta === 1 ? 'add' : 'remove');
+      const verb =
+        kind === 'regular' ? (delta === 1 ? '+ Regular' : '− Regular') :
+        kind === 'absent'  ? (delta === 1 ? '+ Absent'  : '− Absent') :
+                              (delta === 1 ? '+ Extra'   : '− Extra');
+      showToast(`${s.name} ${verb}.`, () => change(prev, kind, delta === 1 ? -1 : 1));
+    } catch (e) {
+      setSubjects((arr) => arr.map((x) => x.id === s.id ? prev : x));
+      showToast('Couldn\'t save. Please try again.');
+    }
+  }
+
+  if (subjects.length === 0) {
+    return (
+      <div className="card text-center" style={{ padding: '1.5rem' }}>
+        <p style={{ color: 'var(--color-text-subtle)' }}>No subjects in this session yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+        {subjects.map((s) => (
+          <li
+            key={s.id}
+            className="card flex flex-col gap-2 py-3 px-4"
+          >
+            <span className="flex items-center gap-3 min-w-0">
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 4,
+                  alignSelf: 'stretch',
+                  minHeight: 44,
+                  borderRadius: 2,
+                  backgroundColor: s.color,
+                  flexShrink: 0,
+                }}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-2">
+                  <a href={`/app/subjects/${s.id}`} className="font-semibold hover:underline truncate">
+                    {s.name}
+                  </a>
+                  {s.location && (
+                    <span className="text-sm font-medium truncate shrink-0" style={{ color: 'var(--color-text-subtle)' }}>
+                      {s.location}
+                    </span>
+                  )}
+                </span>
+                {(s.code || s.isLab) && (
+                  <span className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5" style={{ color: 'var(--color-text-subtle)' }}>
+                    {s.code && <span className="num">{s.code}</span>}
+                    {s.isLab && <span className="rounded px-1 py-0.5 text-[10px] font-medium uppercase" style={{ backgroundColor: 'var(--color-surface-2)' }}>Lab</span>}
+                  </span>
+                )}
+              </span>
+            </span>
+
+            <span className="grid gap-1.5 grid-cols-2 sm:grid-cols-4">
+              <Counter
+                label="Regular"
+                value={s.regular}
+                onAdd={() => change(s, 'regular', 1)}
+                onRemove={() => change(s, 'regular', -1)}
+                tone="safe"
+                disabled={s.off}
+                disabledReason="Class is Off"
+              />
+              <Counter
+                label="Absent"
+                value={s.absent || (s.regular === 0 && s.extra === 0 && s.hasRegularSlot && !s.off ? 1 : 0)}
+                onAdd={() => change(s, 'absent', 1)}
+                onRemove={() => change(s, 'absent', -1)}
+                tone="danger"
+                disabled={s.off}
+                disabledReason="Class is Off"
+              />
+              <Counter
+                label="Extra"
+                value={s.extra}
+                onAdd={() => change(s, 'extra', 1)}
+                onRemove={() => change(s, 'extra', -1)}
+                tone="brand"
+                disabled={s.off}
+                disabledReason="Class is Off"
+              />
+              <OffToggle
+                on={s.off}
+                onToggle={() => change(s, 'off', 1)}
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 text-[11px] grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1" style={{ color: 'var(--color-text-subtle)' }}>
+        <div className="flex gap-1.5">
+          <span className="opacity-60">•</span>
+          <span>
+            <strong style={{ color: 'var(--color-text)' }}>Note:</strong> Classes are marked <strong style={{ color: 'var(--color-danger)' }}>Absent</strong> if no logs exist.
+          </span>
+        </div>
+        <div className="flex gap-1.5">
+          <span className="opacity-60">•</span>
+          <span>Increase Regular or Extra to remove an absence.</span>
+        </div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Regular</strong> counts in total classes.</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Extra</strong> boosts attendance.</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Off</strong> removes class.</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span>Use <strong>+</strong> / <strong>−</strong> to log events.</span></div>
+      </div>
+
+      {toast && (
+        <div className="toast-root" role="status" aria-live="polite">
+          <div className="toast">
+            <span>{toast.message}</span>
+            {toast.undo && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  toast.undo?.();
+                  setToast(null);
+                }}
+              >
+                Undo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Counter({
+  label, value, onAdd, onRemove, tone, disabled = false, disabledReason,
+}: {
+  label: string;
+  value: number;
+  onAdd: () => void;
+  onRemove: () => void;
+  tone: 'safe' | 'danger' | 'brand';
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
+  const activeColor =
+    tone === 'safe' ? 'var(--color-safe)' :
+    tone === 'danger' ? 'var(--color-danger)' :
+    'var(--color-brand-600)';
+  const minusDisabled = disabled || value === 0;
+  const plusDisabled = disabled;
+  return (
+    <span
+      className="rounded-lg border flex items-center justify-between gap-1"
+      style={{ borderColor: value > 0 ? activeColor : 'var(--color-border)', padding: '0.25rem 0.5rem', minHeight: 44, opacity: disabled ? 0.55 : 1 }}
+      title={disabled ? disabledReason : undefined}
+      aria-disabled={disabled || undefined}
+    >
+      <button
+        type="button"
+        onClick={onRemove}
+        disabled={minusDisabled}
+        aria-label={`Remove one ${label}`}
+        className="num"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 6,
+          border: '1px solid var(--color-border)',
+          backgroundColor: 'var(--color-bg)',
+          color: minusDisabled ? 'var(--color-text-subtle)' : 'var(--color-text)',
+          fontSize: 18,
+          fontWeight: 600,
+          cursor: minusDisabled ? 'not-allowed' : 'pointer',
+          opacity: minusDisabled ? 0.5 : 1,
+          flexShrink: 0,
+        }}
+      >
+        −
+      </button>
+      <span className="text-center flex-1">
+        <span
+          className="num block"
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            lineHeight: 1,
+            color: value > 0 ? activeColor : 'var(--color-text)',
+          }}
+        >
+          {value}
+        </span>
+        <span
+          className="text-[10px] uppercase tracking-wide mt-0.5 block"
+          style={{ color: 'var(--color-text-subtle)' }}
+        >
+          {label}
+        </span>
+      </span>
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={plusDisabled}
+        aria-label={`Add one ${label}`}
+        title={plusDisabled ? disabledReason : undefined}
+        className="num"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 6,
+          border: `1px solid ${activeColor}`,
+          backgroundColor: activeColor,
+          color: 'white',
+          fontSize: 18,
+          fontWeight: 600,
+          cursor: plusDisabled ? 'not-allowed' : 'pointer',
+          opacity: plusDisabled ? 0.5 : 1,
+          flexShrink: 0,
+        }}
+      >
+        +
+      </button>
+    </span>
+  );
+}
+
+function OffToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      aria-label={on ? 'Day off — click to undo' : 'Mark day as off (no class)'}
+      className="rounded-lg border flex flex-col items-center justify-center"
+      style={{
+        minHeight: 44,
+        borderColor: on ? 'var(--color-text-subtle)' : 'var(--color-border)',
+        backgroundColor: on ? 'var(--color-text-subtle)' : 'var(--color-bg)',
+        color: on ? 'white' : 'var(--color-text)',
+        cursor: 'pointer',
+      }}
+    >
+      <span style={{ fontWeight: 600, fontSize: 14 }}>
+        {on ? (<><span aria-hidden="true">✓</span> Off</>) : 'Off'}
+      </span>
+      <span className="text-[10px] uppercase tracking-wide mt-0.5" style={{ color: on ? 'white' : 'var(--color-text-subtle)', opacity: on ? 0.85 : 1 }}>
+        No class
+      </span>
+    </button>
+  );
+}

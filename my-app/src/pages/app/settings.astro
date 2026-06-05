@@ -1,0 +1,286 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import ThemeToggle from '../../components/ThemeToggle.astro';
+import Avatar from '../../components/Avatar.astro';
+import { db, AcademicSession, eq, and, desc } from 'astro:db';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/settings');
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+---
+<AppLayout title="Settings">
+  <div class="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
+    <nav class="text-sm mb-4" style="color: var(--color-text-subtle);">
+      <a href="/app/today" class="hover:underline">Dashboard</a> <span aria-hidden="true">/</span> <span>Settings</span>
+    </nav>
+    
+    <div class="flex items-center justify-between gap-4">
+      <h1 class="text-2xl font-semibold tracking-tight">Settings</h1>
+      <a href="/app/today" class="btn btn-ghost btn-sm">Back to Dashboard</a>
+    </div>
+
+    <section class="card mt-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-semibold">Profile</h2>
+        <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full" style="background-color: var(--color-brand-600); color: white;">Active User</span>
+      </div>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Manage your personal identity in the app.</p>
+      
+      <form id="profile-form" class="mt-4 space-y-4">
+        <div class="flex items-center gap-4 mb-2">
+          <Avatar name={user.name} image={user.image ?? null} seed={user.id} size={64} />
+          <div class="text-xs" style="color: var(--color-text-subtle);">
+            Your avatar is automatically generated based on your name.
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="name">Display Name</label>
+          <input id="name" name="name" type="text" class="input" value={user.name} required maxlength="100" />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="email">Email Address</label>
+          <input id="email" name="email" type="email" class="input" value={user.email} required />
+        </div>
+
+        <div id="profile-msg" class="text-sm font-medium" hidden></div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </section>
+
+    <section class="card mt-6">
+      <h2 class="text-base font-semibold">Appearance</h2>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Customize the interface to match your preference.</p>
+      
+      <div class="mt-4 flex items-center justify-between p-4 rounded-xl border" style="border-color: var(--color-border); background-color: var(--color-surface-2);">
+        <div class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium">Dark Mode</span>
+          <span class="text-xs" style="color: var(--color-text-subtle);">Switch between light and dark themes</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-medium uppercase tracking-wider opacity-60">Toggle</span>
+          <ThemeToggle />
+        </div>
+      </div>
+      
+      <p class="mt-3 text-[10px]" style="color: var(--color-text-subtle);">
+        Tip: The app will remember your choice across all your devices using local storage.
+      </p>
+    </section>
+
+    {sess && (
+      <section class="card mt-6">
+        <h2 class="text-base font-semibold">Attendance Settings</h2>
+        <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Configure how your attendance is calculated for "{sess.name}".</p>
+        
+        <form id="session-form" class="mt-4 space-y-4">
+          <input type="hidden" name="id" value={sess.id} />
+          
+          <div class="field">
+            <label class="field-label" for="overallCalcMode">Overall Attendance Basis</label>
+            <select id="overallCalcMode" name="overallCalcMode" class="select">
+              <option value="subject" selected={sess.overallCalcMode === 'subject'}>Subjects only (Default)</option>
+              <option value="lab" selected={sess.overallCalcMode === 'lab'}>Labs only</option>
+              <option value="both" selected={sess.overallCalcMode === 'both'}>Both Subjects and Labs</option>
+            </select>
+            <p class="field-hint">Choose which types of classes contribute to your overall attendance percentage on the dashboard.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="targetPct">Target Percentage (%)</label>
+            <input id="targetPct" name="targetPct" type="number" class="input num" value={sess.targetPct} min="50" max="100" step="1" required />
+            <p class="field-hint">The minimum attendance percentage you want to maintain.</p>
+          </div>
+
+          <div id="session-msg" class="text-sm font-medium" hidden></div>
+
+          <button type="submit" class="btn btn-primary">Update Session Settings</button>
+        </form>
+      </section>
+    )}
+
+    <section class="card mt-6 border-danger" style="border-color: color-mix(in oklab, var(--color-danger) 30%, var(--color-border));">
+      <h2 class="text-base font-semibold text-danger" style="color: var(--color-danger);">Danger Zone</h2>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Once you delete your account, there is no going back. Please be certain.</p>
+      
+      <div class="mt-4 pt-4 border-t" style="border-color: var(--color-border);">
+        <button
+          type="button"
+          id="delete-btn"
+          class="btn btn-danger btn-sm"
+        >
+          Delete Account and All Data
+        </button>
+      </div>
+    </section>
+  </div>
+</AppLayout>
+
+<script is:inline>
+  // Profile Update
+  (function() {
+    const form = document.getElementById('profile-form');
+    const msg = document.getElementById('profile-msg');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]');
+      const formData = new FormData(form);
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email')
+      };
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      msg.hidden = true;
+
+      try {
+        const res = await fetch('/api/account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          msg.textContent = 'Profile updated successfully!';
+          msg.style.color = 'var(--color-safe)';
+          msg.hidden = false;
+          // Optional: reload to update all UI parts
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          const err = await res.json();
+          msg.textContent = err.error || 'Failed to update profile.';
+          msg.style.color = 'var(--color-danger)';
+          msg.hidden = false;
+        }
+      } catch (e) {
+        msg.textContent = 'Network error. Please try again.';
+        msg.style.color = 'var(--color-danger)';
+        msg.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+  })();
+
+  // Session Settings Update
+  (function() {
+    const form = document.getElementById('session-form');
+    const msg = document.getElementById('session-msg');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]');
+      const formData = new FormData(form);
+      const id = formData.get('id');
+      const data = {
+        overallCalcMode: formData.get('overallCalcMode'),
+        targetPct: Number(formData.get('targetPct'))
+      };
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      msg.hidden = true;
+
+      try {
+        const res = await fetch(`/api/sessions/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          msg.textContent = 'Attendance settings updated!';
+          msg.style.color = 'var(--color-safe)';
+          msg.hidden = false;
+        } else {
+          const err = await res.json();
+          msg.textContent = err.error?.message || 'Failed to update settings.';
+          msg.style.color = 'var(--color-danger)';
+          msg.hidden = false;
+        }
+      } catch (e) {
+        msg.textContent = 'Network error. Please try again.';
+        msg.style.color = 'var(--color-danger)';
+        msg.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Session Settings';
+      }
+    });
+  })();
+
+  // Delete Account
+  (function() {
+    const btn = document.getElementById('delete-btn');
+    if (!btn) return;
+
+    // We need the user's email to confirm the deletion. The settings
+    // page already renders it as the #email input value, so read it
+    // from the DOM (single source of truth for what's shown to the user).
+    const emailInput = document.getElementById('email');
+    const userEmail = emailInput ? String(emailInput.value).trim() : '';
+
+    btn.addEventListener('click', async () => {
+      if (!confirm('Are you absolutely sure you want to delete your account? This will permanently remove all your attendance data, subjects, and sessions. This action CANNOT be undone.')) {
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+
+      try {
+        const res = await fetch('/api/account', {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            confirm: 'DELETE MY ACCOUNT',
+            email: userEmail,
+          }),
+        });
+
+        if (res.ok) {
+          window.location.href = '/?deleted=1';
+          return;
+        }
+
+        // Surface the real reason. The server returns `error` as either a
+        // string (e.g. "Email mismatch") or an object (e.g. for rate-limit
+        // responses: { code, message }). Read both shapes, fall back to
+        // the status code if the body isn't JSON.
+        let detail = '';
+        try {
+          const body = await res.json();
+          if (typeof body?.error === 'string') detail = body.error;
+          else if (body?.error?.message) detail = body.error.message;
+          else if (body?.message) detail = body.message;
+        } catch (_) {
+          detail = `HTTP ${res.status}`;
+        }
+        if (!detail) detail = `HTTP ${res.status}`;
+        console.error('[delete-account] failed', res.status, detail);
+        alert(`Failed to delete account: ${detail}`);
+        btn.disabled = false;
+        btn.textContent = 'Delete Account and All Data';
+      } catch (e) {
+        console.error('[delete-account] network error', e);
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Delete Account and All Data';
+      }
+    });
+  })();
+</script>

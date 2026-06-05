@@ -1,0 +1,203 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import WeeklyGrid from '../../components/timetable/WeeklyGrid';
+import { db, AcademicSession, Subject, TimetableSlot, eq, and, desc } from 'astro:db';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login?next=/app/schedule');
+
+const sess = (await db
+  .select()
+  .from(AcademicSession)
+  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
+  .orderBy(desc(AcademicSession.createdAt))
+  .limit(1))[0];
+if (!sess) {
+  return Astro.redirect('/onboarding/session');
+}
+
+const pool = await db.select().from(Subject).where(eq(Subject.sessionId, sess.id));
+const slotRows = await db
+  .select({ slot: TimetableSlot, subject: Subject })
+  .from(TimetableSlot)
+  .innerJoin(Subject, eq(TimetableSlot.subjectId, Subject.id))
+  .where(eq(TimetableSlot.sessionId, sess.id));
+
+const initialSubjects = pool.map((s) => ({
+  id: s.id,
+  name: s.name,
+  color: s.color,
+  isLab: s.isLab,
+}));
+
+const initialSlots = slotRows.map((r) => ({
+  dayOfWeek: r.slot.dayOfWeek,
+  startTime: r.slot.startTime,
+  endTime: r.slot.endTime,
+  subjectName: r.subject.name,
+  isLab: r.subject.isLab,
+  location: r.slot.location ?? undefined,
+}));
+
+const subjectsCount = pool.filter((s) => !s.isLab).length;
+const labsCount = pool.filter((s) => s.isLab).length;
+const classesCount = slotRows.length;
+---
+<AppLayout title="Weekly schedule">
+  <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+    <nav class="text-sm" style="color: var(--color-text-subtle);">
+      <a href="/onboarding/session" class="hover:underline" data-astro-reload>Onboarding</a> <span aria-hidden="true">/</span> <span>Weekly schedule</span>
+    </nav>
+
+    <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Add weekly schedule</h1>
+        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+          Build your weekly class schedule for <strong>{sess.name}</strong>.
+        </p>
+      </div>
+      <a href="/onboarding/session" class="btn btn-secondary btn-sm" data-astro-reload>Back to onboarding</a>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Subjects</div>
+        <div class="num mt-1 text-2xl font-semibold">{subjectsCount}</div>
+      </div>
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Labs</div>
+        <div class="num mt-1 text-2xl font-semibold">{labsCount}</div>
+      </div>
+      <div class="card">
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Classes / week</div>
+        <div class="num mt-1 text-2xl font-semibold">{classesCount}</div>
+      </div>
+    </div>
+
+    <details class="card mt-6 [[open]]:mb-4">
+      <summary class="cursor-pointer font-semibold">📋 Paste timetable text</summary>
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">
+        Format: <code class="num">Day HH:MM-HH:MM Subject (Lab) @ Room</code> — one class per line.
+        Append <code class="num">(Lab)</code> for labs and <code class="num">@ Room</code> for location.
+      </p>
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+        💡 <strong>Use your AI:</strong> paste the AI prompt in the input, drop the reply below.
+      </p>
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+        Example: <code class="num">Mon 09:00-10:00 Calculus</code> · <code class="num">Tue 10:00-11:00 DS (Lab) @ 204</code>
+      </p>
+      <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="tt-input" class="field-label">Input</label>
+          <textarea id="tt-input" class="textarea font-mono text-sm" rows="8" placeholder="Mon 9:00-10:00 Calculus 101&#10;Mon 10:00-11:00 Data Structures (Lab)&#10;Tue 9:00-10:00 English"></textarea>
+        </div>
+        <div>
+          <label for="tt-warn" class="field-label">Preview</label>
+          <div id="tt-warn" class="textarea text-sm" style="min-height: 8rem; overflow: auto; background-color: var(--color-surface-2); white-space: pre-wrap;"></div>
+        </div>
+      </div>
+      <div class="mt-3 flex justify-end">
+        <button id="tt-apply" class="btn btn-primary btn-sm" type="button">Apply Schedule</button>
+      </div>
+    </details>
+
+    {pool.length === 0 ? (
+      <div class="card mt-6 flex flex-col items-center gap-2 py-10 text-center">
+        <div class="text-3xl" aria-hidden="true">📚</div>
+        <p class="text-base font-medium">No subjects or labs yet.</p>
+        <p class="text-sm" style="color: var(--color-text-subtle);">
+          Add at least one subject or lab in the pool below to start building your weekly schedule.
+        </p>
+      </div>
+    ) : null}
+
+    <div class="mt-6">
+      <WeeklyGrid
+        client:load
+        initialSubjects={initialSubjects}
+        initialSlots={initialSlots}
+        sessionId={sess.id}
+      />
+    </div>
+  </div>
+</AppLayout>
+
+<script>
+  // Tiny client glue: textarea → /api/timetable/parse → preview → apply
+  const input = document.getElementById('tt-input') as HTMLTextAreaElement;
+  const preview = document.getElementById('tt-warn') as HTMLElement;
+  const apply = document.getElementById('tt-apply') as HTMLButtonElement;
+  let lastResult: { slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; subjectName: string; isLab: boolean; location?: string }>; warnings: string[]; needsReview: boolean } | null = null;
+
+  function toMin(t: string): number {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  function fmt12(t: string): string {
+    if (!t) return '';
+    const m = toMin(t);
+    const h24 = Math.floor(m / 60);
+    const mm = m % 60;
+    const ap = h24 >= 12 ? 'PM' : 'AM';
+    let h12 = h24 % 12;
+    if (h12 === 0) h12 = 12;
+    return mm === 0 ? `${h12} ${ap}` : `${h12}:${String(mm).padStart(2, '0')} ${ap}`;
+  }
+
+  function formatTimeRange(start: string, end: string) {
+    const s = fmt12(start);
+    const e = fmt12(end);
+    if (!s || !e) return '';
+    const sAP = s.slice(-2);
+    const eAP = e.slice(-2);
+    if (sAP === eAP) {
+      return `${s.slice(0, -3)}–${e}`;
+    }
+    return `${s}–${e}`;
+  }
+
+  function render() {
+    if (!lastResult) { preview.textContent = 'Click "Parse" to preview.'; return; }
+    const lines: string[] = [];
+    if (lastResult.slots.length) {
+      lines.push(`${lastResult.slots.length} class${lastResult.slots.length === 1 ? '' : 'es'} parsed:`);
+      for (const s of lastResult.slots) {
+        const timeRange = formatTimeRange(s.startTime, s.endTime);
+        const loc = s.location ? `  📍 ${s.location}` : '';
+        lines.push(`  • ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][s.dayOfWeek]} ${timeRange}  ${s.subjectName}${s.isLab ? ' (Lab)' : ''}${loc}`);
+      }
+    } else {
+      lines.push('No classes parsed.');
+    }
+    if (lastResult.warnings.length) {
+      lines.push('');
+      lines.push('Warnings:');
+      for (const w of lastResult.warnings) lines.push(`  ! ${w}`);
+    }
+    preview.textContent = lines.join('\n');
+  }
+
+  let parseTimer: number | undefined;
+  input?.addEventListener('input', () => {
+    if (parseTimer) window.clearTimeout(parseTimer);
+    parseTimer = window.setTimeout(async () => {
+      if (!input.value.trim()) { lastResult = null; render(); return; }
+      const res = await fetch('/api/timetable/parse', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: input.value }),
+      });
+      const json = await res.json() as any;
+      lastResult = json.data;
+      render();
+    }, 400);
+  });
+
+  apply?.addEventListener('click', () => {
+    if (!lastResult || lastResult.slots.length === 0) return;
+    // Dispatch a custom event the WeeklyGrid island listens for.
+    window.dispatchEvent(new CustomEvent('at75:import-slots', { detail: lastResult.slots }));
+  });
+</script>

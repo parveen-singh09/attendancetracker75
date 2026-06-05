@@ -1,0 +1,29 @@
+---
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import { t as translate, fmt as format } from '../../lib/i18n';
+---
+<MarketingLayout title="Privacy Policy" description="Our privacy policy.">
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 prose-text">
+    <h1 class="text-3xl font-semibold tracking-tight" data-i18n="privacy.h1">{translate('en', 'privacy.h1')}</h1>
+    <p class="mt-2 text-sm" style="color: var(--color-text-subtle);" data-i18n-attr="privacy.lastUpdated">Last updated: {translate('en', 'privacy.lastUpdated').replace('{date}', 'June 2026')}</p>
+
+    <h2 class="mt-8 text-xl font-semibold" data-i18n="privacy.h2.collect">{translate('en', 'privacy.h2.collect')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n="privacy.p1">{translate('en', 'privacy.p1')}</p>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="privacy.h2.dontDo">{translate('en', 'privacy.h2.dontDo')}</h2>
+    <ul class="mt-2 space-y-1" style="color: var(--color-text-muted);">
+      <li data-i18n="privacy.bullet1">{translate('en', 'privacy.bullet1')}</li>
+      <li data-i18n="privacy.bullet2">{translate('en', 'privacy.bullet2')}</li>
+      <li data-i18n="privacy.bullet3">{translate('en', 'privacy.bullet3')}</li>
+    </ul>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="privacy.h2.cookies">{translate('en', 'privacy.h2.cookies')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n="privacy.cookiesP">{translate('en', 'privacy.cookiesP')}</p>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="privacy.h2.rights">{translate('en', 'privacy.h2.rights')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n-emph="privacy.rightsP">You can export everything you stored as JSON or CSV at any time from <a class="hover:underline" href="/app/settings">Settings</a>. You can delete your account from the same place; deletion is hard and immediate.</p>
+
+    <h2 class="mt-6 text-xl font-semibold" data-i18n="privacy.h2.contact">{translate('en', 'privacy.h2.contact')}</h2>
+    <p style="color: var(--color-text-muted);" data-i18n-emph="privacy.contactP">Questions? Email <a class="hover:underline" href="mailto:hello@attendancetrack75.com">hello@attendancetrack75.com</a>.</p>
+  </div>
+</MarketingLayout>

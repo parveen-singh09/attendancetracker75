@@ -1,0 +1,19 @@
+---
+interface Props {
+  pct: number; // 0..100
+  target: number;
+  size?: 'sm' | 'md';
+}
+const { pct, target, size = 'md' } = Astro.props;
+const clamped = Math.max(0, Math.min(100, pct));
+const safe = clamped >= target;
+const warn = !safe && clamped >= target - 5;
+const tone = safe ? 'var(--color-safe)' : warn ? 'var(--color-warn)' : 'var(--color-danger)';
+const h = size === 'sm' ? 'h-1.5' : 'h-2.5';
+---
+<div class="flex items-center gap-2">
+  <div class={`relative w-full overflow-hidden rounded-full ${h}`} style="background-color: var(--color-surface-2);" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(clamped)} aria-label={`Attendance ${pct.toFixed(1)} percent`}>
+    <div class={`absolute inset-y-0 left-0 rounded-full ${h}`} style={`width: ${clamped}%; background-color: ${tone}; transition: width 200ms ease;`}></div>
+    <div class="pointer-events-none absolute inset-y-0" style={`left: ${target}%; width: 2px; background-color: var(--color-text-subtle);`} aria-hidden="true"></div>
+  </div>
+</div>
