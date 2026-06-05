@@ -1,6 +1,10 @@
 
 import { db, User, Session, Account, eq } from 'astro:db';
-import { randomBytes, randomUUID, pbkdf2Sync, timingSafeEqual, createHash } from 'node:crypto';
+
+// Web Crypto (works on Node 22+, Workers, and modern browsers — no
+// node:crypto import needed, so this module runs identically on
+// Cloudflare Workers and on the local dev server).
+// We use `globalThis.crypto` so the bundler doesn't tree-shake it.
 
 const SESSION_COOKIE = 'at75_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -32,39 +36,105 @@ export type AuthSession = {
 
 const PBKDF2_ITERS = 100_000;
 const PBKDF2_KEYLEN = 32;
-const PBKDF2_DIGEST = 'sha256';
 
-function hashPassword(plain: string): string {
-  const salt = randomBytes(16).toString('base64');
-  const hash = pbkdf2Sync(plain, salt, PBKDF2_ITERS, PBKDF2_KEYLEN, PBKDF2_DIGEST).toString('base64');
+// ---------- Web Crypto helpers ----------
+
+function randomBytes(n: number): Uint8Array {
+  const buf = new Uint8Array(n);
+  globalThis.crypto.getRandomValues(buf);
+  return buf;
+}
+
+function toBase64(bytes: Uint8Array): string {
+  // Workers / Node 22 both provide btoa on a binary string.
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]!);
+  return btoa(s);
+}
+
+function fromBase64(b64: string): Uint8Array {
+  const s = atob(b64);
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+  return toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function toHex(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += bytes[i]!.toString(16).padStart(2, '0');
+  return s;
+}
+
+function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!;
+  return diff === 0;
+}
+
+async function pbkdf2(plain: string, saltB64: string, iters: number, keyLen: number): Promise<Uint8Array> {
+  const enc = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw',
+    enc.encode(plain),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+  const bits = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: fromBase64(saltB64),
+      iterations: iters,
+      hash: 'SHA-256',
+    },
+    key,
+    keyLen * 8
+  );
+  return new Uint8Array(bits);
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const enc = new TextEncoder();
+  const buf = await globalThis.crypto.subtle.digest('SHA-256', enc.encode(input));
+  return toHex(new Uint8Array(buf));
+}
+
+// ---------- Password hashing ----------
+
+async function hashPassword(plain: string): Promise<string> {
+  const salt = toBase64(randomBytes(16));
+  const hash = toBase64(await pbkdf2(plain, salt, PBKDF2_ITERS, PBKDF2_KEYLEN));
   return `pbkdf2$${PBKDF2_ITERS}$${salt}$${hash}`;
 }
 
-function verifyPassword(plain: string, stored: string): boolean {
+async function verifyPassword(plain: string, stored: string): Promise<boolean> {
   const parts = stored.split('$');
   if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
   const iters = Number(parts[1]);
   const salt = parts[2]!;
   const expected = parts[3]!;
   if (!iters || !salt || !expected) return false;
-  const actual = pbkdf2Sync(plain, salt, iters, PBKDF2_KEYLEN, PBKDF2_DIGEST).toString('base64');
-  const a = Buffer.from(actual);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+  const actual = toBase64(await pbkdf2(plain, salt, iters, PBKDF2_KEYLEN));
+  return constantTimeEqual(fromBase64(actual), fromBase64(expected));
 }
 
+// ---------- Tokens ----------
 
 function genToken(): string {
-  return randomBytes(32).toString('base64url');
+  return toBase64Url(randomBytes(32));
 }
 
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
+async function hashToken(token: string): Promise<string> {
+  return sha256Hex(token);
 }
 
 function genUserId(): string {
-  return randomUUID();
+  return globalThis.crypto.randomUUID();
 }
 
 function nowPlusTtl(): Date {
@@ -172,7 +242,7 @@ export async function signUp(
     userId,
     providerId: 'credential',
     accountId: email,
-    password: hashPassword(input.password),
+    password: await hashPassword(input.password),
     createdAt: now,
     updatedAt: now,
   });
@@ -200,7 +270,7 @@ export async function signIn(
     .from(Account)
     .where(eq(Account.userId, userRow.id));
   const credential = acctRows.find((a) => a.providerId === 'credential');
-  if (!credential?.password || !verifyPassword(input.password, credential.password)) {
+  if (!credential?.password || !(await verifyPassword(input.password, credential.password))) {
     return { ok: false, status: 401, message: 'Invalid email or password.' };
   }
   const { session, rawToken } = await createSessionFor(userRow.id, request);
@@ -250,7 +320,7 @@ export async function getSession(
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
   const token = readCookie(request, SESSION_COOKIE);
   if (!token) return null;
-  const tokenHash = hashToken(token);
+  const tokenHash = await hashToken(token);
   const sessionRows = await db.select().from(Session).where(eq(Session.tokenHash, tokenHash));
   const session = sessionRows[0];
   if (!session) return null;
@@ -269,7 +339,7 @@ export async function signOut(
 ): Promise<{ ok: true; cookie: string }> {
   const token = readCookie(request, SESSION_COOKIE);
   if (token) {
-    const tokenHash = hashToken(token);
+    const tokenHash = await hashToken(token);
     await db.delete(Session).where(eq(Session.tokenHash, tokenHash));
   }
   return { ok: true, cookie: clearSessionCookie() };
@@ -280,7 +350,7 @@ async function createSessionFor(userId: string, request: Request): Promise<{ ses
   const now = new Date();
   const id = genUserId();
   const token = genToken();
-  const tokenHash = hashToken(token);
+  const tokenHash = await hashToken(token);
   const ip = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? null;
   const ua = request.headers.get('user-agent') ?? null;
   await db.insert(Session).values({
