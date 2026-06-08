@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import node from '@astrojs/node';
+import cloudflare from '@astrojs/cloudflare';
 import db from '@astrojs/db';
 import sitemap from '@astrojs/sitemap';
 
@@ -15,12 +15,8 @@ const PRIVATE_PREFIXES = ['/app', '/onboarding', '/api'];
 export default defineConfig({
   site: SITE,
   output: 'server',
-  // Node adapter in standalone mode — the build emits `dist/server/entry.mjs`
-  // which is deployed to Cloudflare Pages with the Node.js runtime.
-  // Pages' Node.js runtime is a regular Node 22 process; no compat flags,
-  // no workerd, no V8-isolate weirdness. PBKDF2 / Buffer / libsql all work
-  // natively.
-  adapter: node({ mode: 'standalone' }),
+  // Cloudflare adapter for server-side rendering (SSR) on Cloudflare Pages
+  adapter: cloudflare(),
   integrations: [
     react(),
     db(),
@@ -30,10 +26,6 @@ export default defineConfig({
       entryLimit: 4500,
       changefreq: 'weekly',
       priority: 0.7,
-      // Keep auth / app / onboarding / API routes out of the sitemap.
-      // @astrojs/sitemap passes the *full URL* (e.g.
-      // "https://attendancetrack75.com/app/today/"), so parse it first
-      // and match on pathname only.
       filter: (page) => {
         let pathname;
         try {

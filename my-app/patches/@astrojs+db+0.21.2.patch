@@ -1,0 +1,28 @@
+diff --git a/node_modules/@astrojs/db/dist/core/integration/index.js b/node_modules/@astrojs/db/dist/core/integration/index.js
+index 2cd02f5..e3dfbbe 100644
+--- a/node_modules/@astrojs/db/dist/core/integration/index.js
++++ b/node_modules/@astrojs/db/dist/core/integration/index.js
+@@ -193,9 +193,22 @@ async function executeSeedFile({
+     throw e;
+   }
+ }
++function filterCloudflarePlugins(plugins) {
++  if (!plugins) return plugins;
++  return plugins.flatMap(p => {
++    if (Array.isArray(p)) {
++      return [filterCloudflarePlugins(p)];
++    }
++    if (p && p.name && p.name.includes('cloudflare')) {
++      return [];
++    }
++    return [p];
++  });
++}
+ async function getTempViteServer({ viteConfig }) {
++  const cleanPlugins = filterCloudflarePlugins(viteConfig.plugins);
+   const tempViteServer = await createServer(
+-    mergeConfig(viteConfig, {
++    mergeConfig({ ...viteConfig, plugins: cleanPlugins }, {
+       server: { middlewareMode: true, hmr: false, watch: null, ws: false },
+       optimizeDeps: { noDiscovery: true },
+       ssr: { external: [] },
