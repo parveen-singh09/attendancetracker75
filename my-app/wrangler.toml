@@ -1,0 +1,9 @@
+#:schema https://schema.wrangler.developers.cloudflare.com/config.json
+name = "attendancetrack75"
+compatibility_date = "2026-06-08"
+compatibility_flags = [ "nodejs_compat" ]
+
+pages_build_output_dir = "dist"
+
+[vars]
+PUBLIC_ORIGIN = "http://localhost:4321"

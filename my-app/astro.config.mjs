@@ -41,6 +41,9 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    define: {
+      'process.env': '{}',
+    },
     server: {
       watch: {
         ignored: ['**/src/styles/global.css'],
