@@ -8,7 +8,9 @@ dist/
 # Environment variables
 .env
 .env.*
+.dev.vars
 !.env.example
+
 
 # Cloudflare / Wrangler state (account ID, deploy config, etc.)
 .wrangler/
