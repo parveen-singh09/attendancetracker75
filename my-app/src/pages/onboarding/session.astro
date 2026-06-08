@@ -17,13 +17,9 @@ const existing = await db
   .orderBy(desc(AcademicSession.createdAt))
   .limit(1);
 
-if (existing.length > 0 && !Astro.url.searchParams.get('back')) {
-  return Astro.redirect('/onboarding/timetable?sessionId=' + existing[0]!.id);
-}
-
-const reviewMode = Astro.url.searchParams.get('back') === '1' && existing.length > 0;
+const reviewMode = existing.length > 0;
 const reviewSession = reviewMode ? existing[0]! : null;
-const sessionIdForBack = Astro.url.searchParams.get('sessionId') ?? reviewSession?.id ?? '';
+const sessionIdForBack = reviewSession?.id ?? '';
 
 const now = new Date();
 const yyyy = now.getFullYear();
@@ -67,7 +63,7 @@ const targetValue = reviewSession?.targetPct ?? 75;
         <p class="mt-2" style="color: var(--color-text-muted);" data-i18n="onboarding.session.body">
           {reviewMode
             ? "Here's the session you set up. You can head back to step 2 when you're ready."
-            : 'A session is one academic term — like “Fall 2026”. You can keep multiple sessions and switch between them.'}
+            : 'A session is one academic term — like “Fall 2026”.'}
         </p>
 
         <form id="session-form" class="mt-5 space-y-4" novalidate>
@@ -102,13 +98,12 @@ const targetValue = reviewSession?.targetPct ?? 75;
           <div class="field">
             <label class="field-label" for="targetPct">Target percentage: <span id="t-val" class="num">{targetValue}</span>%</label>
             <input id="targetPct" name="targetPct" type="range" min="50" max="100" step="1" value={String(targetValue)} class="w-full" disabled={reviewMode} />
-            <p class="field-hint" data-i18n="onboarding.session.targetPctHint">The cutoff your college enforces. Most Indian colleges use 75%; most US universities use 80%.</p>
           </div>
           <p id="err" class="field-error" role="alert" hidden></p>
           {reviewMode ? (
             <div class="flex gap-2">
               <a href="/onboarding/welcome" class="btn btn-secondary" data-i18n="btn.back">Back</a>
-              <a href={`/onboarding/timetable?sessionId=${sessionIdForBack}`} class="btn btn-primary flex-1" data-i18n="onboarding.welcome.backToStep2">Back to step 2</a>
+              <a href={`/onboarding/timetable?sessionId=${sessionIdForBack}`} class="btn btn-primary flex-1" data-i18n="onboarding.welcome.backToStep2">Next</a>
             </div>
           ) : (
             <div class="flex gap-2">

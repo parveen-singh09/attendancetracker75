@@ -24,7 +24,7 @@ if (!owned) return Astro.redirect('/onboarding/session');
 <BaseLayout title="Add your timetable" description="Add your weekly classes.">
   <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
     <div class="mb-6 flex items-center justify-between gap-2">
-      <a href={`/onboarding/session?back=1&sessionId=${sessionId}`} class="inline-flex items-center gap-1 text-sm hover:underline" style="color: var(--color-text-muted);" data-astro-reload>
+      <a href="/onboarding/session" class="inline-flex items-center gap-1 text-sm hover:underline" style="color: var(--color-text-muted);" data-astro-reload>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>

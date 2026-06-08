@@ -75,7 +75,9 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }:
   const [subjects, setSubjects] = useState<Entry[]>(
     initialSplit.subjects.length ? initialSplit.subjects : [{ name: 'Subject 1', color: PALETTE[0]!, isLab: false }]
   );
-  const [labs, setLabs] = useState<Entry[]>(initialSplit.labs);
+  const [labs, setLabs] = useState<Entry[]>(
+    initialSplit.labs.length ? initialSplit.labs : [{ name: 'Lab 1', color: PALETTE[1]!, isLab: true }]
+  );
   const [slots, setSlots] = useState<DraftSlot[]>(initialSlots);
   const [saving, setSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);

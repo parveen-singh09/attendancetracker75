@@ -106,7 +106,7 @@ const en: Dict = {
   'onboarding.welcome.titleReview': 'Reviewing step 1',
   'onboarding.welcome.bodyReview':
     "Here's the session you set up. You can head back to step 2 when you're ready.",
-  'onboarding.welcome.backToStep2': 'Back to step 2',
+  'onboarding.welcome.backToStep2': 'Next',
   'onboarding.welcome.step1': 'Name your session and set the target percentage.',
   'onboarding.welcome.step2': 'Add your weekly timetable (manual or paste-text).',
   'onboarding.welcome.getStarted': 'Get started',
@@ -116,13 +116,12 @@ const en: Dict = {
   'onboarding.session.step': 'Step 1 of 2',
   'onboarding.session.title': 'Name your session',
   'onboarding.session.body':
-    'A session is one academic term — like "Fall 2026". You can keep multiple sessions and switch between them.',
+    'A session is one academic term — like "Fall 2026".',
   'onboarding.session.nameLabel': 'Session name',
   'onboarding.session.startDate': 'Start date',
   'onboarding.session.endDate': 'End date',
   'onboarding.session.targetPct': 'Target percentage: {pct}%',
-  'onboarding.session.targetPctHint':
-    'The cutoff your college enforces. Most Indian colleges use 75%; most US universities use 80%.',
+  'onboarding.session.targetPctHint': '',
   'onboarding.session.continue': 'Continue',
   'onboarding.session.creating': 'Creating…',
   'onboarding.session.errorRequired': 'All fields are required.',
