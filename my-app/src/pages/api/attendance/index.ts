@@ -13,7 +13,7 @@ const putSchema = z.object({
   op: z.enum(['add', 'remove', 'clear']).default('add'),
 });
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const user = requireUser(locals);
   if (user instanceof Response) return user;
   const sessionId = url.searchParams.get('sessionId');

@@ -88,7 +88,7 @@ async function pbkdf2(plain: string, saltB64: string, iters: number, keyLen: num
   const bits = await globalThis.crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: fromBase64(saltB64),
+      salt: fromBase64(saltB64) as BufferSource,
       iterations: iters,
       hash: 'SHA-256',
     },

@@ -235,7 +235,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }:
   }
 
   function openAddForDay(day: number) {
-    const used = new Set([...subjects, ...labs].map((s) => s.name));
     const isLab = labs.length > 0 && subjects.length === 0;
     const defaultName = isLab
       ? (labs[0]?.name ?? '')
@@ -286,12 +285,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }:
   function removeSlot(idx: number) {
     setSlots(slots.filter((_, i) => i !== idx));
   }
-
-  function updateSlot(idx: number, patch: Partial<DraftSlot>) {
-    setSlots(slots.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
-  }
-
-
 
   return (
     <div className="space-y-6">

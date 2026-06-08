@@ -5,8 +5,7 @@ import Logo from '../components/Logo.astro';
 // Already logged in? Bounce straight to the app (or ?next=) so users
 // never see the form again after authenticating.
 if (Astro.locals.user) {
-  const next = Astro.url.searchParams.get('next') ?? '/app/today';
-  return Astro.redirect(next);
+  return Astro.redirect(Astro.url.searchParams.get('next') ?? '/app/today');
 }
 ---
 <BaseLayout title="Log in" description="Log in to your Attendance Tracker account.">

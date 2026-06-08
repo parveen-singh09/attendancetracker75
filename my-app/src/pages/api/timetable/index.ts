@@ -23,7 +23,7 @@ const putSchema = z.object({
   slots: z.array(slotSchema).default([]),
 });
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const user = locals.user;
   if (!user) return json({ error: { code: 'unauth', message: 'Login required' } }, 401);
   const sessionId = url.searchParams.get('sessionId');

@@ -1,6 +1,5 @@
 ---
 import MarketingLayout from '../layouts/MarketingLayout.astro';
-import Logo from '../components/Logo.astro';
 import FaqSection from '../components/marketing/FaqSection.astro';
 import { db, AcademicSession, eq, and, desc } from 'astro:db';
 
@@ -231,7 +230,7 @@ const features = [
         return;
       }
       try {
-        const { data, error } = await authClient.signInAnonymous();
+        const { data } = await authClient.signInAnonymous();
         if (data) {
           window.location.href = '/onboarding/welcome';
         } else {

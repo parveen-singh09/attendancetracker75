@@ -3,7 +3,6 @@ import { getSession } from './lib/auth';
 
 const APP_PREFIX = '/app';
 const ONBOARDING_PREFIX = '/onboarding';
-const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 const PUBLIC_FILES = ['/favicon', '/robots.txt', '/_image'];
 
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -11,7 +10,7 @@ const CSRF_EXEMPT = ['/api/auth/'];
 
 function csrfFail(reason: string): Response {
   return new Response(
-    JSON.stringify({ error: { code: 'csrf', message: 'Cross-site request blocked' } }),
+    JSON.stringify({ error: { code: 'csrf', message: `Cross-site request blocked: ${reason}` } }),
     { status: 403, headers: { 'content-type': 'application/json' } }
   );
 }

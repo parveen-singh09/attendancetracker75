@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { computeStats, type AttendanceLog, type DayOverride, type Stats, whatIf } from '../../lib/attendance';
+import { type Stats, whatIf } from '../../lib/attendance';
 
 interface Props {
   base: Stats;
   target: number;
-  logs: AttendanceLog[];
-  days: DayOverride[];
 }
 
-export default function WhatIfSimulator({ base, target, logs, days }: Props) {
+export default function WhatIfSimulator({ base, target }: Props) {
   const [n, setN] = useState(1);
 
   const attended = whatIf(base, n, 'attend');
