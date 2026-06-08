@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { db, User, Session, Account, eq } from 'astro:db';
+import { db, User, Session, Account, AcademicSession, eq } from 'astro:db';
 import { rateLimitResponse } from '../../lib/ratelimit';
+import { inTransaction } from '../../lib/tx';
 
 export const prerender = false;
 
@@ -59,13 +60,15 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   }
 
-  // Hard delete the user. Sessions and Accounts reference the user via
-  // FK without onDelete:'cascade' in the schema, so we must wipe those
-  // child rows first. AcademicSession has cascade and will clean up
-  // its children (Subject → TimetableSlot / AttendanceLog) on its own.
-  await db.delete(Session).where(eq(Session.userId, user.id));
-  await db.delete(Account).where(eq(Account.userId, user.id));
-  await db.delete(User).where(eq(User.id, user.id));
+  // Hard delete the user and all associated data. We use a transaction
+  // with foreign keys enabled to ensure the cascade delete on AcademicSession
+  // successfully wipes all child tables (Subject, TimetableSlot, Day, AttendanceLog).
+  await inTransaction(async (tx) => {
+    await tx.delete(Session).where(eq(Session.userId, user.id));
+    await tx.delete(Account).where(eq(Account.userId, user.id));
+    await tx.delete(AcademicSession).where(eq(AcademicSession.userId, user.id));
+    await tx.delete(User).where(eq(User.id, user.id));
+  });
   // Expire the session cookie so the browser doesn't carry a dead token.
   // Flags must match the original cookie (HttpOnly, SameSite=Lax, Path=/)
   // or the browser won't replace it. `Secure` is added for HTTPS requests.
