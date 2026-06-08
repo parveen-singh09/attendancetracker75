@@ -31,7 +31,7 @@ async function rollup(sessId: string, target: number) {
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
     <div class="flex items-baseline justify-between">
       <h1 class="text-2xl font-semibold tracking-tight">Sessions</h1>
-      <a href="/onboarding/session" class="btn btn-primary btn-sm">+ New session</a>
+      <button id="new-session-btn" class="btn btn-primary btn-sm">+ New session</button>
     </div>
 
     {sessions.length === 0 ? (
@@ -59,7 +59,7 @@ async function rollup(sessId: string, target: number) {
                 <a href={`/app/sessions/${s.id}`} class="btn btn-secondary btn-sm">View rollup</a>
                 {!s.isArchived && (
                   <form method="post" action={`/api/sessions/${s.id}/archive`} onsubmit="return confirm('Archive this session? You can still view its rollup.')">
-                    <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
+                     <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
                   </form>
                 )}
               </div>
@@ -69,4 +69,98 @@ async function rollup(sessId: string, target: number) {
       </ul>
     )}
   </div>
+
+  <dialog
+    id="new-session-modal"
+    class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] p-6 max-w-md w-full shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+    style="margin: auto;"
+  >
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold leading-6">Reset session data?</h2>
+      </div>
+
+      <p class="text-sm font-normal" style="color: var(--color-text-muted);">
+        Creating a new session will permanently erase all your current data, including active sessions, subjects, timetables, and attendance logs. This action cannot be undone.
+      </p>
+
+      <p id="reset-error-msg" class="text-xs text-red-600 font-medium hidden"></p>
+
+      <div class="mt-2 flex justify-end gap-3">
+        <button type="button" id="cancel-reset-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button type="button" id="confirm-reset-btn" class="btn btn-danger btn-sm">Continue and Reset</button>
+      </div>
+    </div>
+  </dialog>
 </AppLayout>
+
+<script>
+  const newSessionBtn = document.getElementById('new-session-btn');
+  const modal = document.getElementById('new-session-modal') as HTMLDialogElement | null;
+  const cancelBtn = document.getElementById('cancel-reset-btn');
+  const confirmBtn = document.getElementById('confirm-reset-btn');
+  const errorMsg = document.getElementById('reset-error-msg');
+
+  if (newSessionBtn && modal && cancelBtn && confirmBtn) {
+    newSessionBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (errorMsg) {
+        errorMsg.classList.add('hidden');
+        errorMsg.textContent = '';
+      }
+      modal.showModal();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      modal.close();
+    });
+
+    // Close on clicking backdrop
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.close();
+      }
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+      if (errorMsg) {
+        errorMsg.classList.add('hidden');
+        errorMsg.textContent = '';
+      }
+      confirmBtn.setAttribute('disabled', 'true');
+      const originalText = confirmBtn.textContent;
+      confirmBtn.textContent = 'Resetting...';
+
+      try {
+        const res = await fetch('/api/sessions/reset', {
+          method: 'POST',
+        });
+        if (res.ok) {
+          window.location.href = '/onboarding/welcome';
+        } else {
+          const body = (await res.json().catch(() => null)) as any;
+          const msg = body?.error?.message || 'Failed to reset data. Please try again.';
+          if (errorMsg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+          }
+          confirmBtn.removeAttribute('disabled');
+          confirmBtn.textContent = originalText;
+        }
+      } catch (err) {
+        console.error(err);
+        if (errorMsg) {
+          errorMsg.textContent = 'An error occurred. Please try again.';
+          errorMsg.classList.remove('hidden');
+        }
+        confirmBtn.removeAttribute('disabled');
+        confirmBtn.textContent = originalText;
+      }
+    });
+  }
+</script>
