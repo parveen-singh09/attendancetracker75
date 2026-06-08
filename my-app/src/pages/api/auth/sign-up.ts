@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!result.ok) return json({ error: { message: result.message } }, result.status);
     return json({ user: result.result.user, session: { id: result.result.session.id, expiresAt: result.result.session.expiresAt } }, 200, result.result.cookie);
   } catch (err: any) {
-    return json({ error: { message: err?.message || 'Server error', stack: err?.stack } }, 500);
+    return json({ error: { message: err?.message || 'Server error', cause: err?.cause?.message || err?.cause, stack: err?.stack } }, 500);
   }
 };
 
