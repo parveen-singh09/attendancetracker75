@@ -105,7 +105,7 @@ function isActive(href: string): boolean {
   <div id="sidebar-backdrop" class="fixed inset-0 z-20 bg-black/50 opacity-0 pointer-events-none transition-opacity md:hidden"></div>
 
   <!-- Sidebar (Dashboard section) -->
-  <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-30 w-72 -translate-x-full transition-all duration-300 md:relative md:flex md:w-80 md:translate-x-0 md:flex-col border-r group" data-state="closed" style="border-color: var(--color-border); background-color: var(--color-surface);">
+  <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-30 w-72 -translate-x-full transition-all duration-300 flex flex-col md:relative md:w-80 md:translate-x-0 border-r group" data-state="closed" style="border-color: var(--color-border); background-color: var(--color-surface);">
     <div class="flex h-14 items-center gap-2 border-b px-4 font-semibold overflow-hidden shrink-0 transition-all duration-300 group-[data-state=closed]:h-auto group-[data-state=closed]:py-4 group-[data-state=closed]:flex-col group-[data-state=closed]:justify-center group-[data-state=closed]:px-0" style="border-color: var(--color-border);">
       <button id="toggle-sidebar" class="p-1 -ml-1 shrink-0 group-[data-state=closed]:ml-0" aria-label="Toggle menu" data-i18n-attr="aria-label:shell.toggleMenu">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
@@ -148,7 +148,7 @@ function isActive(href: string): boolean {
       ))}
     </nav>
 
-    <div id="sidebar-profile-card" class="mx-3 mb-0 mt-3 ml-1 shrink-0 group-[data-state=closed]:mx-2 group-[data-state=closed]:mt-2 group-[data-state=closed]:mb-0 group-[data-state=closed]:p-1.5 group-[data-state=closed]:pr-2.5" style="padding: 0.75rem; background-color: transparent; border: none;">
+    <div id="sidebar-profile-card" class="mx-3 mb-4 mt-3 ml-1 shrink-0 group-[data-state=closed]:mx-2 group-[data-state=closed]:mt-2 group-[data-state=closed]:mb-2 group-[data-state=closed]:p-1.5 group-[data-state=closed]:pr-2.5" style="padding: 0.75rem; background-color: transparent; border: none;">
       <div class="flex items-center gap-2 mb-3 group-[data-state=closed]:flex-col group-[data-state=closed]:gap-0 group-[data-state=closed]:mb-0 group-[data-state=closed]:items-center group-[data-state=closed]:justify-center">
         <a id="sidebar-profile-link" href="/app/settings" class="shrink-0 transition-transform hover:scale-105 group-[data-state=closed]:mx-auto" aria-label="Profile settings" data-i18n-attr="aria-label:shell.profileSettings">
           <Avatar name={user.name} image={user.image ?? null} seed={user.id} size={32} />
