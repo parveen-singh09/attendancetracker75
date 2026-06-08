@@ -1,16 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and } from 'astro:db';
 
-/**
- * GET /api/export.csv?sessionId=...
- *
- * Returns the session's attendance logs as a CSV file download. One
- * row per log entry, with the subject name inlined so the user can
- * sort/filter in a spreadsheet. Day overrides are emitted as a
- * separate section.
- *
- * Auth: requires a session cookie that owns the session.
- */
+
 export const prerender = false;
 
 export const GET: APIRoute = async ({ url, locals }) => {
