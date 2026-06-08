@@ -9,6 +9,9 @@ export const prerender = false;
 const updateSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.email(),
+  image: z.string().refine((val) => !val || val.startsWith('data:image/'), {
+    message: 'Only image data URLs are allowed'
+  }).nullable().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -23,9 +26,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify({ error: 'Invalid input', issues: parsed.error.issues }), { status: 400 });
   }
 
+  const updatePayload: Record<string, any> = {
+    name: parsed.data.name,
+    email: parsed.data.email,
+    updatedAt: new Date(),
+  };
+
+  if (parsed.data.image !== undefined) {
+    updatePayload.image = parsed.data.image;
+  }
+
   await db
     .update(User)
-    .set({ name: parsed.data.name, email: parsed.data.email, updatedAt: new Date() })
+    .set(updatePayload)
     .where(eq(User.id, user.id));
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
