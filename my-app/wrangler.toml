@@ -1,5 +1,5 @@
 #:schema https://schema.wrangler.developers.cloudflare.com/config.json
-name = "attendancetrack75"
+name = "attendancetracker75"
 compatibility_date = "2026-06-08"
 compatibility_flags = [ "nodejs_compat" ]
 
