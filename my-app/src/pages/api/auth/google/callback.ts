@@ -4,7 +4,7 @@ import { createSessionFor, buildSessionCookie } from '../../../../lib/auth';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ request, url, cookies }) => {
+export const GET: APIRoute = async ({ request, url, cookies, locals }) => {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const storedState = cookies.get('google_oauth_state')?.value;
@@ -20,8 +20,9 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
   }
 
   try {
-    const clientId = import.meta.env.GOOGLE_CLIENT_ID;
-    const clientSecret = import.meta.env.GOOGLE_CLIENT_SECRET;
+    const runtimeEnv = (locals as any).runtime?.env;
+    const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
+    const clientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `${url.origin}/api/auth/google/callback`;
 
     // 2. Exchange Authorization Code for Tokens

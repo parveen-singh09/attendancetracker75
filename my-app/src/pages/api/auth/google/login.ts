@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const state = crypto.randomUUID();
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID;
+  const runtimeEnv = (locals as any).runtime?.env;
+  const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
   const redirectUri = `${url.origin}/api/auth/google/callback`;
   const scope = encodeURIComponent('openid profile email');
   
