@@ -142,7 +142,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
         // Navigation Progress and Logging
         var navTimeout;
         document.addEventListener('astro:before-preparation', function() {
-          console.log('[Nav] Preparation started...');
           var bar = document.getElementById('nav-progress');
           if (bar) {
             bar.style.transition = 'transform 10s cubic-bezier(0, 0.4, 0.4, 1)';
@@ -153,11 +152,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
              console.warn('[Nav] Navigation is taking a long time. Check server status.');
           }, 8000);
         });
-        document.addEventListener('astro:after-preparation', function() {
-          console.log('[Nav] Preparation complete.');
-        });
         document.addEventListener('astro:before-swap', function() {
-          console.log('[Nav] Swapping content...');
           clearTimeout(navTimeout);
           var bar = document.getElementById('nav-progress');
           if (bar) {
@@ -166,7 +161,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           }
         });
         document.addEventListener('astro:after-swap', function() {
-          console.log('[Nav] Swap complete.');
           setTimeout(function() {
             var bar = document.getElementById('nav-progress');
             if (bar) {

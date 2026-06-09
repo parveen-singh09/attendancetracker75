@@ -67,10 +67,6 @@ export function computeStats(
   return { held, attended, extra, pct, canMiss, mustAttend, safe };
 }
 
-export function formatPct(p: number): string {
-  return `${p.toFixed(1)}%`;
-}
-
 export function overallStats(
   perSubject: Record<string, Stats>,
   target: number = 75
@@ -128,11 +124,3 @@ export function addDays(d: Date, n: number): Date {
   return out;
 }
 
-export function dayOfWeekMon0(d: Date): number {
-  const js = d.getDay();
-  return (js + 6) % 7;
-}
-
-export function dayName(d: number): string {
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d] ?? '';
-}

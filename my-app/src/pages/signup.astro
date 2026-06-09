@@ -1,6 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Logo from '../components/Logo.astro';
+
+// Already logged in? Bounce straight to the app (or ?next=) so users
+// never see the sign-up form again. Guest accounts are allowed
+// to view the sign-up form to register a permanent account.
+if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
+  return Astro.redirect(Astro.url.searchParams.get('next') ?? '/app/today');
+}
 ---
 <BaseLayout title="Sign up" description="Create a free Attendance Tracker account.">
   <div class="auth-shell">
