@@ -106,13 +106,14 @@ export const GET: APIRoute = async ({ request, url, cookies, locals }) => {
     const secure = import.meta.env.PROD || url.protocol === 'https:';
     
     // Return custom redirect Response to prevent Cloudflare immutable header errors
+    const headers = new Headers();
+    headers.set('Location', '/app/today');
+    headers.append('Set-Cookie', 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+    headers.append('Set-Cookie', buildSessionCookie(rawToken, secure));
+
     return new Response(null, {
       status: 302,
-      headers: [
-        ['Location', '/app/today'],
-        ['Set-Cookie', 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'],
-        ['Set-Cookie', buildSessionCookie(rawToken, secure)],
-      ]
+      headers
     });
   } catch (err) {
     console.error('OAuth Callback Error:', err);
