@@ -123,16 +123,26 @@ export function parseTimetableText(input: string): ParseResult {
       .trim();
 
     let location: string | undefined = undefined;
-    const locMatch = subject.match(/\b(?:room|rm|hall|lab|building|bldg)\s+[a-z0-9\-]+\b/i);
-    if (locMatch) {
-      location = locMatch[0];
-      subject = subject.replace(locMatch[0], '').trim();
+
+    // 1. Try matching with @ symbol first (e.g. "Calculus @ Room 204" or "DS @ 204")
+    const atMatch = subject.match(/@\s*(.+)$/);
+    if (atMatch) {
+      location = atMatch[1]!.trim();
+      subject = subject.replace(/@\s*(.+)$/, '').trim();
     } else {
-       const trailingLoc = subject.match(/\s+([a-z]\-?\d{1,4})$/i);
-       if (trailingLoc && !/\b(lab|tutorial|tut|prac)\b/i.test(trailingLoc[1]!)) {
-         location = trailingLoc[1];
-         subject = subject.slice(0, -trailingLoc[0].length).trim();
-       }
+      // 2. Try matching room/rm/hall/building/bldg/lab keywords followed by code
+      const locMatch = subject.match(/\b(?:room|rm|hall|building|bldg)\s+[a-z0-9\-]+\b/i) || subject.match(/\blab\s+\d+\b/i);
+      if (locMatch) {
+        location = locMatch[0];
+        subject = subject.replace(locMatch[0], '').trim();
+      } else {
+         // 3. Try matching trailing room codes (e.g. A-101, LT-3, LH-2, 202, 104)
+         const trailingLoc = subject.match(/\s+([a-z]{1,2}\-?\d{1,4}|\d{3,4})$/i);
+         if (trailingLoc && !/\b(lab|tutorial|tut|prac)\b/i.test(trailingLoc[1]!)) {
+           location = trailingLoc[1];
+           subject = subject.slice(0, -trailingLoc[0].length).trim();
+         }
+      }
     }
 
     const isLab = /\b(lab|practical|prac|tutorial|tut)\b/i.test(subject);
