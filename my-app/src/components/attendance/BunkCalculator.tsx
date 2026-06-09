@@ -8,15 +8,18 @@ interface Props {
 }
 
 export default function BunkCalculator({ target, logs, days }: Props) {
-  const [attended, setAttended] = useState(0);
-  const [held, setHeld] = useState(0);
+  const [attended, setAttended] = useState<number | ''>('');
+  const [held, setHeld] = useState<number | ''>('');
+
+  const numHeld = held === '' ? 0 : held;
+  const numAttended = attended === '' ? 0 : attended;
 
   const stats = computeStats(
-    held === 0 && attended === 0
+    numHeld === 0 && numAttended === 0
       ? logs
-      : Array.from({ length: held }, (_, i) => ({
+      : Array.from({ length: numHeld }, (_, i) => ({
           date: `sim-${i}`,
-          status: i < attended ? 'present' : 'absent' as 'present' | 'absent',
+          status: i < numAttended ? 'present' : 'absent' as 'present' | 'absent',
         })),
     days,
     target
@@ -39,7 +42,17 @@ export default function BunkCalculator({ target, logs, days }: Props) {
             type="number"
             min={0}
             value={attended}
-            onChange={(e) => setAttended(Math.max(0, parseInt(e.target.value || '0', 10)))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') {
+                setAttended('');
+              } else {
+                const parsed = parseInt(val, 10);
+                if (!isNaN(parsed)) {
+                  setAttended(Math.max(0, parsed));
+                }
+              }
+            }}
             className="input num"
             inputMode="numeric"
             autoComplete="off"
@@ -53,7 +66,17 @@ export default function BunkCalculator({ target, logs, days }: Props) {
             type="number"
             min={0}
             value={held}
-            onChange={(e) => setHeld(Math.max(0, parseInt(e.target.value || '0', 10)))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') {
+                setHeld('');
+              } else {
+                const parsed = parseInt(val, 10);
+                if (!isNaN(parsed)) {
+                  setHeld(Math.max(0, parsed));
+                }
+              }
+            }}
             className="input num"
             inputMode="numeric"
             autoComplete="off"
@@ -68,7 +91,7 @@ export default function BunkCalculator({ target, logs, days }: Props) {
         <Stat label="Need to attend" value={stats.mustAttend} hint="to reach target" />
       </div>
 
-      {held > 0 && attended > held && (
+      {numHeld > 0 && numAttended > numHeld && (
         <p className="mt-2 text-xs" style={{ color: 'var(--color-danger)' }}>
           Attended can&apos;t be greater than held.
         </p>
