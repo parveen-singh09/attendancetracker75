@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ url, locals }) => {
+export const GET: APIRoute = async ({ url }) => {
   try {
     const state = globalThis.crypto.randomUUID();
-    const runtimeEnv = locals?.runtime?.env;
-    const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
+    const clientId = (env as any).GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
     const redirectUri = `${url.origin}/api/auth/google/callback`;
     const scope = encodeURIComponent('openid profile email');
     

@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { db, User, Account, eq, and } from 'astro:db';
 import { createSessionFor, buildSessionCookie } from '../../../../lib/auth';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ request, url, cookies, locals }) => {
+export const GET: APIRoute = async ({ request, url, cookies }) => {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const storedState = cookies.get('google_oauth_state')?.value;
@@ -20,9 +21,8 @@ export const GET: APIRoute = async ({ request, url, cookies, locals }) => {
   }
 
   try {
-    const runtimeEnv = (locals as any).runtime?.env;
-    const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
-    const clientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
+    const clientId = (env as any).GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
+    const clientSecret = (env as any).GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `${url.origin}/api/auth/google/callback`;
 
     // 2. Exchange Authorization Code for Tokens
