@@ -17,9 +17,6 @@ const sess = (await db
 ---
 <AppLayout title="Settings">
   <div class="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
-    <nav class="text-sm mb-4" style="color: var(--color-text-subtle);">
-      <a href="/app/today" class="hover:underline">Dashboard</a> <span aria-hidden="true">/</span> <span>Settings</span>
-    </nav>
     
     <div class="flex items-center justify-between gap-4">
       <h1 class="text-2xl font-semibold tracking-tight">Settings</h1>
@@ -64,7 +61,7 @@ const sess = (await db
                 </button>
               </div>
               <div class="text-xs" style="color: var(--color-text-subtle);">
-                PNG, JPG or WEBP. Max 5MB. Client-side optimized.
+                PNG, JPG or WEBP. Max 5MB.
               </div>
             </div>
           </div>
@@ -78,7 +75,7 @@ const sess = (await db
 
         <div class="field">
           <label class="field-label" for="email">Email Address</label>
-          <input id="email" name="email" type="email" class="input" value={user.email} required />
+          <input id="email" name="email" type="email" class="input" value={user.email} disabled style="cursor: not-allowed; opacity: 0.6; background-color: var(--color-surface-2);" />
         </div>
 
         <div id="profile-msg" class="text-sm font-medium" hidden></div>
@@ -299,7 +296,6 @@ const sess = (await db
       const formData = new FormData(form);
       const data = {
         name: formData.get('name'),
-        email: formData.get('email'),
         image: formData.get('avatar_data') || null
       };
 
