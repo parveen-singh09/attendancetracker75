@@ -395,86 +395,92 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
   import { authClient } from '../lib/auth-client';
   import { t, STORAGE_KEY, resolveLocale, type Locale } from '../lib/i18n';
 
-  const form = document.getElementById('signup-form') as HTMLFormElement;
-  const errorDiv = document.getElementById('form-error') as HTMLDivElement;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-  const next = new URLSearchParams(window.location.search).get('next') || '/onboarding/welcome';
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('signup-form') as HTMLFormElement;
+    const errorDiv = document.getElementById('form-error') as HTMLDivElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const next = new URLSearchParams(window.location.search).get('next') || '/onboarding/welcome';
 
-  // Re-read the locale every time we need to translate a string, so
-  // the user changing languages mid-flow sees the new copy.
-  const currentLocale = (): Locale => {
-    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
-    catch { return 'en'; }
-  };
-  const tr = (key: string): string => t(currentLocale(), key);
+    // Re-read the locale every time we need to translate a string, so
+    // the user changing languages mid-flow sees the new copy.
+    const currentLocale = (): Locale => {
+      try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+      catch { return 'en'; }
+    };
+    const tr = (key: string): string => t(currentLocale(), key);
 
-  // Smart landing: respect an explicit `?next=`, otherwise route
-  // brand-new users to onboarding and completed users to the dashboard.
-  const resolveDestination = async (): Promise<string> => {
-    if (next && next !== '/signup' && next !== '/login') return next;
-    try {
-      const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
-      if (res.ok) {
-        const body = (await res.json()) as { user?: { onboardingStep?: string } };
-        if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
-          return '/onboarding/welcome';
+    // Smart landing: respect an explicit `?next=`, otherwise route
+    // brand-new users to onboarding and completed users to the dashboard.
+    const resolveDestination = async (): Promise<string> => {
+      if (next && next !== '/signup' && next !== '/login') return next;
+      try {
+        const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
+        if (res.ok) {
+          const body = (await res.json()) as { user?: { onboardingStep?: string } };
+          if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
+            return '/onboarding/welcome';
+          }
         }
+      } catch {
+        // fall through
       }
-    } catch {
-      // fall through
-    }
-    return next || '/onboarding/welcome';
-  };
+      return next || '/onboarding/welcome';
+    };
 
-  const setError = (msg: string) => {
-    errorDiv.textContent = msg;
-    errorDiv.hidden = false;
-  };
-  const clearError = () => {
-    errorDiv.textContent = '';
-    errorDiv.hidden = true;
-  };
-  const setSubmitting = (btn: HTMLButtonElement, submitting: boolean, label: string) => {
-    btn.disabled = submitting;
-    btn.textContent = submitting ? tr('btn.pleaseWait') : label;
-  };
+    const setError = (msg: string) => {
+      if (errorDiv) {
+        errorDiv.textContent = msg;
+        errorDiv.hidden = false;
+      }
+    };
+    const clearError = () => {
+      if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.hidden = true;
+      }
+    };
+    const setSubmitting = (btn: HTMLButtonElement, submitting: boolean, label: string) => {
+      btn.disabled = submitting;
+      btn.textContent = submitting ? tr('btn.pleaseWait') : label;
+    };
 
-  form?.addEventListener('submit', (e) => e.preventDefault());
+    form?.addEventListener('submit', (e) => e.preventDefault());
 
-  submitBtn?.addEventListener('click', async () => {
-    clearError();
-    setSubmitting(submitBtn, true, tr('btn.createAccount'));
+    submitBtn?.addEventListener('click', async () => {
+      clearError();
+      setSubmitting(submitBtn, true, tr('btn.createAccount'));
 
-    const formData = new FormData(form);
-    const name = (formData.get('name') as string).trim();
-    const email = (formData.get('email') as string).trim();
-    const password = formData.get('password') as string;
+      const formData = new FormData(form);
+      const name = (formData.get('name') as string).trim();
+      const email = (formData.get('email') as string).trim();
+      const password = formData.get('password') as string;
 
-    if (password.length < 8) {
-      setError(tr('auth.signup.error.shortPassword'));
-      setSubmitting(submitBtn, false, tr('btn.createAccount'));
-      return;
-    }
-
-    try {
-      const { data, error } = await authClient.signUp({ email, password, name });
-
-      if (error) {
-        setError(error.message || tr('auth.signup.error.generic'));
+      if (password.length < 8) {
+        setError(tr('auth.signup.error.shortPassword'));
         setSubmitting(submitBtn, false, tr('btn.createAccount'));
         return;
       }
-      if (data) {
-        const dest = await resolveDestination();
-        window.location.href = dest;
-      } else {
-        setError(tr('auth.signup.error.generic'));
+
+      try {
+        const { data, error } = await authClient.signUp({ email, password, name });
+
+        if (error) {
+          setError(error.message || tr('auth.signup.error.generic'));
+          setSubmitting(submitBtn, false, tr('btn.createAccount'));
+          return;
+        }
+        if (data) {
+          const dest = await resolveDestination();
+          window.location.href = dest;
+        } else {
+          setError(tr('auth.signup.error.generic'));
+          setSubmitting(submitBtn, false, tr('btn.createAccount'));
+        }
+      } catch (err) {
+        console.error('[signup] failed', err);
+        setError(tr('error.network'));
         setSubmitting(submitBtn, false, tr('btn.createAccount'));
       }
-    } catch (err) {
-      console.error('[signup] failed', err);
-      setError(tr('error.network'));
-      setSubmitting(submitBtn, false, tr('btn.createAccount'));
-    }
+    });
   });
 </script>

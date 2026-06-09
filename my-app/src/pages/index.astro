@@ -204,41 +204,43 @@ const features = [
 <script>
   import { authClient } from '../lib/auth-client';
 
-  const btn = document.getElementById('guest-btn') as HTMLButtonElement | null;
-  if (btn) {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      const isAuthed = btn.dataset.authed === '1';
-      const step = btn.dataset.onboardingStep || '';
-      btn.textContent = 'Continuing…';
-      if (isAuthed) {
-        // Already signed in (e.g. a guest who pressed Back from onboarding).
-        // Don't create a second guest row — just send them back to where
-        // they were in the onboarding flow.
-        if (step === 'timetable') {
-          // Need the sessionId for the timetable step. Read it from the
-          // button's data attribute (set server-side from
-          // authedUser.onboardingSessionId) — fall back to a query-param
-          // version of the same.
-          const sid = (btn as HTMLElement).dataset.onboardingSessionId || '';
-          window.location.href = '/onboarding/timetable' + (sid ? '?sessionId=' + encodeURIComponent(sid) : '');
-        } else if (step === 'session') {
-          window.location.href = '/onboarding/session';
-        } else {
-          window.location.href = '/onboarding/welcome';
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('guest-btn') as HTMLButtonElement | null;
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        const isAuthed = btn.dataset.authed === '1';
+        const step = btn.dataset.onboardingStep || '';
+        btn.textContent = 'Continuing…';
+        if (isAuthed) {
+          // Already signed in (e.g. a guest who pressed Back from onboarding).
+          // Don't create a second guest row — just send them back to where
+          // they were in the onboarding flow.
+          if (step === 'timetable') {
+            // Need the sessionId for the timetable step. Read it from the
+            // button's data attribute (set server-side from
+            // authedUser.onboardingSessionId) — fall back to a query-param
+            // version of the same.
+            const sid = (btn as HTMLElement).dataset.onboardingSessionId || '';
+            window.location.href = '/onboarding/timetable' + (sid ? '?sessionId=' + encodeURIComponent(sid) : '');
+          } else if (step === 'session') {
+            window.location.href = '/onboarding/session';
+          } else {
+            window.location.href = '/onboarding/welcome';
+          }
+          return;
         }
-        return;
-      }
-      try {
-        const { data } = await authClient.signInAnonymous();
-        if (data) {
-          window.location.href = '/onboarding/welcome';
-        } else {
+        try {
+          const { data } = await authClient.signInAnonymous();
+          if (data) {
+            window.location.href = '/onboarding/welcome';
+          } else {
+            window.location.href = '/login';
+          }
+        } catch (e) {
           window.location.href = '/login';
         }
-      } catch (e) {
-        window.location.href = '/login';
-      }
-    });
-  }
+      });
+    }
+  });
 </script>

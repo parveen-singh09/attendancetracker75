@@ -378,90 +378,96 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
   import { authClient } from '../lib/auth-client';
   import { t, STORAGE_KEY, resolveLocale, type Locale } from '../lib/i18n';
 
-  const form = document.getElementById('login-form') as HTMLFormElement;
-  const errorDiv = document.getElementById('form-error') as HTMLDivElement;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-  const next = new URLSearchParams(window.location.search).get('next') || '/app/today';
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    const errorDiv = document.getElementById('form-error') as HTMLDivElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const next = new URLSearchParams(window.location.search).get('next') || '/app/today';
 
-  // Re-read the locale every time we need to translate a string, so
-  // the user changing languages mid-flow sees the new copy.
-  const currentLocale = (): Locale => {
-    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
-    catch { return 'en'; }
-  };
-  const tr = (key: string): string => t(currentLocale(), key);
+    // Re-read the locale every time we need to translate a string, so
+    // the user changing languages mid-flow sees the new copy.
+    const currentLocale = (): Locale => {
+      try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+      catch { return 'en'; }
+    };
+    const tr = (key: string): string => t(currentLocale(), key);
 
-  const setError = (msg: string) => {
-    errorDiv.textContent = msg;
-    errorDiv.hidden = false;
-  };
-  const clearError = () => {
-    errorDiv.textContent = '';
-    errorDiv.hidden = true;
-  };
-  const setSubmitting = (btn: HTMLButtonElement, submitting: boolean, label: string) => {
-    btn.disabled = submitting;
-    btn.textContent = submitting ? tr('btn.pleaseWait') : label;
-  };
-
-  // Pick the right destination after a successful login.
-  // We can't decide purely from the URL: the server knows the user's
-  // onboarding state. Always honour an explicit `?next=...`, otherwise
-  // skip onboarding for completed users and route fresh ones into it.
-  const resolveDestination = async (): Promise<string> => {
-    if (next && next !== '/app/today' && next !== '/login') return next;
-    try {
-      const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
-      if (res.ok) {
-        const body = (await res.json()) as { user?: { onboardingStep?: string } };
-        if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
-          return '/onboarding/welcome';
-        }
+    const setError = (msg: string) => {
+      if (errorDiv) {
+        errorDiv.textContent = msg;
+        errorDiv.hidden = false;
       }
-    } catch {
-      // Fall through to the default.
-    }
-    return next || '/app/today';
-  };
+    };
+    const clearError = () => {
+      if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.hidden = true;
+      }
+    };
+    const setSubmitting = (btn: HTMLButtonElement, submitting: boolean, label: string) => {
+      btn.disabled = submitting;
+      btn.textContent = submitting ? tr('btn.pleaseWait') : label;
+    };
 
-  form?.addEventListener('submit', (e) => e.preventDefault());
+    // Pick the right destination after a successful login.
+    // We can't decide purely from the URL: the server knows the user's
+    // onboarding state. Always honour an explicit `?next=...`, otherwise
+    // skip onboarding for completed users and route fresh ones into it.
+    const resolveDestination = async (): Promise<string> => {
+      if (next && next !== '/app/today' && next !== '/login') return next;
+      try {
+        const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
+        if (res.ok) {
+          const body = (await res.json()) as { user?: { onboardingStep?: string } };
+          if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
+            return '/onboarding/welcome';
+          }
+        }
+      } catch {
+        // Fall through to the default.
+      }
+      return next || '/app/today';
+    };
+
+    form?.addEventListener('submit', (e) => e.preventDefault());
 
 
-  submitBtn?.addEventListener('click', async () => {
-    clearError();
-    setSubmitting(submitBtn, true, tr('btn.logIn'));
+    submitBtn?.addEventListener('click', async () => {
+      clearError();
+      setSubmitting(submitBtn, true, tr('btn.logIn'));
 
-    const formData = new FormData(form);
-    const email = (formData.get('email') as string).trim();
-    const password = formData.get('password') as string;
+      const formData = new FormData(form);
+      const email = (formData.get('email') as string).trim();
+      const password = formData.get('password') as string;
 
-    if (!email || !password) {
-      setError(tr('auth.login.error.missingFields'));
-      setSubmitting(submitBtn, false, tr('btn.logIn'));
-      return;
-    }
-
-    try {
-      const { data, error } = await authClient.signIn({ email, password });
-
-      if (error) {
-        // Server-provided errors may already be in English. Keep them
-        // as-is — we don't translate backend strings in phase 1.
-        setError(error.message || tr('auth.login.error.generic'));
+      if (!email || !password) {
+        setError(tr('auth.login.error.missingFields'));
         setSubmitting(submitBtn, false, tr('btn.logIn'));
         return;
       }
-      if (data) {
-        const dest = await resolveDestination();
-        window.location.href = dest;
-      } else {
-        setError(tr('auth.login.error.generic'));
+
+      try {
+        const { data, error } = await authClient.signIn({ email, password });
+
+        if (error) {
+          // Server-provided errors may already be in English. Keep them
+          // as-is — we don't translate backend strings in phase 1.
+          setError(error.message || tr('auth.login.error.generic'));
+          setSubmitting(submitBtn, false, tr('btn.logIn'));
+          return;
+        }
+        if (data) {
+          const dest = await resolveDestination();
+          window.location.href = dest;
+        } else {
+          setError(tr('auth.login.error.generic'));
+          setSubmitting(submitBtn, false, tr('btn.logIn'));
+        }
+      } catch (err) {
+        console.error('[login] signIn failed', err);
+        setError(tr('error.network'));
         setSubmitting(submitBtn, false, tr('btn.logIn'));
       }
-    } catch (err) {
-      console.error('[login] signIn failed', err);
-      setError(tr('error.network'));
-      setSubmitting(submitBtn, false, tr('btn.logIn'));
-    }
+    });
   });
 </script>
