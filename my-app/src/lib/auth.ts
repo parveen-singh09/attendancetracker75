@@ -151,7 +151,7 @@ function readCookie(request: Request, name: string): string | null {
   return null;
 }
 
-function buildSessionCookie(token: string, secure: boolean): string {
+export function buildSessionCookie(token: string, secure: boolean): string {
   const parts = [
     `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
     'Path=/',
@@ -346,7 +346,7 @@ export async function signOut(
 }
 
 
-async function createSessionFor(userId: string, request: Request): Promise<{ session: AuthSession; rawToken: string }> {
+export async function createSessionFor(userId: string, request: Request): Promise<{ session: AuthSession; rawToken: string }> {
   const now = new Date();
   const id = genUserId();
   const token = genToken();
