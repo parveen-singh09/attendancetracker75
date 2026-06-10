@@ -223,7 +223,7 @@ const en: Dict = {
   'contact.h1': 'Contact us',
   'contact.p1': "We'd love to hear from you — bug reports, feature ideas, or just a hello. Pick whichever channel works for you.",
   'contact.emailLabel': 'Email',
-  'contact.emailResponse': 'We respond within 2 business days.',
+  'contact.emailResponse': 'We try to respond as soon as possible.',
   'contact.bugLabel': 'Report a bug',
   'contact.bugBody': 'Found something broken? Include a screenshot and the steps to reproduce. The fastest fix comes from a clear repro.',
   'contact.featureLabel': 'Feature request',
@@ -254,7 +254,7 @@ const en: Dict = {
   'privacy.rightsLink': 'Settings',
   'privacy.h2.contact': 'Contact',
   'privacy.contactP':
-    'Questions? Email {emph1}hello@attendancetrack75.com{emphEnd}.',
+    'Questions? Email {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
   // Terms page
   'terms.h1': 'Terms of Service',
@@ -367,7 +367,7 @@ const hi: Dict = {
   'contact.h1': 'हमसे संपर्क करें',
   'contact.p1': 'हम आपसे सुनना पसंद करेंगे — बग रिपोर्ट, सुविधा विचार, या बस एक नमस्ते। जो भी चैनल आपके लिए काम करे उसे चुनें।',
   'contact.emailLabel': 'ईमेल',
-  'contact.emailResponse': 'हम 2 व्यावसायिक दिनों के भीतर जवाब देते हैं।',
+  'contact.emailResponse': 'हम जल्द से जल्द जवाब देने की कोशिश करते हैं।',
   'contact.bugLabel': 'बग रिपोर्ट करें',
   'contact.bugBody': 'कुछ टूटा हुआ मिला? स्क्रीनशॉट और पुनरुत्पादन के चरण शामिल करें। सबसे तेज़ समाधान एक स्पष्ट पुनरुत्पादन से आता है।',
   'contact.featureLabel': 'सुविधा अनुरोध',
@@ -392,7 +392,7 @@ const hi: Dict = {
   'privacy.rightsP': 'आप {emph1}सेटिंग्स{emphEnd} से किसी भी समय JSON या CSV के रूप में अपना सारा डेटा निर्यात कर सकते हैं। आप उसी स्थान से अपना खाता हटा सकते हैं; विलोपन कठिन और तत्काल है।',
   'privacy.rightsLink': 'सेटिंग्स',
   'privacy.h2.contact': 'संपर्क',
-  'privacy.contactP': 'प्रश्न? ईमेल करें {emph1}hello@attendancetrack75.com{emphEnd}।',
+  'privacy.contactP': 'प्रश्न? ईमेल करें {emph1}contactfeedback9@gmail.com{emphEnd}।',
 
   // Terms page
   'terms.h1': 'सेवा की शर्तें',
@@ -499,7 +499,7 @@ const es: Dict = {
   'contact.h1': 'Contáctanos',
   'contact.p1': 'Nos encantaría saber de ti — informes de errores, ideas de funciones o simplemente un saludo. Elige el canal que te resulte más cómodo.',
   'contact.emailLabel': 'Correo',
-  'contact.emailResponse': 'Respondemos en un plazo de 2 días laborables.',
+  'contact.emailResponse': 'Intentamos responder lo antes posible.',
   'contact.bugLabel': 'Reportar un error',
   'contact.bugBody': '¿Has encontrado algo que no funciona? Incluye una captura y los pasos para reproducirlo. La solución más rápida viene de una reproducción clara.',
   'contact.featureLabel': 'Solicitar función',
@@ -524,7 +524,7 @@ const es: Dict = {
   'privacy.rightsP': 'Puedes exportar todo lo que has guardado en JSON o CSV en cualquier momento desde {emph1}Ajustes{emphEnd}. También puedes eliminar tu cuenta desde el mismo lugar; la eliminación es firme e inmediata.',
   'privacy.rightsLink': 'Ajustes',
   'privacy.h2.contact': 'Contacto',
-  'privacy.contactP': '¿Preguntas? Escribe a {emph1}hello@attendancetrack75.com{emphEnd}.',
+  'privacy.contactP': '¿Preguntas? Escribe a {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
   // Terms page
   'terms.h1': 'Términos del servicio',
@@ -631,7 +631,7 @@ const fr: Dict = {
   'contact.h1': 'Nous contacter',
   'contact.p1': 'Nous serions ravis d’avoir de vos nouvelles — rapports de bugs, idées de fonctionnalités, ou simplement un bonjour. Choisissez le canal qui vous convient.',
   'contact.emailLabel': 'E-mail',
-  'contact.emailResponse': 'Nous répondons sous 2 jours ouvrés.',
+  'contact.emailResponse': 'Nous essayons de répondre le plus rapidement possible.',
   'contact.bugLabel': 'Signaler un bug',
   'contact.bugBody': 'Vous avez trouvé quelque chose de cassé ? Incluez une capture d’écran et les étapes pour reproduire. La correction la plus rapide vient d’un repro clair.',
   'contact.featureLabel': 'Demande de fonctionnalité',
@@ -656,7 +656,7 @@ const fr: Dict = {
   'privacy.rightsP': 'Vous pouvez exporter tout ce que vous avez stocké en JSON ou CSV à tout moment depuis {emph1}Paramètres{emphEnd}. Vous pouvez supprimer votre compte au même endroit ; la suppression est ferme et immédiate.',
   'privacy.rightsLink': 'Paramètres',
   'privacy.h2.contact': 'Contact',
-  'privacy.contactP': 'Des questions ? Écrivez à {emph1}hello@attendancetrack75.com{emphEnd}.',
+  'privacy.contactP': 'Des questions ? Écrivez à {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
   // Terms page
   'terms.h1': 'Conditions d’utilisation',
@@ -752,7 +752,7 @@ const de: Dict = {
   // Contact (German)
   'contact.h1': 'Kontakt',
   'contact.emailLabel': 'E-Mail',
-  'contact.emailResponse': 'Wir antworten innerhalb von 2 Werktagen.',
+  'contact.emailResponse': 'Wir versuchen, so schnell wie möglich zu antworten.',
   'contact.bugLabel': 'Fehler melden',
   'contact.featureLabel': 'Feature-Wunsch',
   'contact.privacyLabel': 'Datenschutz & Daten',
@@ -857,7 +857,7 @@ const pt: Dict = {
   // Contact (Portuguese)
   'contact.h1': 'Fale conosco',
   'contact.emailLabel': 'E-mail',
-  'contact.emailResponse': 'Respondemos em até 2 dias úteis.',
+  'contact.emailResponse': 'Tentamos responder o mais rápido possível.',
   'contact.bugLabel': 'Reportar um bug',
   'contact.featureLabel': 'Pedir recurso',
   'contact.privacyLabel': 'Privacidade e dados',
@@ -952,7 +952,7 @@ const ar: Dict = {
   // Contact (Arabic)
   'contact.h1': 'اتصل بنا',
   'contact.emailLabel': 'البريد الإلكتروني',
-  'contact.emailResponse': 'نرد خلال يومي عمل.',
+  'contact.emailResponse': 'نحاول الرد في أسرع وقت ممكن.',
   'contact.bugLabel': 'الإبلاغ عن خطأ',
   'contact.featureLabel': 'طلب ميزة',
   'contact.privacyLabel': 'الخصوصية والبيانات',
@@ -1047,7 +1047,7 @@ const zh: Dict = {
   // Contact (Chinese)
   'contact.h1': '联系我们',
   'contact.emailLabel': '邮箱',
-  'contact.emailResponse': '我们会在 2 个工作日内回复。',
+  'contact.emailResponse': '我们尝试尽快回复。',
   'contact.bugLabel': '报告 Bug',
   'contact.featureLabel': '功能请求',
   'contact.privacyLabel': '隐私与数据',
@@ -1142,7 +1142,7 @@ const ja: Dict = {
   // Contact (Japanese)
   'contact.h1': 'お問い合わせ',
   'contact.emailLabel': 'メール',
-  'contact.emailResponse': '2営業日以内にご返信します。',
+  'contact.emailResponse': 'できるだけ早く返信するよう努めます。',
   'contact.bugLabel': 'バグ報告',
   'contact.featureLabel': '機能リクエスト',
   'contact.privacyLabel': 'プライバシーとデータ',
@@ -1237,7 +1237,7 @@ const ru: Dict = {
   // Contact (Russian)
   'contact.h1': 'Связаться с нами',
   'contact.emailLabel': 'Эл. почта',
-  'contact.emailResponse': 'Отвечаем в течение 2 рабочих дней.',
+  'contact.emailResponse': 'Мы стараемся ответить как можно скорее.',
   'contact.bugLabel': 'Сообщить об ошибке',
   'contact.featureLabel': 'Запрос функции',
   'contact.privacyLabel': 'Приватность и данные',
