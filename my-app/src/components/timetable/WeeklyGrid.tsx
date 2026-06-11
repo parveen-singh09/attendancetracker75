@@ -609,15 +609,11 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
           style={{ color: 'var(--color-text-subtle)', minWidth: '8rem', textAlign: 'right' }}
           aria-live="polite"
         >
-          {!isOnboarding && (saving
+          {isOnboarding && (saving || autoSaving
             ? tr('weeklyGrid.saving')
             : saveError
               ? tr('weeklyGrid.saveFailed')
-              : autoSaving
-                ? tr('weeklyGrid.saving')
-                : subjects.length + labs.length + slots.length > 0
-                  ? tr('weeklyGrid.changesSaved')
-                  : '')}
+              : '')}
         </span>
         <button
           className="btn btn-primary"
