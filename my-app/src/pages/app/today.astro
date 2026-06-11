@@ -192,6 +192,14 @@ const overallColor =
   overall.safe === 'warn' ? 'var(--color-warn)' :
   overall.safe === 'danger' ? 'var(--color-danger)' :
   'var(--color-text)';
+
+function fmt12(t: string): string {
+  const [h24, mm] = t.split(':').map(Number);
+  const ap = h24! >= 12 ? 'PM' : 'AM';
+  let h12 = h24! % 12;
+  if (h12 === 0) h12 = 12;
+  return mm === 0 ? `${h12} ${ap}` : `${h12}:${String(mm).padStart(2, '0')} ${ap}`;
+}
 ---
 <AppLayout title="Today">
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
@@ -252,7 +260,7 @@ const overallColor =
                     )}
                   </span>
                   <span class="flex items-center gap-2 text-[11px] shrink-0" style="color:var(--color-text-subtle)">
-                    <span class="num font-medium">{c.startTime}–{c.endTime}</span>
+                    <span class="num font-medium">{fmt12(c.startTime)}–{fmt12(c.endTime)}</span>
                     {c.location && (
                       <span class="flex items-center gap-1">
                         <span aria-hidden="true" class="opacity-40">·</span>
