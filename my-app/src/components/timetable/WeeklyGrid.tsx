@@ -327,7 +327,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
 
   return (
     <div className="space-y-6">
-      {}
       <section className="card">
         <h2 className="text-base font-semibold">{tr('weeklyGrid.addSubjectsTitle')}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
@@ -365,7 +364,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         </div>
       </section>
 
-      {}
       <section className="card">
         <h2 className="text-base font-semibold">{tr('weeklyGrid.buildScheduleTitle')}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
