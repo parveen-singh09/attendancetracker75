@@ -46,18 +46,11 @@ const classesCount = slotRows.length;
 ---
 <AppLayout title="Weekly schedule">
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-    <nav class="text-sm" style="color: var(--color-text-subtle);">
-      <a href="/onboarding/session" class="hover:underline" data-astro-reload data-i18n="schedule.breadcrumb.onboarding">Onboarding</a> <span aria-hidden="true">/</span> <span data-i18n="schedule.breadcrumb.weekly">Weekly schedule</span>
-    </nav>
-
-    <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-semibold tracking-tight" data-i18n="schedule.title">Add weekly schedule</h1>
-        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.subtitle" data-i18n-params={JSON.stringify({ name: sess.name })}>
-          Build your weekly class schedule for <strong>{sess.name}</strong>.
-        </p>
-      </div>
-      <a href="/onboarding/session" class="btn btn-secondary btn-sm" data-astro-reload data-i18n="schedule.backToOnboarding">Back to onboarding</a>
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight" data-i18n="schedule.title">Add weekly schedule</h1>
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.subtitle" data-i18n-params={JSON.stringify({ name: sess.name })}>
+        Build your weekly class schedule for <strong>{sess.name}</strong>.
+      </p>
     </div>
 
     <div class="mt-4 grid gap-3 sm:grid-cols-3">
