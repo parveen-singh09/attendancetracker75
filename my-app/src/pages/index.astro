@@ -233,7 +233,7 @@ const features = [
         try {
           const { data } = await authClient.signInAnonymous();
           if (data) {
-            window.location.href = '/onboarding/welcome';
+            window.location.href = '/app/today';
           } else {
             window.location.href = '/login';
           }

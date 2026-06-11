@@ -129,7 +129,7 @@ const en: Dict = {
   'onboarding.timetable.step': 'Step 2 of 2',
   'onboarding.timetable.title': 'Add your weekly timetable',
   'onboarding.timetable.body':
-    "Add your subjects, then click cells to add classes. Drag to move. You can also paste a plain-text timetable below and we'll fill the grid for you.",
+    "Add your subjects, then click cells to add classes. You can also paste a plain-text timetable below and we'll fill the grid for you.",
   'onboarding.timetable.pasteTitle': '📋 Paste timetable text',
   'onboarding.timetable.pasteHelp':
     'Load your timetable in the given format below, or ask your AI to format it for you:',

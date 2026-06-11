@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Logo from '../../components/Logo.astro';
 import Avatar from '../../components/Avatar.astro';
 
 const user = Astro.locals.user;
@@ -38,25 +37,6 @@ if (referer) {
 <BaseLayout title="Welcome" description="Let's set up your attendance tracking.">
   <div class="grid min-h-screen place-items-center px-4 py-8">
     <div class="w-full max-w-md">
-      <div class="mb-6 flex items-center justify-between gap-2">
-        <a
-          href={backHref}
-          class="inline-flex items-center gap-1 text-sm hover:underline"
-          style="color: var(--color-text-muted);"
-          data-astro-reload
-          aria-label="Back"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Back
-        </a>
-        <div class="flex items-center gap-2 font-semibold">
-          <Logo class="h-7 w-7" />
-          <span>Attendance Tracker</span>
-        </div>
-      </div>
 
       <div class="card">
         <div class="flex items-center gap-3">

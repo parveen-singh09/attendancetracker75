@@ -20,6 +20,7 @@ interface Props {
   initialSlots: DraftSlot[];
   initialSubjects: Entry[];
   sessionId: string;
+  isOnboarding?: boolean;
 }
 
 const DAYS_FULL = [
@@ -63,7 +64,7 @@ function sortByTime(slots: DraftSlot[]): DraftSlot[] {
 }
 
 
-export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }: Props) {
+export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, isOnboarding = false }: Props) {
   const splitEntries = (pool: Entry[]): { subjects: Entry[]; labs: Entry[] } => {
     const subjects: Entry[] = [];
     const labs: Entry[] = [];
@@ -569,7 +570,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }:
           style={{ color: 'var(--color-text-subtle)', minWidth: '8rem', textAlign: 'right' }}
           aria-live="polite"
         >
-          {saving
+          {!isOnboarding && (saving
             ? 'Saving…'
             : saveError
               ? 'Save failed'
@@ -577,7 +578,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId }:
                 ? 'Saving…'
                 : subjects.length + labs.length + slots.length > 0
                   ? 'All changes saved ✓'
-                  : ''}
+                  : '')}
         </span>
         <button
           className="btn btn-primary"

@@ -1,5 +1,5 @@
 
-import { db, User, Session, Account, eq } from 'astro:db';
+import { db, User, Session, Account, AcademicSession, Subject, TimetableSlot, Day, AttendanceLog, eq } from 'astro:db';
 
 // Web Crypto (works on Node 22+, Workers, and modern browsers — no
 // node:crypto import needed, so this module runs identically on
@@ -286,17 +286,21 @@ export async function signInAnonymous(
   const now = new Date();
   const userId = genUserId();
   const guestEmail = `guest-${userId}@guest.local`;
+  
+  // 1. Insert User with onboardingStep as done
   await db.insert(User).values({
     id: userId,
     email: guestEmail,
     name: 'Guest',
     emailVerified: false,
     isAnonymous: true,
-    onboardingStep: 'welcome',
+    onboardingStep: 'done',
     targetPctDefault: 75,
     createdAt: now,
     updatedAt: now,
   });
+
+  // 2. Insert Account
   await db.insert(Account).values({
     id: genUserId(),
     userId,
@@ -306,6 +310,57 @@ export async function signInAnonymous(
     createdAt: now,
     updatedAt: now,
   });
+
+  // 3. Create default AcademicSession
+  const sessionId = genUserId();
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + 4);
+  
+  const yyyy = startDate.getFullYear();
+  const mm = String(startDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(startDate.getDate()).padStart(2, '0');
+  const startDateStr = `${yyyy}-${mm}-${dd}`;
+  
+  const eyyyy = endDate.getFullYear();
+  const emm = String(endDate.getMonth() + 1).padStart(2, '0');
+  const edd = String(endDate.getDate()).padStart(2, '0');
+  const endDateStr = `${eyyyy}-${emm}-${edd}`;
+  
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const sessionName = `${monthNames[startDate.getMonth()]} ${startDate.getMonth() < 5 ? 'Spring' : startDate.getMonth() < 8 ? 'Summer' : 'Fall'} ${startDate.getFullYear()}`;
+
+  await db.insert(AcademicSession).values({
+    id: sessionId,
+    userId,
+    name: sessionName,
+    startDate: startDateStr,
+    endDate: endDateStr,
+    targetPct: 75,
+    overallCalcMode: 'subject',
+    isArchived: false,
+    createdAt: now,
+  });
+
+  // 4. Create default Subjects
+  const defaultSubjects = [
+    { name: 'Mathematics', color: '#3b82f6' },
+    { name: 'Physics', color: '#ef4444' },
+    { name: 'Chemistry', color: '#10b981' },
+    { name: 'English', color: '#8b5cf6' },
+  ];
+
+  for (const sub of defaultSubjects) {
+    await db.insert(Subject).values({
+      id: genUserId(),
+      sessionId,
+      name: sub.name,
+      color: sub.color,
+      credits: 3,
+      isLab: false,
+      createdAt: now,
+    });
+  }
 
   const { session, rawToken } = await createSessionFor(userId, request);
   const user = (await db.select().from(User).where(eq(User.id, userId)))[0]!;
@@ -340,7 +395,30 @@ export async function signOut(
   const token = readCookie(request, SESSION_COOKIE);
   if (token) {
     const tokenHash = await hashToken(token);
-    await db.delete(Session).where(eq(Session.tokenHash, tokenHash));
+    const sessionRows = await db.select().from(Session).where(eq(Session.tokenHash, tokenHash));
+    const session = sessionRows[0];
+    if (session) {
+      const userRows = await db.select().from(User).where(eq(User.id, session.userId));
+      const user = userRows[0];
+      if (user && user.isAnonymous) {
+        const userId = user.id;
+        // Fetch all academic sessions to delete child records manually first (LibSQL doesn't cascade correctly)
+        const userSessions = await db.select({ id: AcademicSession.id }).from(AcademicSession).where(eq(AcademicSession.userId, userId));
+        for (const sess of userSessions) {
+          await db.delete(AttendanceLog).where(eq(AttendanceLog.sessionId, sess.id));
+          await db.delete(TimetableSlot).where(eq(TimetableSlot.sessionId, sess.id));
+          await db.delete(Day).where(eq(Day.sessionId, sess.id));
+          await db.delete(Subject).where(eq(Subject.sessionId, sess.id));
+        }
+        await db.delete(AcademicSession).where(eq(AcademicSession.userId, userId));
+        await db.delete(Account).where(eq(Account.userId, userId));
+        await db.delete(Session).where(eq(Session.userId, userId));
+        await db.delete(User).where(eq(User.id, userId));
+      } else {
+        // Regular user: only delete this session
+        await db.delete(Session).where(eq(Session.tokenHash, tokenHash));
+      }
+    }
   }
   return { ok: true, cookie: clearSessionCookie() };
 }
