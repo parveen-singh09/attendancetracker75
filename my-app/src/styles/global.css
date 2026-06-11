@@ -236,6 +236,15 @@ input[type="time"] {
 .btn-danger:hover:not(:disabled) {
   background-color: #b91c1c;
 }
+.btn-success {
+  background-color: transparent !important;
+  color: #16a34a !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.btn-success:hover:not(:disabled) {
+  background-color: var(--color-surface);
+}
 .btn-sm {
   padding: 0.4rem 0.75rem;
   font-size: 0.875rem;

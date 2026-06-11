@@ -138,6 +138,7 @@ const en: Dict = {
   'onboarding.timetable.pasteInput': 'Input',
   'onboarding.timetable.pastePreview': 'Preview',
   'onboarding.timetable.applySchedule': 'Apply Schedule',
+  'onboarding.timetable.applied': 'Applied',
 
   // Today page
   'today.title': 'Today',
@@ -421,6 +422,7 @@ const en: Dict = {
   'schedule.labelInput': 'Input',
   'schedule.labelPreview': 'Preview',
   'schedule.applySchedule': 'Apply Schedule',
+  'schedule.applied': 'Applied',
   'schedule.noSubjectsYet': 'No subjects or labs yet.',
   'schedule.noSubjectsHelp': 'Add at least one subject or lab in the pool below to start building your weekly schedule.',
   'schedule.parse.previewHint': 'Click "Parse" to preview.',
@@ -811,7 +813,8 @@ const hi: Dict = {
   'schedule.pasteExample': 'उदाहरण: Mon 09:00-10:00 Calculus · Tue 10:00-11:00 DS (Lab) @ 204',
   'schedule.labelInput': 'इनपुट',
   'schedule.labelPreview': 'पूर्वावलोकन',
-  'schedule.applySchedule': 'शेड्यूल लागू करें',
+  'schedule.applySchedule': 'शेड्यूل लागू करें',
+  'schedule.applied': 'लागू किया गया',
   'schedule.noSubjectsYet': 'अभी तक कोई विषय या लैब नहीं है।',
   'schedule.noSubjectsHelp': 'अपना साप्ताहिक शेड्यूल बनाना शुरू करने के लिए नीचे दिए गए पूल में कम से कम एक विषय या लैब जोड़ें।',
   'schedule.parse.previewHint': 'पूर्वावलोकन के लिए "Parse" पर क्लिक करें।',
@@ -1201,6 +1204,7 @@ const es: Dict = {
   'schedule.labelInput': 'Entrada',
   'schedule.labelPreview': 'Vista previa',
   'schedule.applySchedule': 'Aplicar horario',
+  'schedule.applied': 'Aplicado',
   'schedule.noSubjectsYet': 'Aún no hay asignaturas ni laboratorios.',
   'schedule.noSubjectsHelp': 'Añade al menos una asignatura o laboratorio al grupo de abajo para empezar a construir tu horario semanal.',
   'schedule.parse.previewHint': 'Haz clic en "Parse" para previsualizar.',

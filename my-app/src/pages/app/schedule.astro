@@ -212,5 +212,29 @@ const classesCount = slotRows.length;
     if (!lastResult || lastResult.slots.length === 0) return;
     // Dispatch a custom event the WeeklyGrid island listens for.
     window.dispatchEvent(new CustomEvent('at75:import-slots', { detail: lastResult.slots }));
+    
+    // Feedback: show "Applied"
+    const originalText = apply.textContent;
+    apply.textContent = tr('schedule.applied');
+    
+    // Force styles via JS to bypass any CSS conflicts
+    const originalBg = apply.style.backgroundColor;
+    const originalColor = apply.style.color;
+    const originalBorder = apply.style.borderColor;
+
+    apply.classList.remove('btn-primary');
+    apply.style.backgroundColor = 'transparent';
+    apply.style.color = '#16a34a'; // Green
+    apply.style.borderColor = 'transparent';
+    apply.style.fontWeight = '600';
+    
+    setTimeout(() => {
+      apply.textContent = originalText;
+      apply.classList.add('btn-primary');
+      apply.style.backgroundColor = originalBg;
+      apply.style.color = originalColor;
+      apply.style.borderColor = originalBorder;
+      apply.style.fontWeight = '';
+    }, 2000);
   });
 </script>

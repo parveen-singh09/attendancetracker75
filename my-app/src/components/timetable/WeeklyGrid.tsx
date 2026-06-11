@@ -34,10 +34,31 @@ const DAYS_FULL = [
   { short: 'Sat', long: 'Saturday' },
 ];
 
-const PALETTE = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-];
+function getRandomColor(seed?: string): string {
+  let h: number;
+  if (seed) {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    h = Math.abs(hash % 360);
+  } else {
+    h = Math.floor(Math.random() * 360);
+  }
+  // We use 70% saturation and 45% lightness for vibrant, accessible colors on light/dark backgrounds
+  return hslToHex(h, 70, 45);
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
 
 
 function toMin(t: string): number {
@@ -112,10 +133,10 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
 
   const initialSplit = splitEntries(initialSubjects);
   const [subjects, setSubjects] = useState<Entry[]>(
-    initialSplit.subjects.length ? initialSplit.subjects : [{ name: 'Subject 1', color: PALETTE[0]!, isLab: false }]
+    initialSplit.subjects.length ? initialSplit.subjects : [{ name: 'Subject 1', color: getRandomColor(), isLab: false }]
   );
   const [labs, setLabs] = useState<Entry[]>(
-    initialSplit.labs.length ? initialSplit.labs : [{ name: 'Lab 1', color: PALETTE[1]!, isLab: true }]
+    initialSplit.labs.length ? initialSplit.labs : [{ name: 'Lab 1', color: getRandomColor(), isLab: true }]
   );
   const [slots, setSlots] = useState<DraftSlot[]>(initialSlots);
   const [saving, setSaving] = useState(false);
@@ -208,17 +229,13 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     function onImport(e: Event) {
       const detail = (e as CustomEvent).detail as DraftSlot[];
       if (!Array.isArray(detail)) return;
-      const usedColors = new Set([...subjects, ...labs].map((x) => x.color));
       const newSubjects: Entry[] = [];
       const newLabs: Entry[] = [];
       for (const sl of detail) {
         const target = sl.isLab ? newLabs : newSubjects;
         const existing = sl.isLab ? labs : subjects;
         if (!existing.some((x) => x.name === sl.subjectName) && !target.some((x) => x.name === sl.subjectName)) {
-          const color =
-            PALETTE.find((c) => !usedColors.has(c) && !target.some((x) => x.color === c)) ?? PALETTE[0]!;
-          usedColors.add(color);
-          target.push({ name: sl.subjectName, color, isLab: sl.isLab });
+          target.push({ name: sl.subjectName, color: getRandomColor(sl.subjectName), isLab: sl.isLab });
         }
       }
       if (newSubjects.length) setSubjects((arr) => [...arr, ...newSubjects]);
@@ -229,23 +246,17 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     return () => window.removeEventListener('at75:import-slots', onImport);
   }, [subjects, labs]);
 
-  function nextColor(used: Set<string>): string {
-    return PALETTE.find((c) => !used.has(c)) ?? PALETTE[used.size % PALETTE.length]!;
-  }
-
   function addSubject() {
-    const used = new Set(subjects.map((s) => s.color));
     setSubjects([
       ...subjects,
-      { name: `Subject ${subjects.length + 1}`, color: nextColor(used), isLab: false },
+      { name: `Subject ${subjects.length + 1}`, color: getRandomColor(), isLab: false },
     ]);
   }
 
   function addLab() {
-    const used = new Set([...subjects, ...labs].map((s) => s.color));
     setLabs([
       ...labs,
-      { name: `Lab ${labs.length + 1}`, color: nextColor(used), isLab: true },
+      { name: `Lab ${labs.length + 1}`, color: getRandomColor(), isLab: true },
     ]);
   }
 
@@ -341,10 +352,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
             onAdd={addSubject}
             onRename={(idx, name) => renameInPool('subject', idx, name)}
             onRemove={(idx) => removeFromPool('subject', idx)}
-            onColorChange={(idx, color) =>
-              setSubjects((arr) => arr.map((x, j) => (j === idx ? { ...x, color } : x)))
-            }
-            palette={PALETTE}
             tr={tr}
           />
           <PoolEditor
@@ -354,10 +361,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
             onAdd={addLab}
             onRename={(idx, name) => renameInPool('lab', idx, name)}
             onRemove={(idx) => removeFromPool('lab', idx)}
-            onColorChange={(idx, color) =>
-              setLabs((arr) => arr.map((x, j) => (j === idx ? { ...x, color } : x)))
-            }
-            palette={PALETTE}
             emptyHint={tr('weeklyGrid.noLabs')}
             tr={tr}
           />
@@ -631,7 +634,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
 
 
 function PoolEditor({
-  kind, title, entries, onAdd, onRename, onRemove, onColorChange, palette, emptyHint, tr,
+  kind, title, entries, onAdd, onRename, onRemove, emptyHint, tr,
 }: {
   kind: 'subject' | 'lab';
   title: string;
@@ -639,8 +642,6 @@ function PoolEditor({
   onAdd: () => void;
   onRename: (idx: number, name: string) => void;
   onRemove: (idx: number) => void;
-  onColorChange: (idx: number, color: string) => void;
-  palette: string[];
   emptyHint?: string;
   tr: (key: string) => string;
 }) {
@@ -660,29 +661,28 @@ function PoolEditor({
       {entries.length === 0 && emptyHint && (
         <p className="mt-2 text-xs" style={{ color: 'var(--color-text-subtle)' }}>{emptyHint}</p>
       )}
-      <ul className="mt-2 space-y-1.5">
+      <ul className="mt-2 space-y-2">
         {entries.map((s, i) => (
-          <li key={i} className="flex items-center gap-2">
+          <li 
+            key={i} 
+            className="flex items-center gap-2 rounded-md border p-1 pl-2 pr-2" 
+            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}
+          >
             <span
               aria-hidden="true"
-              style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: s.color, flexShrink: 0 }}
+              style={{ width: 4, height: 24, borderRadius: 2, backgroundColor: s.color, flexShrink: 0 }}
             />
             <input
-              className="input flex-1"
+              className="input flex-1 !border-none !ring-0 !shadow-none !outline-none bg-transparent"
+              style={{ padding: '2px 8px', border: 'none' }}
               value={s.name}
               onChange={(e) => onRename(i, e.target.value)}
               placeholder={kind === 'lab' ? tr('weeklyGrid.labNamePlaceholder') : tr('weeklyGrid.subjectNamePlaceholder')}
               aria-label={`${title} ${i + 1} name`}
             />
-            <ColorSwatchPicker
-              value={s.color}
-              palette={palette}
-              onChange={(c) => onColorChange(i, c)}
-              ariaLabel={`${title} ${i + 1} color`}
-            />
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm h-auto min-w-0 p-1"
               onClick={() => onRemove(i)}
               aria-label={`${tr('weeklyGrid.remove')} ${s.name}`}
             >
@@ -692,97 +692,5 @@ function PoolEditor({
         ))}
       </ul>
     </div>
-  );
-}
-
-if (typeof window !== 'undefined') {
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement | null;
-    if (!target) return;
-    document.querySelectorAll('details.color-picker[open]').forEach((d) => {
-      if (!d.contains(target)) d.removeAttribute('open');
-    });
-  });
-}
-
-
-function ColorSwatchPicker({
-  value, palette, onChange, ariaLabel,
-}: {
-  value: string;
-  palette: string[];
-  onChange: (c: string) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <details className="relative color-picker">
-      <summary
-        aria-label={ariaLabel}
-        className="list-none cursor-pointer"
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 6,
-          border: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-bg)',
-          padding: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            backgroundColor: value,
-          }}
-        />
-      </summary>
-      <div
-        role="listbox"
-        aria-label={ariaLabel}
-        style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          right: 0,
-          zIndex: 20,
-          backgroundColor: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 8,
-          padding: 6,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 4,
-        }}
-      >
-        {palette.map((c) => {
-          const selected = c.toLowerCase() === value.toLowerCase();
-          return (
-            <button
-              key={c}
-              type="button"
-              role="option"
-              aria-selected={selected}
-              aria-label={c}
-              onClick={() => onChange(c)}
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                border: selected
-                  ? '2px solid var(--color-text)'
-                  : '2px solid transparent',
-                padding: 0,
-                cursor: 'pointer',
-                backgroundColor: c,
-                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)',
-              }}
-            />
-          );
-        })}
-      </div>
-    </details>
   );
 }

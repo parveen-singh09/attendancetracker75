@@ -120,10 +120,10 @@ function isActive(href: string): boolean {
     </div>
 
     {activeSession && (
-      <div class="border-b px-4 py-3 text-xs overflow-hidden transition-all duration-300 group-[data-state=closed]:h-14 group-[data-state=closed]:px-0 group-[data-state=closed]:py-0 group-[data-state=closed]:flex group-[data-state=closed]:items-center group-[data-state=closed]:justify-center shrink-0" style="border-color: var(--color-border); color: var(--color-text-subtle);">
+      <div class="border-b px-4 py-3 text-sm overflow-hidden transition-all duration-300 group-[data-state=closed]:h-14 group-[data-state=closed]:px-0 group-[data-state=closed]:py-0 group-[data-state=closed]:flex group-[data-state=closed]:items-center group-[data-state=closed]:justify-center shrink-0" style="border-color: var(--color-border); color: var(--color-text-subtle);">
         <div id="session-info-expanded" class="group-[data-state=closed]:hidden w-full">
           <div class="flex items-baseline justify-between gap-2">
-            <div class="font-medium truncate flex-1 group-[data-state=closed]:hidden" style="color: var(--color-text);">{activeSession.name}</div>
+            <div class="font-normal truncate flex-1 group-[data-state=closed]:hidden" style="color: var(--color-text);">{activeSession.name}</div>
             {sessionPct && <div id="sidebar-session-pct" class="num font-bold text-sm group-[data-state=closed]:hidden ml-2" style="color: var(--color-brand-600);">{Math.floor(parseFloat(sessionPct)) + '%'}</div>}
           </div>
         </div>
