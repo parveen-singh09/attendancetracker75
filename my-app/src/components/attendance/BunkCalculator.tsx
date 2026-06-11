@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { computeStats, type AttendanceLog, type DayOverride } from '../../lib/attendance';
+import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n';
 
 interface Props {
   target: number;
@@ -8,6 +9,33 @@ interface Props {
 }
 
 export default function BunkCalculator({ target, logs, days }: Props) {
+  const [locale, setLocale] = useState<Locale>('en');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocale(resolveLocale(saved));
+      }
+    } catch {}
+
+    const handleLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.locale) {
+        setLocale(detail.locale);
+      }
+    };
+    window.addEventListener('at75:locale-changed', handleLocaleChange);
+    return () => window.removeEventListener('at75:locale-changed', handleLocaleChange);
+  }, []);
+
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) {
+      return fmt(locale, key, params);
+    }
+    return t(locale, key);
+  };
+
   const [attended, setAttended] = useState<number | ''>('');
   const [held, setHeld] = useState<number | ''>('');
 
@@ -29,14 +57,14 @@ export default function BunkCalculator({ target, logs, days }: Props) {
 
   return (
     <div className="card">
-      <h3 className="text-base font-semibold">Quick calculator</h3>
+      <h3 className="text-base font-semibold">{tr('bunk.quickCalc.title')}</h3>
       <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-        Punch in two numbers. No account needed.
+        {tr('bunk.quickCalc.body')}
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="field">
-          <label className="field-label" htmlFor="attended">Classes attended</label>
+          <label className="field-label" htmlFor="attended">{tr('bunk.quickCalc.classesAttended')}</label>
           <input
             id="attended"
             type="number"
@@ -56,11 +84,11 @@ export default function BunkCalculator({ target, logs, days }: Props) {
             className="input num"
             inputMode="numeric"
             autoComplete="off"
-            placeholder="e.g. 42"
+            placeholder={tr('bunk.quickCalc.placeholderAttended')}
           />
         </div>
         <div className="field">
-          <label className="field-label" htmlFor="held">Classes held</label>
+          <label className="field-label" htmlFor="held">{tr('bunk.quickCalc.classesHeld')}</label>
           <input
             id="held"
             type="number"
@@ -80,20 +108,20 @@ export default function BunkCalculator({ target, logs, days }: Props) {
             className="input num"
             inputMode="numeric"
             autoComplete="off"
-            placeholder="e.g. 50"
+            placeholder={tr('bunk.quickCalc.placeholderHeld')}
           />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <Stat label="Current" value={`${pct}%`} tone={stats.safe} />
-        <Stat label="Can miss" value={stats.canMiss} hint={`stay ≥ ${target}%`} />
-        <Stat label="Need to attend" value={stats.mustAttend} hint="to reach target" />
+        <Stat label={tr('bunk.quickCalc.stat.current')} value={`${pct}%`} tone={stats.safe} />
+        <Stat label={tr('bunk.quickCalc.stat.canMiss')} value={stats.canMiss} hint={tr('bunk.quickCalc.stat.stayAbove', { target })} />
+        <Stat label={tr('bunk.quickCalc.stat.needToAttend')} value={stats.mustAttend} hint={tr('bunk.quickCalc.stat.toReachTarget')} />
       </div>
 
       {numHeld > 0 && numAttended > numHeld && (
         <p className="mt-2 text-xs" style={{ color: 'var(--color-danger)' }}>
-          Attended can&apos;t be greater than held.
+          {tr('bunk.quickCalc.errorAttendedGreater')}
         </p>
       )}
     </div>

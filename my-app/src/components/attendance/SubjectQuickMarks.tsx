@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n';
 
 type DbStatus = 'present' | 'absent' | 'extra' | 'off';
 
@@ -34,6 +35,33 @@ function kindToDbStatus(k: CounterKind): DbStatus {
 }
 
 export default function SubjectQuickMarks({ date, subjects: initial, targetPct, calcMode, initialOverall }: Props) {
+  const [locale, setLocale] = useState<Locale>('en');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocale(resolveLocale(saved));
+      }
+    } catch {}
+
+    const handleLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.locale) {
+        setLocale(detail.locale);
+      }
+    };
+    window.addEventListener('at75:locale-changed', handleLocaleChange);
+    return () => window.removeEventListener('at75:locale-changed', handleLocaleChange);
+  }, []);
+
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) {
+      return fmt(locale, key, params);
+    }
+    return t(locale, key);
+  };
+
   const [subjects, setSubjects] = useState<Subject[]>(initial);
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null);
 
@@ -84,13 +112,13 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 
     // Update Today Page Fraction
     const todayFracEl = document.getElementById('today-overall-fraction');
-    if (todayFracEl) todayFracEl.textContent = `${newAttended}/${newHeld} attended`;
+    if (todayFracEl) todayFracEl.textContent = tr('today.attendedOf', { attended: newAttended, held: newHeld });
 
     // Update Today Page Extra
     const todayExtraEl = document.getElementById('today-overall-extra');
     if (todayExtraEl) {
       if (newExtra > 0) {
-        todayExtraEl.textContent = ` · +${newExtra} extra`;
+        todayExtraEl.textContent = tr('today.extraCount', { extra: newExtra });
         todayExtraEl.style.display = 'inline';
       } else {
         todayExtraEl.style.display = 'none';
@@ -125,7 +153,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         (progressFill as HTMLElement).style.backgroundColor = barTone;
       }
     }
-  }, [subjects, initial, initialOverall, targetPct]);
+  }, [subjects, initial, initialOverall, targetPct, locale]);
 
   function showToast(message: string, undo?: () => void) {
     setToast({ message, undo });
@@ -133,7 +161,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
   }
 
   function recompute(s: Subject): Subject {
-   const explicitHeld = s.regular + s.absent;
+    const explicitHeld = s.regular + s.absent;
     const held = s.off
       ? 0
       : (s.regular + s.absent + s.extra === 0 && s.hasRegularSlot ? explicitHeld + 1 : explicitHeld);
@@ -197,10 +225,15 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         } else {
           await callApi(s, kind, 'remove');
         }
-        showToast(`${s.name} marked ${optimistic.off ? 'Off' : 'no longer Off'}.`, () => change(prev, kind, 1));
+        showToast(
+          optimistic.off
+            ? tr('quickMarks.toast.markedOff', { name: s.name })
+            : tr('quickMarks.toast.markedNotOff', { name: s.name }),
+          () => change(prev, kind, 1)
+        );
       } catch (e) {
         setSubjects((arr) => arr.map((x) => x.id === s.id ? prev : x));
-        showToast('Couldn\'t save. Please try again.');
+        showToast(tr('dailyGrid.toast.saveFailed'));
       }
       return;
     }
@@ -208,7 +241,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     // Defense-in-depth: if the class is marked Off, don't fire the request.
     // The server would reject it with 409, but skipping saves a round trip.
     if (s.off) {
-      showToast(`${s.name} is marked Off. Clear Off first.`);
+      showToast(tr('quickMarks.toast.isOffClearFirst', { name: s.name }));
       return;
     }
 
@@ -224,21 +257,23 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     setSubjects((arr) => arr.map((x) => x.id === s.id ? optimistic : x));
     try {
       await callApi(s, kind, delta === 1 ? 'add' : 'remove');
-      const verb =
-        kind === 'regular' ? (delta === 1 ? '+ Regular' : '− Regular') :
-        kind === 'absent'  ? (delta === 1 ? '+ Absent'  : '− Absent') :
-                              (delta === 1 ? '+ Extra'   : '− Extra');
-      showToast(`${s.name} ${verb}.`, () => change(prev, kind, delta === 1 ? -1 : 1));
+      const action =
+        kind === 'regular'
+          ? (delta === 1 ? tr('quickMarks.action.addRegular') : tr('quickMarks.action.removeRegular'))
+          : kind === 'absent'
+          ? (delta === 1 ? tr('quickMarks.action.addAbsent') : tr('quickMarks.action.removeAbsent'))
+          : (delta === 1 ? tr('quickMarks.action.addExtra') : tr('quickMarks.action.removeExtra'));
+      showToast(tr('quickMarks.toast.action', { name: s.name, action }), () => change(prev, kind, delta === 1 ? -1 : 1));
     } catch (e) {
       setSubjects((arr) => arr.map((x) => x.id === s.id ? prev : x));
-      showToast('Couldn\'t save. Please try again.');
+      showToast(tr('dailyGrid.toast.saveFailed'));
     }
   }
 
   if (subjects.length === 0) {
     return (
       <div className="card text-center" style={{ padding: '1.5rem' }}>
-        <p style={{ color: 'var(--color-text-subtle)' }}>No subjects in this session yet.</p>
+        <p style={{ color: 'var(--color-text-subtle)' }}>{tr('quickMarks.noSubjects')}</p>
       </div>
     );
   }
@@ -277,7 +312,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
                 {(s.code || s.isLab) && (
                   <span className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5" style={{ color: 'var(--color-text-subtle)' }}>
                     {s.code && <span className="num">{s.code}</span>}
-                    {s.isLab && <span className="rounded px-1 py-0.5 text-[10px] font-medium uppercase" style={{ backgroundColor: 'var(--color-surface-2)' }}>Lab</span>}
+                    {s.isLab && <span className="rounded px-1 py-0.5 text-[10px] font-medium uppercase" style={{ backgroundColor: 'var(--color-surface-2)' }}>{tr('dailyGrid.labLabel')}</span>}
                   </span>
                 )}
               </span>
@@ -285,35 +320,39 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 
             <span className="grid gap-1.5 grid-cols-2 sm:grid-cols-4">
               <Counter
-                label="Regular"
+                label={tr('quickMarks.labelRegular')}
                 value={s.regular}
                 onAdd={() => change(s, 'regular', 1)}
                 onRemove={() => change(s, 'regular', -1)}
                 tone="safe"
                 disabled={s.off}
-                disabledReason="Class is Off"
+                disabledReason={tr('quickMarks.disabledReason')}
+                tr={tr}
               />
               <Counter
-                label="Absent"
+                label={tr('quickMarks.labelAbsent')}
                 value={s.absent || (s.regular === 0 && s.extra === 0 && s.hasRegularSlot && !s.off ? 1 : 0)}
                 onAdd={() => change(s, 'absent', 1)}
                 onRemove={() => change(s, 'absent', -1)}
                 tone="danger"
                 disabled={s.off}
-                disabledReason="Class is Off"
+                disabledReason={tr('quickMarks.disabledReason')}
+                tr={tr}
               />
               <Counter
-                label="Extra"
+                label={tr('quickMarks.labelExtra')}
                 value={s.extra}
                 onAdd={() => change(s, 'extra', 1)}
                 onRemove={() => change(s, 'extra', -1)}
                 tone="brand"
                 disabled={s.off}
-                disabledReason="Class is Off"
+                disabledReason={tr('quickMarks.disabledReason')}
+                tr={tr}
               />
               <OffToggle
                 on={s.off}
                 onToggle={() => change(s, 'off', 1)}
+                tr={tr}
               />
             </span>
           </li>
@@ -324,17 +363,17 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         <div className="flex gap-1.5">
           <span className="opacity-60">•</span>
           <span>
-            <strong style={{ color: 'var(--color-text)' }}>Note:</strong> Classes are marked <strong style={{ color: 'var(--color-danger)' }}>Absent</strong> if no logs exist.
+            <strong style={{ color: 'var(--color-text)' }}>{tr('quickMarks.notes.header')}</strong> {tr('quickMarks.notes.absentIfNoLogs', { absent: tr('quickMarks.labelAbsent') })}
           </span>
         </div>
         <div className="flex gap-1.5">
           <span className="opacity-60">•</span>
-          <span>Increase Regular or Extra to remove an absence.</span>
+          <span>{tr('quickMarks.notes.increaseRegularOrExtra')}</span>
         </div>
-        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Regular</strong> counts in total classes.</span></div>
-        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Extra</strong> boosts attendance.</span></div>
-        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>Off</strong> removes class.</span></div>
-        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span>Use <strong>+</strong> / <strong>−</strong> to log events.</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>{tr('quickMarks.labelRegular')}</strong> {tr('quickMarks.notes.regularCounts')}</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>{tr('quickMarks.labelExtra')}</strong> {tr('quickMarks.notes.extraBoosts')}</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span><strong>{tr('quickMarks.labelOff')}</strong> {tr('quickMarks.notes.offRemoves')}</span></div>
+        <div className="flex gap-1.5"><span className="opacity-60">•</span> <span>{tr('quickMarks.notes.usePlusMinus')}</span></div>
       </div>
 
       {toast && (
@@ -349,7 +388,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
                   setToast(null);
                 }}
               >
-                Undo
+                {tr('dailyGrid.undo')}
               </button>
             )}
           </div>
@@ -360,7 +399,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 }
 
 function Counter({
-  label, value, onAdd, onRemove, tone, disabled = false, disabledReason,
+  label, value, onAdd, onRemove, tone, disabled = false, disabledReason, tr
 }: {
   label: string;
   value: number;
@@ -369,6 +408,7 @@ function Counter({
   tone: 'safe' | 'danger' | 'brand';
   disabled?: boolean;
   disabledReason?: string;
+  tr: any;
 }) {
   const activeColor =
     tone === 'safe' ? 'var(--color-safe)' :
@@ -387,7 +427,7 @@ function Counter({
         type="button"
         onClick={onRemove}
         disabled={minusDisabled}
-        aria-label={`Remove one ${label}`}
+        aria-label={tr('quickMarks.ariaLabelRemove', { label })}
         className="num"
         style={{
           width: 32,
@@ -428,7 +468,7 @@ function Counter({
         type="button"
         onClick={onAdd}
         disabled={plusDisabled}
-        aria-label={`Add one ${label}`}
+        aria-label={tr('quickMarks.ariaLabelAdd', { label })}
         title={plusDisabled ? disabledReason : undefined}
         className="num"
         style={{
@@ -451,13 +491,13 @@ function Counter({
   );
 }
 
-function OffToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+function OffToggle({ on, onToggle, tr }: { on: boolean; onToggle: () => void; tr: any }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={on}
-      aria-label={on ? 'Day off — click to undo' : 'Mark day as off (no class)'}
+      aria-label={on ? tr('quickMarks.ariaLabelRemove', { label: tr('quickMarks.labelOff') }) : tr('quickMarks.ariaLabelAdd', { label: tr('quickMarks.labelOff') })}
       className="rounded-lg border flex flex-col items-center justify-center"
       style={{
         minHeight: 44,
@@ -468,10 +508,10 @@ function OffToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       }}
     >
       <span style={{ fontWeight: 600, fontSize: 14 }}>
-        {on ? (<><span aria-hidden="true">✓</span> Off</>) : 'Off'}
+        {on ? (<><span aria-hidden="true">✓</span> {tr('quickMarks.labelOff')}</>) : tr('quickMarks.labelOff')}
       </span>
       <span className="text-[10px] uppercase tracking-wide mt-0.5" style={{ color: on ? 'white' : 'var(--color-text-subtle)', opacity: on ? 0.85 : 1 }}>
-        No class
+        {tr('quickMarks.labelNoClass')}
       </span>
     </button>
   );

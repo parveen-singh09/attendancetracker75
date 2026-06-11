@@ -19,16 +19,16 @@ const sess = (await db
   <div class="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
     
     <div class="flex items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold tracking-tight">Settings</h1>
-      <a href="/app/today" class="btn btn-ghost btn-sm">Back to Dashboard</a>
+      <h1 class="text-2xl font-semibold tracking-tight" data-i18n="settings.title">Settings</h1>
+      <a href="/app/today" class="btn btn-ghost btn-sm" data-i18n="settings.backToDashboard">Back to Dashboard</a>
     </div>
 
     <section class="card mt-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-base font-semibold">Profile</h2>
-        <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full" style="background-color: var(--color-brand-600); color: white;">Active User</span>
+        <h2 class="text-base font-semibold" data-i18n="settings.profile.title">Profile</h2>
+        <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full" style="background-color: var(--color-brand-600); color: white;" data-i18n="settings.profile.activeUser">Active User</span>
       </div>
-      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Manage your personal identity in the app.</p>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="settings.profile.subtitle">Manage your personal identity in the app.</p>
       
       <form id="profile-form" class="mt-4 space-y-4">
         <input type="hidden" id="avatar-data-input" name="avatar_data" value={user.image || ''} />
@@ -39,7 +39,7 @@ const sess = (await db
             </div>
             <div class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
-                <label for="avatar-upload" class="btn btn-secondary btn-sm" style="margin: 0; min-height: unset; cursor: pointer;">
+                <label for="avatar-upload" class="btn btn-secondary btn-sm" style="margin: 0; min-height: unset; cursor: pointer;" data-i18n="settings.profile.uploadPhoto">
                   Upload Photo
                   <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" class="hidden" style="display: none;" />
                 </label>
@@ -48,6 +48,7 @@ const sess = (await db
                   id="remove-avatar-btn"
                   class="btn btn-ghost btn-sm text-red-600 dark:text-red-400"
                   style={`min-height: unset; ${user.image ? 'display: inline-flex;' : 'display: none;'}`}
+                  data-i18n="settings.profile.removePhoto"
                 >
                   Remove
                 </button>
@@ -56,11 +57,12 @@ const sess = (await db
                   id="remove-avatar-btn-dynamic"
                   class="btn btn-ghost btn-sm text-red-600 dark:text-red-400"
                   style="min-height: unset; display: none;"
+                  data-i18n="settings.profile.removePhoto"
                 >
                   Remove
                 </button>
               </div>
-              <div class="text-xs" style="color: var(--color-text-subtle);">
+              <div class="text-xs" style="color: var(--color-text-subtle);" data-i18n="settings.profile.uploadHelp">
                 PNG, JPG or WEBP. Max 5MB.
               </div>
             </div>
@@ -69,81 +71,82 @@ const sess = (await db
         </div>
 
         <div class="field">
-          <label class="field-label" for="name">Display Name</label>
+          <label class="field-label" for="name" data-i18n="settings.profile.labelName">Display Name</label>
           <input id="name" name="name" type="text" class="input" value={user.name} required maxlength="100" />
         </div>
 
         <div class="field">
-          <label class="field-label" for="email">Email Address</label>
+          <label class="field-label" for="email" data-i18n="settings.profile.labelEmail">Email Address</label>
           <input id="email" name="email" type="email" class="input" value={user.email} disabled style="cursor: not-allowed; opacity: 0.6; background-color: var(--color-surface-2);" />
         </div>
 
         <div id="profile-msg" class="text-sm font-medium" hidden></div>
 
-        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="submit" class="btn btn-primary" data-i18n="settings.profile.btnSave">Save Changes</button>
       </form>
     </section>
 
     <section class="card mt-6">
-      <h2 class="text-base font-semibold">Appearance</h2>
-      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Customize the interface to match your preference.</p>
+      <h2 class="text-base font-semibold" data-i18n="settings.appearance.title">Appearance</h2>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="settings.appearance.subtitle">Customize the interface to match your preference.</p>
       
       <div class="mt-4 flex items-center justify-between p-4 rounded-xl border" style="border-color: var(--color-border); background-color: var(--color-surface-2);">
         <div class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium">Dark Mode</span>
-          <span class="text-xs" style="color: var(--color-text-subtle);">Switch between light and dark themes</span>
+          <span class="text-sm font-medium" data-i18n="settings.appearance.darkMode">Dark Mode</span>
+          <span class="text-xs" style="color: var(--color-text-subtle);" data-i18n="settings.appearance.darkModeDesc">Switch between light and dark themes</span>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs font-medium uppercase tracking-wider opacity-60">Toggle</span>
+          <span class="text-xs font-medium uppercase tracking-wider opacity-60" data-i18n="settings.appearance.toggle">Toggle</span>
           <ThemeToggle />
         </div>
       </div>
       
-      <p class="mt-3 text-[10px]" style="color: var(--color-text-subtle);">
+      <p class="mt-3 text-[10px]" style="color: var(--color-text-subtle);" data-i18n="settings.appearance.tip">
         Tip: The app will remember your choice across all your devices using local storage.
       </p>
     </section>
 
     {sess && (
       <section class="card mt-6">
-        <h2 class="text-base font-semibold">Attendance Settings</h2>
-        <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Configure how your attendance is calculated for "{sess.name}".</p>
+        <h2 class="text-base font-semibold" data-i18n="settings.attendance.title">Attendance Settings</h2>
+        <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="settings.attendance.subtitle" data-i18n-params={JSON.stringify({ name: sess.name })}>Configure how your attendance is calculated for "{sess.name}".</p>
         
         <form id="session-form" class="mt-4 space-y-4">
           <input type="hidden" name="id" value={sess.id} />
           
           <div class="field">
-            <label class="field-label" for="overallCalcMode">Overall Attendance Basis</label>
+            <label class="field-label" for="overallCalcMode" data-i18n="settings.attendance.labelBasis">Overall Attendance Basis</label>
             <select id="overallCalcMode" name="overallCalcMode" class="select">
-              <option value="subject" selected={sess.overallCalcMode === 'subject'}>Subjects only (Default)</option>
-              <option value="lab" selected={sess.overallCalcMode === 'lab'}>Labs only</option>
-              <option value="both" selected={sess.overallCalcMode === 'both'}>Both Subjects and Labs</option>
+              <option value="subject" selected={sess.overallCalcMode === 'subject'} data-i18n="settings.attendance.optionSubject">Subjects only (Default)</option>
+              <option value="lab" selected={sess.overallCalcMode === 'lab'} data-i18n="settings.attendance.optionLab">Labs only</option>
+              <option value="both" selected={sess.overallCalcMode === 'both'} data-i18n="settings.attendance.optionBoth">Both Subjects and Labs</option>
             </select>
-            <p class="field-hint">Choose which types of classes contribute to your overall attendance percentage on the dashboard.</p>
+            <p class="field-hint" data-i18n="settings.attendance.hintBasis">Choose which types of classes contribute to your overall attendance percentage on the dashboard.</p>
           </div>
 
           <div class="field">
-            <label class="field-label" for="targetPct">Target Percentage (%)</label>
+            <label class="field-label" for="targetPct" data-i18n="settings.attendance.labelTarget">Target Percentage (%)</label>
             <input id="targetPct" name="targetPct" type="number" class="input num" value={sess.targetPct} min="50" max="100" step="1" required />
-            <p class="field-hint">The minimum attendance percentage you want to maintain.</p>
+            <p class="field-hint" data-i18n="settings.attendance.hintTarget">The minimum attendance percentage you want to maintain.</p>
           </div>
 
           <div id="session-msg" class="text-sm font-medium" hidden></div>
 
-          <button type="submit" class="btn btn-primary">Update Session Settings</button>
+          <button type="submit" class="btn btn-primary" data-i18n="settings.attendance.btnUpdate">Update Session Settings</button>
         </form>
       </section>
     )}
 
     <section class="card mt-6 border-danger" style="border-color: color-mix(in oklab, var(--color-danger) 30%, var(--color-border));">
-      <h2 class="text-base font-semibold text-danger" style="color: var(--color-danger);">Danger Zone</h2>
-      <p class="mt-1 text-sm" style="color: var(--color-text-muted);">Once you delete your account, there is no going back. Please be certain.</p>
+      <h2 class="text-base font-semibold text-danger" style="color: var(--color-danger);" data-i18n="settings.danger.title">Danger Zone</h2>
+      <p class="mt-1 text-sm" style="color: var(--color-text-muted);" data-i18n="settings.danger.subtitle">Once you delete your account, there is no going back. Please be certain.</p>
       
       <div class="mt-4 pt-4 border-t" style="border-color: var(--color-border);">
         <button
           type="button"
           id="delete-btn"
           class="btn btn-danger btn-sm"
+          data-i18n="settings.danger.btnDelete"
         >
           Delete Account and All Data
         </button>
@@ -152,292 +155,305 @@ const sess = (await db
   </div>
 </AppLayout>
 
-<script is:inline>
-  // Profile Update
-  (function() {
+<script>
+  import { resolveLocale, STORAGE_KEY, t, fmt } from '../../lib/i18n';
+
+  const getLocale = () => {
+    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+    catch { return 'en'; }
+  };
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) return fmt(getLocale(), key, params);
+    return t(getLocale(), key);
+  };
+
+  function initSettings() {
+    // Profile Update
     const form = document.getElementById('profile-form');
     const msg = document.getElementById('profile-msg');
-    if (!form) return;
+    if (form) {
+      const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement | null;
+      const avatarError = document.getElementById('avatar-error');
+      const avatarContainer = document.getElementById('avatar-container');
+      const removeAvatarBtn = document.getElementById('remove-avatar-btn');
+      const removeAvatarBtnDynamic = document.getElementById('remove-avatar-btn-dynamic');
+      const avatarDataInput = document.getElementById('avatar-data-input') as HTMLInputElement | null;
 
-    const avatarUpload = document.getElementById('avatar-upload');
-    const avatarError = document.getElementById('avatar-error');
-    const avatarContainer = document.getElementById('avatar-container');
-    const removeAvatarBtn = document.getElementById('remove-avatar-btn');
-    const removeAvatarBtnDynamic = document.getElementById('remove-avatar-btn-dynamic');
-    const avatarDataInput = document.getElementById('avatar-data-input');
+      if (avatarUpload) {
+        avatarUpload.addEventListener('change', (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (!file) return;
 
-    if (avatarUpload) {
-      avatarUpload.addEventListener('change', (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (avatarError) {
-          avatarError.style.display = 'none';
-          avatarError.textContent = '';
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
           if (avatarError) {
-            avatarError.textContent = 'File is too large. Max size is 5MB.';
-            avatarError.style.display = 'block';
+            avatarError.style.display = 'none';
+            avatarError.textContent = '';
           }
-          avatarUpload.value = '';
-          return;
-        }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxDim = 256;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > maxDim) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              }
-            } else {
-              if (height > maxDim) {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, width, height);
-            }
-
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            if (avatarDataInput) {
-              avatarDataInput.value = dataUrl;
-            }
-
-            // Update preview image
-            if (avatarContainer) {
-              avatarContainer.replaceChildren();
-              const imgElem = document.createElement('img');
-              imgElem.src = dataUrl;
-              imgElem.alt = 'Avatar Preview';
-              imgElem.style.width = '64px';
-              imgElem.style.height = '64px';
-              imgElem.style.borderRadius = '32px';
-              imgElem.style.objectFit = 'cover';
-              imgElem.style.flexShrink = '0';
-              avatarContainer.appendChild(imgElem);
-            }
-
-            if (removeAvatarBtn) removeAvatarBtn.style.display = 'none';
-            if (removeAvatarBtnDynamic) removeAvatarBtnDynamic.style.display = 'inline-flex';
-          };
-          img.onerror = () => {
+          if (file.size > 5 * 1024 * 1024) {
             if (avatarError) {
-              avatarError.textContent = 'Failed to load image file.';
+              avatarError.textContent = tr('settings.profile.errorLargeFile');
               avatarError.style.display = 'block';
             }
+            avatarUpload.value = '';
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxDim = 256;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > maxDim) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                }
+              } else {
+                if (height > maxDim) {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+              }
+
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              if (avatarDataInput) {
+                avatarDataInput.value = dataUrl;
+              }
+
+              if (avatarContainer) {
+                avatarContainer.replaceChildren();
+                const imgElem = document.createElement('img');
+                imgElem.src = dataUrl;
+                imgElem.alt = 'Avatar Preview';
+                imgElem.style.width = '64px';
+                imgElem.style.height = '64px';
+                imgElem.style.borderRadius = '32px';
+                imgElem.style.objectFit = 'cover';
+                imgElem.style.flexShrink = '0';
+                avatarContainer.appendChild(imgElem);
+              }
+
+              if (removeAvatarBtn) removeAvatarBtn.style.display = 'none';
+              if (removeAvatarBtnDynamic) removeAvatarBtnDynamic.style.display = 'inline-flex';
+            };
+            img.onerror = () => {
+              if (avatarError) {
+                avatarError.textContent = tr('settings.profile.errorLoadImage');
+                avatarError.style.display = 'block';
+              }
+            };
+            img.src = event.target?.result as string;
           };
-          img.src = event.target?.result;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const handleRemoveAvatar = () => {
+        if (avatarDataInput) {
+          avatarDataInput.value = '';
+        }
+        if (avatarContainer) {
+          avatarContainer.replaceChildren();
+          
+          const nameInput = document.getElementById('name') as HTMLInputElement | null;
+          const nameVal = nameInput ? nameInput.value.trim() : 'User';
+          const initials = nameVal.split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
+          
+          const span = document.createElement('span');
+          span.className = 'avatar num';
+          span.textContent = initials;
+          span.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+            font-size: 27px;
+            line-height: 1;
+            flex-shrink: 0;
+            user-select: none;
+          `;
+          avatarContainer.appendChild(span);
+        }
+        if (removeAvatarBtn) removeAvatarBtn.style.display = 'none';
+        if (removeAvatarBtnDynamic) removeAvatarBtnDynamic.style.display = 'none';
+        if (avatarUpload) avatarUpload.value = '';
+      };
+
+      if (removeAvatarBtn) {
+        removeAvatarBtn.addEventListener('click', handleRemoveAvatar);
+      }
+      if (removeAvatarBtnDynamic) {
+        removeAvatarBtnDynamic.addEventListener('click', handleRemoveAvatar);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        const formData = new FormData(form as HTMLFormElement);
+        const data = {
+          name: formData.get('name'),
+          image: formData.get('avatar_data') || null
         };
-        reader.readAsDataURL(file);
+
+        btn.disabled = true;
+        btn.textContent = tr('settings.profile.saving');
+        if (msg) msg.hidden = true;
+
+        try {
+          const res = await fetch('/api/account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          if (res.ok) {
+            if (msg) {
+              msg.textContent = tr('settings.profile.success');
+              msg.style.color = 'var(--color-safe)';
+              msg.hidden = false;
+            }
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            const err = await res.json();
+            if (msg) {
+              msg.textContent = err.error || tr('settings.profile.errorGeneric');
+              msg.style.color = 'var(--color-danger)';
+              msg.hidden = false;
+            }
+          }
+        } catch (e) {
+          if (msg) {
+            msg.textContent = tr('error.network');
+            msg.style.color = 'var(--color-danger)';
+            msg.hidden = false;
+          }
+        } finally {
+          btn.disabled = false;
+          btn.textContent = tr('settings.profile.btnSave');
+        }
       });
     }
 
-    const handleRemoveAvatar = () => {
-      if (avatarDataInput) {
-        avatarDataInput.value = '';
-      }
-      if (avatarContainer) {
-        avatarContainer.replaceChildren();
-        
-        const nameInput = document.getElementById('name');
-        const nameVal = nameInput ? nameInput.value.trim() : 'User';
-        const initials = nameVal.split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        
-        const span = document.createElement('span');
-        span.className = 'avatar num';
-        span.textContent = initials;
-        span.style.cssText = `
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 64px;
-          height: 64px;
-          border-radius: 32px;
-          background-color: #3b82f6;
-          color: white;
-          font-weight: 600;
-          font-size: 27px;
-          line-height: 1;
-          flex-shrink: 0;
-          user-select: none;
-        `;
-        avatarContainer.appendChild(span);
-      }
-      if (removeAvatarBtn) removeAvatarBtn.style.display = 'none';
-      if (removeAvatarBtnDynamic) removeAvatarBtnDynamic.style.display = 'none';
-      if (avatarUpload) avatarUpload.value = '';
-    };
+    // Session Settings Update
+    const sessionForm = document.getElementById('session-form');
+    const sessionMsg = document.getElementById('session-msg');
+    if (sessionForm) {
+      sessionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = sessionForm.querySelector('button[type="submit"]') as HTMLButtonElement;
+        const formData = new FormData(sessionForm as HTMLFormElement);
+        const id = formData.get('id');
+        const data = {
+          overallCalcMode: formData.get('overallCalcMode'),
+          targetPct: Number(formData.get('targetPct'))
+        };
 
-    if (removeAvatarBtn) {
-      removeAvatarBtn.addEventListener('click', handleRemoveAvatar);
-    }
-    if (removeAvatarBtnDynamic) {
-      removeAvatarBtnDynamic.addEventListener('click', handleRemoveAvatar);
-    }
+        btn.disabled = true;
+        btn.textContent = tr('settings.profile.saving');
+        if (sessionMsg) sessionMsg.hidden = true;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = form.querySelector('button[type="submit"]');
-      const formData = new FormData(form);
-      const data = {
-        name: formData.get('name'),
-        image: formData.get('avatar_data') || null
-      };
+        try {
+          const res = await fetch(`/api/sessions/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
 
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-      msg.hidden = true;
-
-      try {
-        const res = await fetch('/api/account', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-          msg.textContent = 'Profile updated successfully!';
-          msg.style.color = 'var(--color-safe)';
-          msg.hidden = false;
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          const err = await res.json();
-          msg.textContent = err.error || 'Failed to update profile.';
-          msg.style.color = 'var(--color-danger)';
-          msg.hidden = false;
+          if (res.ok) {
+            if (sessionMsg) {
+              sessionMsg.textContent = tr('settings.attendance.success');
+              sessionMsg.style.color = 'var(--color-safe)';
+              sessionMsg.hidden = false;
+            }
+          } else {
+            const err = await res.json();
+            if (sessionMsg) {
+              sessionMsg.textContent = err.error?.message || tr('settings.attendance.errorGeneric');
+              sessionMsg.style.color = 'var(--color-danger)';
+              sessionMsg.hidden = false;
+            }
+          }
+        } catch (e) {
+          if (sessionMsg) {
+            sessionMsg.textContent = tr('error.network');
+            sessionMsg.style.color = 'var(--color-danger)';
+            sessionMsg.hidden = false;
+          }
+        } finally {
+          btn.disabled = false;
+          btn.textContent = tr('settings.attendance.btnUpdate');
         }
-      } catch (e) {
-        msg.textContent = 'Network error. Please try again.';
-        msg.style.color = 'var(--color-danger)';
-        msg.hidden = false;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save Changes';
-      }
-    });
-  })();
+      });
+    }
 
-  // Session Settings Update
-  (function() {
-    const form = document.getElementById('session-form');
-    const msg = document.getElementById('session-msg');
-    if (!form) return;
+    // Delete Account
+    const deleteBtn = document.getElementById('delete-btn') as HTMLButtonElement | null;
+    if (deleteBtn) {
+      const emailInput = document.getElementById('email') as HTMLInputElement | null;
+      const userEmail = emailInput ? String(emailInput.value).trim() : '';
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = form.querySelector('button[type="submit"]');
-      const formData = new FormData(form);
-      const id = formData.get('id');
-      const data = {
-        overallCalcMode: formData.get('overallCalcMode'),
-        targetPct: Number(formData.get('targetPct'))
-      };
-
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-      msg.hidden = true;
-
-      try {
-        const res = await fetch(`/api/sessions/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-          msg.textContent = 'Attendance settings updated!';
-          msg.style.color = 'var(--color-safe)';
-          msg.hidden = false;
-        } else {
-          const err = await res.json();
-          msg.textContent = err.error?.message || 'Failed to update settings.';
-          msg.style.color = 'var(--color-danger)';
-          msg.hidden = false;
-        }
-      } catch (e) {
-        msg.textContent = 'Network error. Please try again.';
-        msg.style.color = 'var(--color-danger)';
-        msg.hidden = false;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Update Session Settings';
-      }
-    });
-  })();
-
-  // Delete Account
-  (function() {
-    const btn = document.getElementById('delete-btn');
-    if (!btn) return;
-
-    // We need the user's email to confirm the deletion. The settings
-    // page already renders it as the #email input value, so read it
-    // from the DOM (single source of truth for what's shown to the user).
-    const emailInput = document.getElementById('email');
-    const userEmail = emailInput ? String(emailInput.value).trim() : '';
-
-    btn.addEventListener('click', async () => {
-      if (!confirm('Are you absolutely sure you want to delete your account? This will permanently remove all your attendance data, subjects, and sessions. This action CANNOT be undone.')) {
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Deleting...';
-
-      try {
-        const res = await fetch('/api/account', {
-          method: 'DELETE',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            confirm: 'DELETE MY ACCOUNT',
-            email: userEmail,
-          }),
-        });
-
-        if (res.ok) {
-          window.location.href = '/?deleted=1';
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm(tr('settings.danger.confirmText'))) {
           return;
         }
 
-        // Surface the real reason. The server returns `error` as either a
-        // string (e.g. "Email mismatch") or an object (e.g. for rate-limit
-        // responses: { code, message }). Read both shapes, fall back to
-        // the status code if the body isn't JSON.
-        let detail = '';
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = tr('settings.danger.deleting');
+
         try {
-          const body = await res.json();
-          if (typeof body?.error === 'string') detail = body.error;
-          else if (body?.error?.message) detail = body.error.message;
-          else if (body?.message) detail = body.message;
-        } catch (_) {
-          detail = `HTTP ${res.status}`;
+          const res = await fetch('/api/account', {
+            method: 'DELETE',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              confirm: 'DELETE MY ACCOUNT',
+              email: userEmail,
+            }),
+          });
+
+          if (res.ok) {
+            window.location.href = '/?deleted=1';
+            return;
+          }
+
+          let detail = '';
+          try {
+            const body = await res.json();
+            if (typeof body?.error === 'string') detail = body.error;
+            else if (body?.error?.message) detail = body.error.message;
+            else if (body?.message) detail = body.message;
+          } catch (_) {
+            detail = `HTTP ${res.status}`;
+          }
+          if (!detail) detail = `HTTP ${res.status}`;
+          console.error('[delete-account] failed', res.status, detail);
+          alert(tr('settings.danger.errorDelete', { error: detail }));
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = tr('settings.danger.btnDelete');
+        } catch (e) {
+          console.error('[delete-account] network error', e);
+          alert(tr('error.network'));
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = tr('settings.danger.btnDelete');
         }
-        if (!detail) detail = `HTTP ${res.status}`;
-        console.error('[delete-account] failed', res.status, detail);
-        alert(`Failed to delete account: ${detail}`);
-        btn.disabled = false;
-        btn.textContent = 'Delete Account and All Data';
-      } catch (e) {
-        console.error('[delete-account] network error', e);
-        alert('Network error. Please try again.');
-        btn.disabled = false;
-        btn.textContent = 'Delete Account and All Data';
-      }
-    });
-  })();
+      });
+    }
+  }
+
+  document.addEventListener('astro:page-load', initSettings);
 </script>

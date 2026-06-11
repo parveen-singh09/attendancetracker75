@@ -58,27 +58,27 @@ const labPct = labTotal.held === 0 ? 0 : (labTotal.attended / labTotal.held) * 1
 <AppLayout title="Subjects">
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
     <div class="flex items-baseline justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight">Subjects</h1>
-      <a class="btn btn-secondary btn-sm" href={`/app/sessions/${sess.id}`}>View session rollup</a>
+      <h1 class="text-2xl font-semibold tracking-tight" data-i18n="subjects.title">Subjects</h1>
+      <a class="btn btn-secondary btn-sm" href={`/app/sessions/${sess.id}`} data-i18n="subjects.viewSessionRollup">View session rollup</a>
     </div>
 
     {enriched.length > 0 && (
       <div class="mt-6 grid grid-cols-2 gap-4">
         <div class="card flex flex-col gap-1">
-          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);">Total Subject Attendance</div>
+          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);" data-i18n="subjects.stat.subjectAttendance">Total Subject Attendance</div>
           <div class="flex items-baseline gap-2">
             <span class="num text-2xl font-bold">{subPct.toFixed(1)}%</span>
-            <span class="text-xs" style="color: var(--color-text-subtle);">{subTotal.attended}/{subTotal.held} attended</span>
+            <span class="text-xs" style="color: var(--color-text-subtle);" data-i18n="subjects.stat.attendedCount" data-i18n-params={JSON.stringify({ attended: subTotal.attended, held: subTotal.held })}>{subTotal.attended}/{subTotal.held} attended</span>
           </div>
           <div class="mt-1">
             <PercentageBar pct={subPct} target={sess.targetPct} size="sm" />
           </div>
         </div>
         <div class="card flex flex-col gap-1">
-          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);">Total Lab Attendance</div>
+          <div class="text-[10px] uppercase tracking-wider font-semibold" style="color: var(--color-text-subtle);" data-i18n="subjects.stat.labAttendance">Total Lab Attendance</div>
           <div class="flex items-baseline gap-2">
             <span class="num text-2xl font-bold">{labPct.toFixed(1)}%</span>
-            <span class="text-xs" style="color: var(--color-text-subtle);">{labTotal.attended}/{labTotal.held} attended</span>
+            <span class="text-xs" style="color: var(--color-text-subtle);" data-i18n="subjects.stat.attendedCount" data-i18n-params={JSON.stringify({ attended: labTotal.attended, held: labTotal.held })}>{labTotal.attended}/{labTotal.held} attended</span>
           </div>
           <div class="mt-1">
             <PercentageBar pct={labPct} target={sess.targetPct} size="sm" />
@@ -94,6 +94,9 @@ const labPct = labTotal.held === 0 ? 0 : (labTotal.attended / labTotal.held) * 1
           description="Add subjects by editing your timetable."
           ctaLabel="Edit timetable"
           ctaHref={`/onboarding/timetable?sessionId=${sess.id}`}
+          titleKey="subjects.empty.title"
+          descriptionKey="subjects.empty.description"
+          ctaLabelKey="subjects.empty.ctaLabel"
         />
       </div>
     ) : (
@@ -104,13 +107,13 @@ const labPct = labTotal.held === 0 ? 0 : (labTotal.attended / labTotal.held) * 1
             <div class="flex-1">
               <a href={`/app/subjects/${s.id}`} class="font-medium hover:underline">{s.name}</a>
               {s.code && <span class="ml-2 text-sm" style="color: var(--color-text-subtle);">{s.code}</span>}
-              {s.isLab && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase" style="background-color: var(--color-surface-2); color: var(--color-text-subtle);">Lab</span>}
+              {s.isLab && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase" style="background-color: var(--color-surface-2); color: var(--color-text-subtle);" data-i18n="subjects.labelLab">Lab</span>}
               <div class="mt-2">
                 <PercentageBar pct={s.stats.pct} target={sess.targetPct} size="sm" />
               </div>
             </div>
             <div class="text-right">
-              <div class="text-[10px] uppercase tracking-wider" style="color: var(--color-text-subtle);">Attendance till date</div>
+              <div class="text-[10px] uppercase tracking-wider" style="color: var(--color-text-subtle);" data-i18n="subjects.attendanceTillDate">Attendance till date</div>
               <div class="num text-xl font-semibold">{s.stats.pct.toFixed(1)}%</div>
               <div class="text-xs" style="color: var(--color-text-subtle);">{s.stats.attended}/{s.stats.held}</div>
             </div>

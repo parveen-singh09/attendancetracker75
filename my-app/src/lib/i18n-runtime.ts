@@ -1,5 +1,5 @@
 
-import { DEFAULT_LOCALE, RTL_LOCALES, STORAGE_KEY, resolveLocale, t, tSegments, type Locale, type Segment } from './i18n';
+import { DEFAULT_LOCALE, RTL_LOCALES, STORAGE_KEY, resolveLocale, t, tSegments, fmt, type Locale, type Segment } from './i18n';
 
 function getSavedLocale(): Locale {
   try {
@@ -32,7 +32,18 @@ function renderSegments(parent: Element, segments: Segment[]): void {
 function applyToElement(el: Element, locale: Locale): void {
   const key = el.getAttribute('data-i18n');
   if (key) {
-    el.textContent = t(locale, key);
+    const paramsAttr = el.getAttribute('data-i18n-params');
+    if (paramsAttr) {
+      try {
+        const params = JSON.parse(paramsAttr);
+        el.textContent = fmt(locale, key, params);
+      } catch (e) {
+        console.error('[i18n-runtime] Failed to parse params for key:', key, e);
+        el.textContent = t(locale, key);
+      }
+    } else {
+      el.textContent = t(locale, key);
+    }
   }
   const emphKey = el.getAttribute('data-i18n-emph');
   if (emphKey) {

@@ -30,12 +30,12 @@ async function rollup(sessId: string, target: number) {
 <AppLayout title="Sessions">
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
     <div class="flex items-baseline justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight">Sessions</h1>
-      <button id="new-session-btn" class="btn btn-primary btn-sm">+ New session</button>
+      <h1 class="text-2xl font-semibold tracking-tight" data-i18n="sessions.title">Sessions</h1>
+      <button id="new-session-btn" class="btn btn-primary btn-sm" data-i18n="sessions.newSession">+ New session</button>
     </div>
 
     {sessions.length === 0 ? (
-      <p class="mt-6 text-sm" style="color: var(--color-text-subtle);">No sessions yet.</p>
+      <p class="mt-6 text-sm" style="color: var(--color-text-subtle);" data-i18n="sessions.noSessions">No sessions yet.</p>
     ) : (
       <ul class="mt-6 space-y-3">
         {await Promise.all(sessions.map(async (s) => {
@@ -45,9 +45,9 @@ async function rollup(sessId: string, target: number) {
               <div class="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <a href={`/app/sessions/${s.id}`} class="font-semibold hover:underline">{s.name}</a>
-                  <div class="text-xs num" style="color: var(--color-text-subtle);">
+                  <div class="text-xs num" style="color: var(--color-text-subtle);" data-i18n="sessions.detailLine" data-i18n-params={JSON.stringify({ startDate: s.startDate, endDate: s.endDate, subjects: r.subjects, target: s.targetPct })}>
                     {s.startDate} → {s.endDate} · {r.subjects} subjects · target {s.targetPct}%
-                    {s.isArchived && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase" style="background-color: var(--color-surface-2);">Archived</span>}
+                    {s.isArchived && <span class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase" style="background-color: var(--color-surface-2);" data-i18n="sessions.labelArchived">Archived</span>}
                   </div>
                 </div>
                 <div class="num text-2xl font-semibold">{r.overall.pct.toFixed(1)}%</div>
@@ -56,10 +56,10 @@ async function rollup(sessId: string, target: number) {
                 <PercentageBar pct={r.overall.pct} target={s.targetPct} size="sm" />
               </div>
               <div class="mt-3 flex flex-wrap gap-2">
-                <a href={`/app/sessions/${s.id}`} class="btn btn-secondary btn-sm">View rollup</a>
+                <a href={`/app/sessions/${s.id}`} class="btn btn-secondary btn-sm" data-i18n="sessions.viewRollup">View rollup</a>
                 {!s.isArchived && (
-                  <form method="post" action={`/api/sessions/${s.id}/archive`} onsubmit="return confirm('Archive this session? You can still view its rollup.')">
-                     <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
+                  <form method="post" action={`/api/sessions/${s.id}/archive`} onsubmit="const activeLocale = localStorage.getItem('at75_locale') || 'en'; const msgs = { en: 'Archive this session? You can still view its rollup.', hi: 'इस सत्र को आर्काइव करें? आप अभी भी इसके रोलअप को देख सकते हैं।', es: '¿Archivar esta sesión? Aún puedes ver su resumen.', fr: 'Archiver cette session ? Vous pouvez toujours voir son récapitulatif.', de: 'Diese Sitzung archivieren? Sie können immer noch die Zusammenfassung anzeigen.', pt: 'Arquivar esta sessão? Você ainda poderá ver o resumo.', ar: 'هل تريد أرشفة هذه الجلسة؟ لا يزال بإمكانك عرض ملخصها.', zh: '归档此学期？您仍然可以查看其汇总。', ja: 'このセッションをアーカイブしますか？ロールアップは引き続き表示できます。', ru: 'Архивировать эту сессию? Вы все еще сможете просматривать её сводку.' }; return confirm(msgs[activeLocale] || msgs.en);">
+                     <button type="submit" class="btn btn-ghost btn-sm" data-i18n="sessions.btnArchive">Archive</button>
                   </form>
                 )}
               </div>
@@ -82,24 +82,32 @@ async function rollup(sessId: string, target: number) {
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
         </div>
-        <h2 class="text-lg font-semibold leading-6">Reset session data?</h2>
+        <h2 class="text-lg font-semibold leading-6" data-i18n="sessions.modal.title">Reset session data?</h2>
       </div>
 
-      <p class="text-sm font-normal" style="color: var(--color-text-muted);">
+      <p class="text-sm font-normal" style="color: var(--color-text-muted);" data-i18n="sessions.modal.body">
         Creating a new session will permanently erase all your current data, including active sessions, subjects, timetables, and attendance logs. This action cannot be undone.
       </p>
 
       <p id="reset-error-msg" class="text-xs text-red-600 font-medium hidden"></p>
 
       <div class="mt-2 flex justify-end gap-3">
-        <button type="button" id="cancel-reset-btn" class="btn btn-secondary btn-sm">Cancel</button>
-        <button type="button" id="confirm-reset-btn" class="btn btn-danger btn-sm">Continue and Reset</button>
+        <button type="button" id="cancel-reset-btn" class="btn btn-secondary btn-sm" data-i18n="sessions.modal.cancel">Cancel</button>
+        <button type="button" id="confirm-reset-btn" class="btn btn-danger btn-sm" data-i18n="sessions.modal.confirm">Continue and Reset</button>
       </div>
     </div>
   </dialog>
 </AppLayout>
 
 <script>
+  import { resolveLocale, STORAGE_KEY, t } from '../../../lib/i18n';
+
+  const getLocale = () => {
+    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+    catch { return 'en'; }
+  };
+  const tr = (key: string) => t(getLocale(), key);
+
   const newSessionBtn = document.getElementById('new-session-btn');
   const modal = document.getElementById('new-session-modal') as HTMLDialogElement | null;
   const cancelBtn = document.getElementById('cancel-reset-btn');
@@ -134,7 +142,7 @@ async function rollup(sessId: string, target: number) {
       }
       confirmBtn.setAttribute('disabled', 'true');
       const originalText = confirmBtn.textContent;
-      confirmBtn.textContent = 'Resetting...';
+      confirmBtn.textContent = tr('sessions.modal.resetting');
 
       try {
         const res = await fetch('/api/sessions/reset', {
@@ -144,7 +152,7 @@ async function rollup(sessId: string, target: number) {
           window.location.href = '/onboarding/welcome';
         } else {
           const body = (await res.json().catch(() => null)) as any;
-          const msg = body?.error?.message || 'Failed to reset data. Please try again.';
+          const msg = body?.error?.message || tr('sessions.modal.errorReset');
           if (errorMsg) {
             errorMsg.textContent = msg;
             errorMsg.classList.remove('hidden');
@@ -155,7 +163,7 @@ async function rollup(sessId: string, target: number) {
       } catch (err) {
         console.error(err);
         if (errorMsg) {
-          errorMsg.textContent = 'An error occurred. Please try again.';
+          errorMsg.textContent = tr('error.generic');
           errorMsg.classList.remove('hidden');
         }
         confirmBtn.removeAttribute('disabled');

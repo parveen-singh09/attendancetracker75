@@ -76,13 +76,13 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
 <AppLayout title="Edit attendance">
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
     <nav class="text-sm" style="color: var(--color-text-subtle);">
-      <a href="/app/today" class="hover:underline">Today</a> <span aria-hidden="true">/</span> <span>Edit a past day</span>
+      <a href="/app/today" class="hover:underline" data-i18n="history.breadcrumb.today">Today</a> <span aria-hidden="true">/</span> <span data-i18n="history.breadcrumb.editPast">Edit a past day</span>
     </nav>
 
     <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-      <h1 class="text-2xl font-semibold tracking-tight">Edit attendance</h1>
+      <h1 class="text-2xl font-semibold tracking-tight" data-i18n="history.title">Edit attendance</h1>
     </div>
-    <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+    <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="history.subtitle">
       Backfill or correct attendance for any past date in this session.
     </p>
 
@@ -95,6 +95,7 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
           aria-disabled={!canGoPrev}
           aria-label="Previous day"
           style={canGoPrev ? '' : 'opacity: 0.5; pointer-events: none;'}
+          data-i18n="history.btn.prev"
         >
           ← Prev
         </a>
@@ -102,6 +103,7 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
           href="/app/today"
           class="btn btn-secondary btn-sm"
           aria-current={isToday ? 'page' : undefined}
+          data-i18n="history.btn.today"
         >
           Today
         </a>
@@ -111,12 +113,13 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
           aria-disabled={!canGoNext}
           aria-label="Next day"
           style={canGoNext ? '' : 'opacity: 0.5; pointer-events: none;'}
+          data-i18n="history.btn.next"
         >
           Next →
         </a>
 
         <div class="ml-auto flex items-center gap-2">
-          <label for="date" class="text-sm font-medium">Jump to:</label>
+          <label for="date" class="text-sm font-medium" data-i18n="history.jumpTo">Jump to:</label>
           <div class="relative">
             <input
               id="date"
@@ -137,7 +140,9 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
         </div>
       </div>
       <p class="mt-3 text-sm" style="color: var(--color-text-subtle);">
-        Editing <strong>{longDate}</strong>{isToday ? ' (today)' : ''}.
+        <span id="history-editing-text" data-date={longDate} data-is-today={isToday ? '1' : '0'}>
+          Editing <strong>{longDate}</strong>{isToday ? ' (today)' : ''}.
+        </span>
       </p>
     </div>
 
@@ -148,6 +153,9 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
           description="Your timetable has no classes for the selected weekday. Pick another date or edit your timetable."
           ctaLabel="Pick another date"
           ctaHref={`/app/history?date=${today}`}
+          titleKey="history.empty.title"
+          descriptionKey="history.empty.description"
+          ctaLabelKey="history.empty.ctaLabel"
         />
       </div>
     ) : (
@@ -157,3 +165,44 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
     )}
   </div>
 </AppLayout>
+
+<script>
+  import { resolveLocale, STORAGE_KEY, fmt } from '../../lib/i18n';
+
+  function updateDynamicTexts() {
+    try {
+      const locale = resolveLocale(localStorage.getItem(STORAGE_KEY));
+
+      const editEl = document.getElementById('history-editing-text');
+      if (editEl) {
+        const rawDate = editEl.getAttribute('data-date') || '';
+        const isTodayVal = editEl.getAttribute('data-is-today') === '1';
+
+        const dateInput = document.getElementById('date') as HTMLInputElement | null;
+        let formattedDate = rawDate;
+        if (dateInput && dateInput.value) {
+          const parts = dateInput.value.split('-');
+          const y = parseInt(parts[0] ?? '0', 10);
+          const m = parseInt(parts[1] ?? '1', 10) - 1;
+          const d = parseInt(parts[2] ?? '1', 10);
+          if (y) {
+            formattedDate = new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(y, m, d));
+          }
+        }
+
+        const isTodayStr = isTodayVal ? fmt(locale, 'history.isTodayLabel') : '';
+        editEl.innerHTML = fmt(locale, 'history.editingText', { date: `<strong>${formattedDate}</strong>`, isToday: isTodayStr });
+      }
+    } catch (err) {
+      console.error('[history-dynamic] error formatting past date text:', err);
+    }
+  }
+
+  function initHistory() {
+    updateDynamicTexts();
+    window.removeEventListener('at75:locale-changed', updateDynamicTexts);
+    window.addEventListener('at75:locale-changed', updateDynamicTexts);
+  }
+
+  document.addEventListener('astro:page-load', initHistory);
+</script>

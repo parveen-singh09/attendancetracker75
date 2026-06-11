@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n';
 
 type Status = 'present' | 'absent' | 'extra' | 'off';
 
@@ -19,13 +20,6 @@ interface Props {
   slots: Slot[];
   dayStatus: 'normal' | 'holiday' | 'sick' | 'event';
 }
-
-const labels: Record<Status, string> = {
-  present: 'Present',
-  absent: 'Absent',
-  extra: 'Extra',
-  off: 'Off',
-};
 
 const tones: Record<Status, string> = {
   present: 'var(--color-safe)',
@@ -64,6 +58,40 @@ function formatTimeRange(start: string, end: string) {
 }
 
 export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: initialDayStatus }: Props) {
+  const [locale, setLocale] = useState<Locale>('en');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocale(resolveLocale(saved));
+      }
+    } catch {}
+
+    const handleLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.locale) {
+        setLocale(detail.locale);
+      }
+    };
+    window.addEventListener('at75:locale-changed', handleLocaleChange);
+    return () => window.removeEventListener('at75:locale-changed', handleLocaleChange);
+  }, []);
+
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) {
+      return fmt(locale, key, params);
+    }
+    return t(locale, key);
+  };
+
+  const labels: Record<Status, string> = {
+    present: tr('status.present'),
+    absent: tr('status.absent'),
+    extra: tr('status.extra'),
+    off: tr('status.off'),
+  };
+
   const [slots, setSlots] = useState(initialSlots);
   const [dayStatus, setDayStatus] = useState(initialDayStatus);
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null);
@@ -84,14 +112,14 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
         body: JSON.stringify({ subjectId: slot.subjectId, date, status }),
       });
       if (!res.ok) throw new Error('Save failed');
-      showToast(`${slot.subjectName} marked ${labels[status]}.`, prev
+      showToast(tr('dailyGrid.toast.marked', { name: slot.subjectName, status: labels[status] }), prev
         ? () => setSlots((arr) => arr.map((s) => (s.id === slot.id ? { ...s, status: prev } : s)))
         : undefined
       );
     } catch (e) {
       // revert
       setSlots((arr) => arr.map((s) => (s.id === slot.id ? { ...s, status: prev } : s)));
-      showToast('Couldn\'t save. Please try again.');
+      showToast(tr('dailyGrid.toast.saveFailed'));
     }
   }
 
@@ -107,7 +135,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
         body: JSON.stringify({ date, status: 'holiday' }),
       });
       if (!res.ok) throw new Error('Save failed');
-      showToast('Day marked as holiday.', () => {
+      showToast(tr('dailyGrid.toast.dayMarkedHoliday'), () => {
         setDayStatus(prevDay);
         setSlots(prevSlots);
         void fetch('/api/days', {
@@ -119,7 +147,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
     } catch (e) {
       setDayStatus(prevDay);
       setSlots(prevSlots);
-      showToast('Couldn\'t save. Please try again.');
+      showToast(tr('dailyGrid.toast.saveFailed'));
     }
   }
 
@@ -133,17 +161,17 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
         body: JSON.stringify({ date }),
       });
       if (!res.ok) throw new Error('Save failed');
-      showToast('Holiday cleared.');
+      showToast(tr('dailyGrid.toast.holidayCleared'));
     } catch (e) {
       setDayStatus(prevDay);
-      showToast('Couldn\'t save.');
+      showToast(tr('dailyGrid.toast.couldNotSaveGeneric'));
     }
   }
 
   if (slots.length === 0) {
     return (
       <div className="card text-center" style={{ padding: '2rem' }}>
-        <p style={{ color: 'var(--color-text-subtle)' }}>No classes scheduled for this date.</p>
+        <p style={{ color: 'var(--color-text-subtle)' }}>{tr('dailyGrid.noClassesScheduled')}</p>
       </div>
     );
   }
@@ -156,11 +184,11 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
           style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-2)' }}
         >
           <span>
-            <strong>Day status:</strong> {dayStatus}
+            <strong>{tr('dailyGrid.dayStatus')}</strong> {tr('status.' + dayStatus)}
           </span>
           {dayStatus === 'holiday' && (
             <button className="btn btn-ghost btn-sm" onClick={clearDayOff}>
-              Clear
+              {tr('dailyGrid.clear')}
             </button>
           )}
         </div>
@@ -187,7 +215,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
                   {slot.subjectName}
                   {slot.isLab && (
                     <span className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide" style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-subtle)' }}>
-                      Lab
+                      {tr('dailyGrid.labLabel')}
                     </span>
                   )}
                 </div>
@@ -206,7 +234,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
                     type="button"
                     onClick={() => setSlotStatus(slot, s)}
                     aria-pressed={active}
-                    aria-label={`Mark ${slot.subjectName} ${labels[s]}`}
+                    aria-label={tr('dailyGrid.ariaLabelMark', { name: slot.subjectName, status: labels[s] })}
                     className="btn px-2 py-1.5 text-xs sm:text-sm"
                     style={{
                       backgroundColor: active ? tones[s] : 'var(--color-bg)',
@@ -227,11 +255,11 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-          Tap a status to log. Changes save automatically.
+          {tr('dailyGrid.tapStatusToLog')}
         </p>
         {dayStatus === 'normal' && (
           <button className="btn btn-secondary btn-sm" onClick={markDayOff} type="button">
-            Mark whole day off
+            {tr('dailyGrid.markWholeDayOff')}
           </button>
         )}
       </div>
@@ -248,7 +276,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
                   setToast(null);
                 }}
               >
-                Undo
+                {tr('dailyGrid.undo')}
               </button>
             )}
           </div>

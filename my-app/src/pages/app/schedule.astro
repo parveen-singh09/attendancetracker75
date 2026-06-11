@@ -47,66 +47,68 @@ const classesCount = slotRows.length;
 <AppLayout title="Weekly schedule">
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
     <nav class="text-sm" style="color: var(--color-text-subtle);">
-      <a href="/onboarding/session" class="hover:underline" data-astro-reload>Onboarding</a> <span aria-hidden="true">/</span> <span>Weekly schedule</span>
+      <a href="/onboarding/session" class="hover:underline" data-astro-reload data-i18n="schedule.breadcrumb.onboarding">Onboarding</a> <span aria-hidden="true">/</span> <span data-i18n="schedule.breadcrumb.weekly">Weekly schedule</span>
     </nav>
 
     <div class="mt-3 flex flex-wrap items-baseline justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">Add weekly schedule</h1>
-        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+        <h1 class="text-2xl font-semibold tracking-tight" data-i18n="schedule.title">Add weekly schedule</h1>
+        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.subtitle" data-i18n-params={JSON.stringify({ name: sess.name })}>
           Build your weekly class schedule for <strong>{sess.name}</strong>.
         </p>
       </div>
-      <a href="/onboarding/session" class="btn btn-secondary btn-sm" data-astro-reload>Back to onboarding</a>
+      <a href="/onboarding/session" class="btn btn-secondary btn-sm" data-astro-reload data-i18n="schedule.backToOnboarding">Back to onboarding</a>
     </div>
 
     <div class="mt-4 grid gap-3 sm:grid-cols-3">
       <div class="card">
-        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Subjects</div>
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="schedule.stat.subjects">Subjects</div>
         <div class="num mt-1 text-2xl font-semibold">{subjectsCount}</div>
       </div>
       <div class="card">
-        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Labs</div>
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="schedule.stat.labs">Labs</div>
         <div class="num mt-1 text-2xl font-semibold">{labsCount}</div>
       </div>
       <div class="card">
-        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);">Classes / week</div>
+        <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="schedule.stat.classesPerWeek">Classes / week</div>
         <div class="num mt-1 text-2xl font-semibold">{classesCount}</div>
       </div>
     </div>
 
     <details class="card mt-6 [[open]]:mb-4">
-      <summary class="cursor-pointer font-semibold">📋 Paste timetable text</summary>
-      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">
+      <summary class="cursor-pointer font-semibold" data-i18n="schedule.pasteTitle">📋 Paste timetable text</summary>
+      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.pasteHelp1">
         Format: <code class="num">Day HH:MM-HH:MM Subject (Lab) @ Room</code> — one class per line.
+      </p>
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.pasteHelp2">
         Append <code class="num">(Lab)</code> for labs and <code class="num">@ Room</code> for location.
       </p>
-      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.pasteHelpAI">
         💡 <strong>Use your AI:</strong> paste the AI prompt in the input, drop the reply below.
       </p>
-      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
+      <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.pasteExample">
         Example: <code class="num">Mon 09:00-10:00 Calculus</code> · <code class="num">Tue 10:00-11:00 DS (Lab) @ 204</code>
       </p>
       <div class="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
-          <label for="tt-input" class="field-label">Input</label>
+          <label for="tt-input" class="field-label" data-i18n="schedule.labelInput">Input</label>
           <textarea id="tt-input" class="textarea font-mono text-sm" rows="8" placeholder="Mon 9:00-10:00 Calculus 101&#10;Mon 10:00-11:00 Data Structures (Lab)&#10;Tue 9:00-10:00 English"></textarea>
         </div>
         <div>
-          <label for="tt-warn" class="field-label">Preview</label>
+          <label for="tt-warn" class="field-label" data-i18n="schedule.labelPreview">Preview</label>
           <div id="tt-warn" class="textarea text-sm" style="min-height: 8rem; overflow: auto; background-color: var(--color-surface-2); white-space: pre-wrap;"></div>
         </div>
       </div>
       <div class="mt-3 flex justify-end">
-        <button id="tt-apply" class="btn btn-primary btn-sm" type="button">Apply Schedule</button>
+        <button id="tt-apply" class="btn btn-primary btn-sm" type="button" data-i18n="schedule.applySchedule">Apply Schedule</button>
       </div>
     </details>
 
     {pool.length === 0 ? (
       <div class="card mt-6 flex flex-col items-center gap-2 py-10 text-center">
         <div class="text-3xl" aria-hidden="true">📚</div>
-        <p class="text-base font-medium">No subjects or labs yet.</p>
-        <p class="text-sm" style="color: var(--color-text-subtle);">
+        <p class="text-base font-medium" data-i18n="schedule.noSubjectsYet">No subjects or labs yet.</p>
+        <p class="text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.noSubjectsHelp">
           Add at least one subject or lab in the pool below to start building your weekly schedule.
         </p>
       </div>
@@ -124,6 +126,17 @@ const classesCount = slotRows.length;
 </AppLayout>
 
 <script>
+  import { t, fmt, resolveLocale, STORAGE_KEY } from '../../lib/i18n';
+
+  const getLocale = () => {
+    try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
+    catch { return 'en'; }
+  };
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) return fmt(getLocale(), key, params);
+    return t(getLocale(), key);
+  };
+
   // Tiny client glue: textarea → /api/timetable/parse → preview → apply
   const input = document.getElementById('tt-input') as HTMLTextAreaElement;
   const preview = document.getElementById('tt-warn') as HTMLElement;
@@ -159,21 +172,28 @@ const classesCount = slotRows.length;
   }
 
   function render() {
-    if (!lastResult) { preview.textContent = 'Click "Parse" to preview.'; return; }
+    if (!lastResult) { preview.textContent = tr('schedule.parse.previewHint'); return; }
     const lines: string[] = [];
     if (lastResult.slots.length) {
-      lines.push(`${lastResult.slots.length} class${lastResult.slots.length === 1 ? '' : 'es'} parsed:`);
+      if (lastResult.slots.length === 1) {
+        lines.push(tr('schedule.parse.classesParsed', { count: 1 }));
+      } else {
+        lines.push(tr('schedule.parse.classesParsedPlural', { count: lastResult.slots.length }));
+      }
       for (const s of lastResult.slots) {
         const timeRange = formatTimeRange(s.startTime, s.endTime);
         const loc = s.location ? `  📍 ${s.location}` : '';
-        lines.push(`  • ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][s.dayOfWeek]} ${timeRange}  ${s.subjectName}${s.isLab ? ' (Lab)' : ''}${loc}`);
+        const dayKeys = ['day.short.sun','day.short.mon','day.short.tue','day.short.wed','day.short.thu','day.short.fri','day.short.sat'];
+        const dayStr = tr(dayKeys[s.dayOfWeek] || 'day.short.sun');
+        const labStr = s.isLab ? ` (${tr('weeklyGrid.labLabel')})` : '';
+        lines.push(`  • ${dayStr} ${timeRange}  ${s.subjectName}${labStr}${loc}`);
       }
     } else {
-      lines.push('No classes parsed.');
+      lines.push(tr('schedule.parse.noClassesParsed'));
     }
     if (lastResult.warnings.length) {
       lines.push('');
-      lines.push('Warnings:');
+      lines.push(tr('schedule.parse.warnings'));
       for (const w of lastResult.warnings) lines.push(`  ! ${w}`);
     }
     preview.textContent = lines.join('\n');

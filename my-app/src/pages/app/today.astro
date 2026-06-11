@@ -199,7 +199,7 @@ const overallColor =
       <div>
         <h1 class="text-2xl font-semibold tracking-tight" data-i18n="today.title">Today</h1>
         <p class="mt-1 text-sm" style="color: var(--color-text-subtle);">
-          {longDate} · {sess.name} · Day {dayInto + 1}
+          <span id="today-date-str" data-time={new Date().getTime()}>{longDate}</span> · {sess.name} · <span id="today-day-str" data-day={dayInto + 1}>Day {dayInto + 1}</span>
         </p>
       </div>
       <div class="text-right">
@@ -207,8 +207,8 @@ const overallColor =
           {Math.floor(overall.pct)}%
         </div>
         <div class="text-xs" style="color: var(--color-text-subtle);">
-          <span data-i18n="today.overall">Overall Attendance</span> · <span id="today-overall-fraction">{overall.attended}/{overall.held} attended</span>
-          {overall.extra > 0 && <span id="today-overall-extra" style="color: var(--color-brand-600);"> · +{overall.extra} extra</span>}
+          <span data-i18n="today.overall">Overall Attendance</span> · <span id="today-overall-fraction" data-i18n="today.attendedOf" data-i18n-params={JSON.stringify({ attended: overall.attended, held: overall.held })}>{overall.attended}/{overall.held} attended</span>
+          {overall.extra > 0 && <span id="today-overall-extra" style="color: var(--color-brand-600);" data-i18n="today.extraCount" data-i18n-params={JSON.stringify({ extra: overall.extra })}> · +{overall.extra} extra</span>}
         </div>
       </div>
     </div>
@@ -218,10 +218,10 @@ const overallColor =
     </div>
 
     <span class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-      <Stat id="stat-held" label="Regular held" value={overall.held} />
-      <Stat id="stat-attended" label="Attended" value={overall.attended} />
-      <Stat id="stat-extra" label="Extra" value={overall.extra} />
-      <Stat label="Subjects" value={Object.values(filteredStats).filter((s) => s.held > 0 || s.extra > 0).length} />
+      <Stat id="stat-held" label="Regular held" value={overall.held} i18nKey="today.stat.held" />
+      <Stat id="stat-attended" label="Attended" value={overall.attended} i18nKey="today.stat.attended" />
+      <Stat id="stat-extra" label="Extra" value={overall.extra} i18nKey="today.stat.extra" />
+      <Stat label="Subjects" value={Object.values(filteredStats).filter((s) => s.held > 0 || s.extra > 0).length} i18nKey="today.stat.subjects" />
     </span>
 
     <section class="mt-8">
@@ -232,7 +232,7 @@ const overallColor =
           <div class="text-2xl" aria-hidden="true">🎉</div>
           <p class="text-sm font-medium" data-i18n="today.empty.title">No classes today</p>
           <p class="text-sm font-bold" style="color: var(--color-brand-600);" data-i18n="today.empty.body">Enjoy your day off</p>
-          <p class="text-[10px]" style="color: var(--color-text-subtle);">
+          <p class="text-[10px]" style="color: var(--color-text-subtle);" data-i18n="today.empty.classesHelp">
             Add classes to your weekly schedule to see them here.
           </p>
         </div>
@@ -246,7 +246,7 @@ const overallColor =
                   <span class="flex items-center gap-1.5 min-w-0">
                     <span class="text-sm font-semibold truncate">{c.name}</span>
                     {c.isLab && (
-                      <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase shrink-0" style="background-color:color-mix(in oklab, var(--color-brand-500) 15%, transparent);color:var(--color-brand-600)">
+                      <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase shrink-0" style="background-color:color-mix(in oklab, var(--color-brand-500) 15%, transparent);color:var(--color-brand-600)" data-i18n="today.schedule.lab">
                         Lab
                       </span>
                     )}
@@ -285,6 +285,42 @@ const overallColor =
     )}
   </div>
 </AppLayout>
+
+<script>
+  import { resolveLocale, STORAGE_KEY, fmt } from '../../lib/i18n';
+
+  function updateDynamicTexts() {
+    try {
+      const locale = resolveLocale(localStorage.getItem(STORAGE_KEY));
+
+      // Format date
+      const dateEl = document.getElementById('today-date-str');
+      if (dateEl) {
+        const ms = parseInt(dateEl.getAttribute('data-time') || '0', 10);
+        if (ms) {
+          dateEl.textContent = new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'short', day: 'numeric' }).format(new Date(ms));
+        }
+      }
+
+      // Format Day X
+      const dayEl = document.getElementById('today-day-str');
+      if (dayEl) {
+        const dayNum = dayEl.getAttribute('data-day') || '1';
+        dayEl.textContent = fmt(locale, 'today.dayNum', { num: dayNum });
+      }
+    } catch (err) {
+      console.error('[today-dynamic] error formatting dynamic text:', err);
+    }
+  }
+
+  function initToday() {
+    updateDynamicTexts();
+    window.removeEventListener('at75:locale-changed', updateDynamicTexts);
+    window.addEventListener('at75:locale-changed', updateDynamicTexts);
+  }
+
+  document.addEventListener('astro:page-load', initToday);
+</script>
 
 <style>
 </style>

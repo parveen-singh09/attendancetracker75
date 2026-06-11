@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n';
 
 export interface DraftSlot {
   dayOfWeek: number; // 0=Sun .. 6=Sat
@@ -65,6 +66,43 @@ function sortByTime(slots: DraftSlot[]): DraftSlot[] {
 
 
 export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, isOnboarding = false }: Props) {
+  const [locale, setLocale] = useState<Locale>('en');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setLocale(resolveLocale(saved));
+      }
+    } catch {}
+
+    const handleLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.locale) {
+        setLocale(detail.locale);
+      }
+    };
+    window.addEventListener('at75:locale-changed', handleLocaleChange);
+    return () => window.removeEventListener('at75:locale-changed', handleLocaleChange);
+  }, []);
+
+  const tr = (key: string, params?: Record<string, string | number>) => {
+    if (params) {
+      return fmt(locale, key, params);
+    }
+    return t(locale, key);
+  };
+
+  const localizedDays = [
+    { short: tr('day.short.sun'), long: tr('day.long.sun') },
+    { short: tr('day.short.mon'), long: tr('day.long.mon') },
+    { short: tr('day.short.tue'), long: tr('day.long.tue') },
+    { short: tr('day.short.wed'), long: tr('day.long.wed') },
+    { short: tr('day.short.thu'), long: tr('day.long.thu') },
+    { short: tr('day.short.fri'), long: tr('day.long.fri') },
+    { short: tr('day.short.sat'), long: tr('day.long.sat') },
+  ];
+
   const splitEntries = (pool: Entry[]): { subjects: Entry[]; labs: Entry[] } => {
     const subjects: Entry[] = [];
     const labs: Entry[] = [];
@@ -255,18 +293,18 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
   function confirmAddClass() {
     if (addForDay === null) return;
     if (!entryName.trim()) {
-      setSaveError('Please pick a subject or lab.');
+      setSaveError(tr('weeklyGrid.errorPickSubject'));
       return;
     }
     if (toMin(endTime) <= toMin(startTime)) {
-      setSaveError('End time must be after start time.');
+      setSaveError(tr('weeklyGrid.errorTimeOrder'));
       return;
     }
     setSaveError(null);
     const pool = entryIsLab ? labs : subjects;
     const entry = pool.find((x) => x.name === entryName);
     if (!entry) {
-      setSaveError('That entry no longer exists.');
+      setSaveError(tr('weeklyGrid.errorNotExists'));
       return;
     }
     setSlots((arr) => [
@@ -291,15 +329,15 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     <div className="space-y-6">
       {}
       <section className="card">
-        <h2 className="text-base font-semibold">1. Add subjects and labs</h2>
+        <h2 className="text-base font-semibold">{tr('weeklyGrid.addSubjectsTitle')}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-          Add your subjects and labs. You&apos;ll assign them to days in the next step.
+          {tr('weeklyGrid.addSubjectsBody')}
         </p>
 
         <div className="mt-4 grid gap-6 sm:grid-cols-2">
           <PoolEditor
             kind="subject"
-            title="Subjects"
+            title={tr('weeklyGrid.subjects')}
             entries={subjects}
             onAdd={addSubject}
             onRename={(idx, name) => renameInPool('subject', idx, name)}
@@ -308,10 +346,11 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
               setSubjects((arr) => arr.map((x, j) => (j === idx ? { ...x, color } : x)))
             }
             palette={PALETTE}
+            tr={tr}
           />
           <PoolEditor
             kind="lab"
-            title="Labs"
+            title={tr('weeklyGrid.labs')}
             entries={labs}
             onAdd={addLab}
             onRename={(idx, name) => renameInPool('lab', idx, name)}
@@ -320,21 +359,23 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
               setLabs((arr) => arr.map((x, j) => (j === idx ? { ...x, color } : x)))
             }
             palette={PALETTE}
-            emptyHint="No labs yet. Click + Add lab to create one."
+            emptyHint={tr('weeklyGrid.noLabs')}
+            tr={tr}
           />
         </div>
       </section>
 
       {}
       <section className="card">
-        <h2 className="text-base font-semibold">2. Build your weekly schedule</h2>
+        <h2 className="text-base font-semibold">{tr('weeklyGrid.buildScheduleTitle')}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-          For each day, add the classes you attend. Pick a subject or lab from the pool above, and set the time.
+          {tr('weeklyGrid.buildScheduleBody')}
         </p>
 
         <div className="mt-4 space-y-2">
-          {DAYS_FULL.map((d, dayIdx) => {
+          {DAYS_FULL.map((_, dayIdx) => {
             const todays = sortByTime(slots.filter((s) => s.dayOfWeek === dayIdx));
+            const dayNameLong = localizedDays[dayIdx]?.long || '';
             return (
               <div
                 key={dayIdx}
@@ -345,20 +386,20 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                 }}
               >
                 <div className="flex w-full items-center justify-between gap-3 pr-2">
-                  <div className="font-semibold">{d.long}</div>
+                  <div className="font-semibold">{dayNameLong}</div>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() => openAddForDay(dayIdx)}
-                    aria-label={`Add class to ${d.long}`}
+                    aria-label={`${tr('weeklyGrid.addClass')} ${dayNameLong}`}
                   >
-                    + Add class
+                    {tr('weeklyGrid.addClass')}
                   </button>
                 </div>
 
                 {todays.length === 0 && addForDay !== dayIdx && (
                   <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-                    No classes and labs.
+                    {tr('weeklyGrid.noClasses')}
                   </p>
                 )}
 
@@ -391,7 +432,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase"
                               style={{ backgroundColor: 'color-mix(in oklab, var(--color-brand-500) 18%, transparent)', color: 'var(--color-brand-600)' }}
                             >
-                              Lab
+                              {tr('weeklyGrid.labLabel')}
                             </span>
                           )}
                           <span className="num text-xs" style={{ color: 'var(--color-text-subtle)' }}>
@@ -407,9 +448,9 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               type="button"
                               className="btn btn-ghost btn-sm"
                               onClick={() => removeSlot(globalIdx)}
-                              aria-label={`Remove ${sl.subjectName} ${fmt12(sl.startTime)} from ${d.long}`}
+                              aria-label={`${tr('weeklyGrid.remove')} ${sl.subjectName} ${fmt12(sl.startTime)}`}
                             >
-                              Remove
+                              {tr('weeklyGrid.remove')}
                             </button>
                           </div>
                         </li>
@@ -425,7 +466,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                   >
                     <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                       <div className="field col-span-2 sm:col-span-1 min-w-0">
-                        <label className="field-label" htmlFor={`name-${dayIdx}`}>Subject or lab</label>
+                        <label className="field-label" htmlFor={`name-${dayIdx}`}>{tr('weeklyGrid.subjectOrLab')}</label>
                         <select
                           id={`name-${dayIdx}`}
                           className="select"
@@ -437,18 +478,18 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                             const inLabs = labs.some((l) => l.name === newName);
                             setEntryIsLab(inLabs);
                           }}
-                          aria-label="Pick a subject or lab"
+                          aria-label={tr('weeklyGrid.subjectOrLab')}
                         >
-                          {subjects.length === 0 && labs.length === 0 && <option value="">— add a subject or lab first —</option>}
+                          {subjects.length === 0 && labs.length === 0 && <option value="">{tr('weeklyGrid.addSubjectOrLabFirst')}</option>}
                           {subjects.length > 0 && (
-                            <optgroup label="Subjects">
+                            <optgroup label={tr('weeklyGrid.subjects')}>
                               {subjects.map((s) => (
                                 <option key={`subj-${s.name}`} value={s.name}>{s.name}</option>
                               ))}
                             </optgroup>
                           )}
                           {labs.length > 0 && (
-                            <optgroup label="Labs">
+                            <optgroup label={tr('weeklyGrid.labs')}>
                               {labs.map((l) => (
                                 <option key={`lab-${l.name}`} value={l.name}>{l.name}</option>
                               ))}
@@ -458,7 +499,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                       </div>
                       <div className="grid grid-cols-2 gap-4 sm:gap-5 min-w-0">
                         <div className="field col-span-1 min-w-0 pr-1.5 sm:pr-0">
-                          <label className="field-label text-xs sm:text-sm" htmlFor={`start-${dayIdx}`}>Start</label>
+                          <label className="field-label text-xs sm:text-sm" htmlFor={`start-${dayIdx}`}>{tr('weeklyGrid.start')}</label>
                           <div className="relative">
                             <input
                               id={`start-${dayIdx}`}
@@ -467,13 +508,13 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               value={startTime}
                               onChange={(e) => {
                                 const v = e.target.value;
-                                setStartTime(v);
-                                // If end <= start, push end to start+1h
-                                if (toMin(v) >= toMin(endTime)) {
-                                  setEndTime(fromMin(Math.min(toMin(v) + 60, 23 * 60 + 59)));
-                                }
+                                  setStartTime(v);
+                                  // If end <= start, push end to start+1h
+                                  if (toMin(v) >= toMin(endTime)) {
+                                    setEndTime(fromMin(Math.min(toMin(v) + 60, 23 * 60 + 59)));
+                                  }
                               }}
-                              aria-label="Start time"
+                              aria-label={tr('weeklyGrid.start')}
                             />
                             <div className="pointer-events-none absolute inset-y-0 right-0 hidden sm:flex items-center pr-1.5" style={{ color: 'var(--color-text-subtle)' }}>
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -483,7 +524,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                           </div>
                         </div>
                         <div className="field col-span-1 min-w-0 pl-1.5 sm:pl-0">
-                          <label className="field-label text-xs sm:text-sm" htmlFor={`end-${dayIdx}`}>End</label>
+                          <label className="field-label text-xs sm:text-sm" htmlFor={`end-${dayIdx}`}>{tr('weeklyGrid.end')}</label>
                           <div className="relative">
                             <input
                               id={`end-${dayIdx}`}
@@ -491,7 +532,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               className="input num pr-2 sm:pr-7 w-full min-w-0 text-xs sm:text-sm"
                               value={endTime}
                               onChange={(e) => setEndTime(e.target.value)}
-                              aria-label="End time"
+                              aria-label={tr('weeklyGrid.end')}
                             />
                             <div className="pointer-events-none absolute inset-y-0 right-0 hidden sm:flex items-center pr-1.5" style={{ color: 'var(--color-text-subtle)' }}>
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -502,15 +543,15 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                         </div>
                       </div>
                       <div className="field col-span-2 sm:col-span-2 min-w-0">
-                        <label className="field-label" htmlFor={`loc-${dayIdx}`}>Location (optional)</label>
+                        <label className="field-label" htmlFor={`loc-${dayIdx}`}>{tr('weeklyGrid.locationLabel')}</label>
                         <input
                           id={`loc-${dayIdx}`}
                           type="text"
                           className="input"
                           value={location}
                           onChange={(e) => setLocation(e.target.value)}
-                          placeholder="e.g. Room 204"
-                          aria-label="Location"
+                          placeholder={tr('weeklyGrid.roomPlaceholder')}
+                          aria-label={tr('weeklyGrid.locationLabel')}
                         />
                       </div>
                     </div>
@@ -519,16 +560,16 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                         type="button"
                         className="btn btn-ghost btn-sm"
                         onClick={closeAddForDay}
-                        aria-label="Cancel"
+                        aria-label={tr('weeklyGrid.cancel')}
                       >
-                        Cancel
+                        {tr('weeklyGrid.cancel')}
                       </button>
                       <button
                         type="button"
                         className="btn btn-primary btn-sm"
                         onClick={confirmAddClass}
                       >
-                        Add
+                        {tr('weeklyGrid.add')}
                       </button>
                     </div>
                   </div>
@@ -548,14 +589,14 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
           <div className="flex items-start gap-2">
             <span aria-hidden="true" style={{ color: 'var(--color-danger)' }}>⚠</span>
             <div className="flex-1">
-              <p className="font-medium" style={{ color: 'var(--color-danger)' }}>Couldn&apos;t save</p>
+              <p className="font-medium" style={{ color: 'var(--color-danger)' }}>{tr('weeklyGrid.couldNotSave')}</p>
               <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>{saveError}</p>
             </div>
             <button
               type="button"
               onClick={() => setSaveError(null)}
               className="btn btn-ghost btn-sm"
-              aria-label="Dismiss error"
+              aria-label={tr('weeklyGrid.cancel')}
               style={{ minHeight: 32, minWidth: 32, padding: '2px 8px' }}
             >
               ✕
@@ -571,13 +612,13 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
           aria-live="polite"
         >
           {!isOnboarding && (saving
-            ? 'Saving…'
+            ? tr('weeklyGrid.saving')
             : saveError
-              ? 'Save failed'
+              ? tr('weeklyGrid.saveFailed')
               : autoSaving
-                ? 'Saving…'
+                ? tr('weeklyGrid.saving')
                 : subjects.length + labs.length + slots.length > 0
-                  ? 'All changes saved ✓'
+                  ? tr('weeklyGrid.changesSaved')
                   : '')}
         </span>
         <button
@@ -587,7 +628,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
           disabled={saving}
           aria-busy={saving}
         >
-          {saving ? 'Saving…' : 'Save & Continue' /* btn.saveAndContinue / btn.saving */}
+          {saving ? tr('weeklyGrid.saving') : tr('weeklyGrid.saveAndContinue')}
         </button>
       </div>
     </div>
@@ -596,7 +637,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
 
 
 function PoolEditor({
-  kind, title, entries, onAdd, onRename, onRemove, onColorChange, palette, emptyHint,
+  kind, title, entries, onAdd, onRename, onRemove, onColorChange, palette, emptyHint, tr,
 }: {
   kind: 'subject' | 'lab';
   title: string;
@@ -607,6 +648,7 @@ function PoolEditor({
   onColorChange: (idx: number, color: string) => void;
   palette: string[];
   emptyHint?: string;
+  tr: (key: string) => string;
 }) {
   return (
     <div>
@@ -616,9 +658,9 @@ function PoolEditor({
           type="button"
           className="btn btn-secondary btn-sm"
           onClick={onAdd}
-          aria-label={`Add ${kind}`}
+          aria-label={tr(kind === 'lab' ? 'weeklyGrid.addLab' : 'weeklyGrid.addSubject')}
         >
-          + Add {kind}
+          {tr(kind === 'lab' ? 'weeklyGrid.addLab' : 'weeklyGrid.addSubject')}
         </button>
       </div>
       {entries.length === 0 && emptyHint && (
@@ -635,7 +677,7 @@ function PoolEditor({
               className="input flex-1"
               value={s.name}
               onChange={(e) => onRename(i, e.target.value)}
-              placeholder={kind === 'lab' ? 'Lab name' : 'Subject name'}
+              placeholder={kind === 'lab' ? tr('weeklyGrid.labNamePlaceholder') : tr('weeklyGrid.subjectNamePlaceholder')}
               aria-label={`${title} ${i + 1} name`}
             />
             <ColorSwatchPicker
@@ -648,7 +690,7 @@ function PoolEditor({
               type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => onRemove(i)}
-              aria-label={`Remove ${s.name}`}
+              aria-label={`${tr('weeklyGrid.remove')} ${s.name}`}
             >
               ✕
             </button>

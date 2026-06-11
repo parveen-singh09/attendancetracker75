@@ -175,6 +175,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
       })();
     </script>
     <ClientRouter />
+    <script>
+      import { initI18n } from '../lib/i18n-runtime';
+      document.addEventListener('astro:page-load', initI18n);
+    </script>
     <style is:global>
       #nav-progress {
         position: fixed;

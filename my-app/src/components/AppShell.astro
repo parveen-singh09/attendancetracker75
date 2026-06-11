@@ -111,9 +111,9 @@ function isActive(href: string): boolean {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
       <a href="/app/today" class="flex items-center gap-2 truncate opacity-100 transition-opacity group-[data-state=closed]:hidden md:group-[data-state=closed]:hidden">
-        <span class="md:hidden">Attendance</span>
+        <span class="md:hidden" data-i18n="shell.logoMobile">Attendance</span>
         <Logo class="h-5 w-5 hidden md:block" />
-        <span class="truncate hidden md:block text-sm">Attendance Tracker</span>
+        <span class="truncate hidden md:block text-sm" data-i18n="shell.logoDesktop">Attendance Tracker</span>
       </a>
     </div>
 
@@ -353,7 +353,23 @@ function isActive(href: string): boolean {
       logoutForm.onsubmit = function (e) {
         e.preventDefault();
         var btn = logoutForm.querySelector('button[type="submit"]');
-        if (btn) { btn.disabled = true; btn.textContent = 'Logging out…'; /* shell.loggingOut */ }
+        if (btn) {
+          btn.disabled = true;
+          var activeLocale = localStorage.getItem('at75_locale') || 'en';
+          var logoutTexts = {
+            en: 'Logging out…',
+            hi: 'लॉग आउट किया जा रहा है…',
+            es: 'Cerrando sesión…',
+            fr: 'Déconnexion…',
+            de: 'Abmelden…',
+            pt: 'Saindo…',
+            ar: 'جاري تسجيل الخروج…',
+            zh: '正在退出…',
+            ja: 'ログアウト中…',
+            ru: 'Выход…'
+          };
+          btn.textContent = logoutTexts[activeLocale] || logoutTexts.en;
+        }
         fetch('/api/auth/sign-out', {
           method: 'POST',
           credentials: 'same-origin',

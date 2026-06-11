@@ -42,11 +42,11 @@ const targetValue = reviewSession?.targetPct ?? 75;
     <div class="w-full max-w-md">
 
       <div class="card">
-        <p class="text-sm font-medium" style="color: var(--color-brand-600);" data-i18n="onboarding.session.step">
+        <p class="text-sm font-medium" style="color: var(--color-brand-600);" data-i18n={reviewMode ? "onboarding.welcome.titleReview" : "onboarding.session.step"}>
           {reviewMode ? 'Reviewing step 1' : 'Step 1 of 2'}
         </p>
         <h1 class="mt-1 text-2xl font-semibold tracking-tight" data-i18n="onboarding.session.title">Name your session</h1>
-        <p class="mt-2" style="color: var(--color-text-muted);" data-i18n="onboarding.session.body">
+        <p class="mt-2" style="color: var(--color-text-muted);" data-i18n={reviewMode ? "onboarding.welcome.bodyReview" : "onboarding.session.body"}>
           {reviewMode
             ? "Here's the session you set up. You can head back to step 2 when you're ready."
             : 'A session is one academic term — like “Fall 2026”.'}
@@ -82,7 +82,9 @@ const targetValue = reviewSession?.targetPct ?? 75;
             </div>
           </div>
           <div class="field">
-            <label class="field-label" for="targetPct">Target percentage: <span id="t-val" class="num">{targetValue}</span>%</label>
+            <label class="field-label" for="targetPct">
+              <span data-i18n="onboarding.session.targetPctLabel">Target percentage</span>: <span id="t-val" class="num">{targetValue}</span>%
+            </label>
             <input id="targetPct" name="targetPct" type="range" min="50" max="100" step="1" value={String(targetValue)} class="w-full" disabled={reviewMode} />
           </div>
           <p id="err" class="field-error" role="alert" hidden></p>
@@ -104,9 +106,19 @@ const targetValue = reviewSession?.targetPct ?? 75;
 </BaseLayout>
 
 <script>
-  const t = document.getElementById('targetPct') as HTMLInputElement;
+  import { t, resolveLocale, STORAGE_KEY } from '../../lib/i18n';
+
+  const getLocale = () => {
+    try {
+      return resolveLocale(localStorage.getItem(STORAGE_KEY));
+    } catch {
+      return 'en';
+    }
+  };
+
+  const targetPctInput = document.getElementById('targetPct') as HTMLInputElement;
   const tv = document.getElementById('t-val');
-  if (t && tv) t.addEventListener('input', () => (tv.textContent = t.value));
+  if (targetPctInput && tv) targetPctInput.addEventListener('input', () => (tv.textContent = targetPctInput.value));
 
   const form = document.getElementById('session-form') as HTMLFormElement;
   form?.addEventListener('submit', async (e) => {
@@ -120,13 +132,13 @@ const targetValue = reviewSession?.targetPct ?? 75;
       targetPct: parseInt((form.elements.namedItem('targetPct') as HTMLInputElement).value, 10),
     };
     if (!data.name || !data.startDate || !data.endDate) {
-      err.textContent = 'All fields are required.';
+      err.textContent = t(getLocale(), 'onboarding.session.errorRequired');
       err.hidden = false;
       return;
     }
     const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating…';
+    submitBtn.textContent = t(getLocale(), 'onboarding.session.creating');
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -134,10 +146,10 @@ const targetValue = reviewSession?.targetPct ?? 75;
     });
     const json = await res.json() as any;
     if (!res.ok) {
-      err.textContent = json?.error?.message || 'Something went wrong.';
+      err.textContent = json?.error?.message || t(getLocale(), 'error.generic');
       err.hidden = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Continue';
+      submitBtn.textContent = t(getLocale(), 'onboarding.session.continue');
       return;
     }
     window.location.href = `/onboarding/timetable?sessionId=${json.data.id}`;
