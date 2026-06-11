@@ -13,7 +13,9 @@ type Dict = Record<string, string>;
 
 const en: Dict = {
   'nav.today': "Today's Schedule",
+  'nav.today.short': 'Today',
   'nav.weekly': 'Weekly Schedule',
+  'nav.weekly.short': 'Weekly',
   'nav.subjects': 'Subjects',
   'nav.calculator': 'Calculator',
   'nav.sessions': 'Sessions',
@@ -489,6 +491,7 @@ const en: Dict = {
   'settings.danger.confirmText': 'Are you absolutely sure you want to delete your account? This will permanently remove all your attendance data, subjects, and sessions. This action CANNOT be undone.',
   'settings.danger.deleting': 'Deleting...',
   'settings.danger.errorDelete': 'Failed to delete account: {error}',
+  'subjects.title': 'Subjects',
   'subjects.viewSessionRollup': 'View session rollup',
   'subjects.stat.subjectAttendance': 'Total Subject Attendance',
   'subjects.stat.labAttendance': 'Total Lab Attendance',
@@ -530,7 +533,9 @@ const hi: Dict = {
   // Phase 1: spot translations for the most-visible chrome. Missing
   // entries fall back to English at runtime.
   'nav.today': 'आज का शेड्यूल',
+  'nav.today.short': 'आज',
   'nav.weekly': 'साप्ताहिक शेड्यूल',
+  'nav.weekly.short': 'साप्ताहिक',
   'nav.subjects': 'विषय',
   'nav.calculator': 'कैलकुलेटर',
   'nav.sessions': 'सत्र',
@@ -877,6 +882,7 @@ const hi: Dict = {
   'settings.danger.confirmText': 'क्या आप वाकई अपना खाता हटाना चाहते हैं? यह आपके सभी उपस्थिति डेटा, विषयों और सत्रों को स्थायी रूप से हटा देगा। इस क्रिया को पूर्ववत नहीं किया जा सकता।',
   'settings.danger.deleting': 'हटाया जा रहा है...',
   'settings.danger.errorDelete': 'खाता हटाने में विफल: {error}',
+  'subjects.title': 'विषय',
   'subjects.viewSessionRollup': 'सत्र सारांश देखें',
   'subjects.stat.subjectAttendance': 'कुल विषय उपस्थिति',
   'subjects.stat.labAttendance': 'कुल लैब उपस्थिति',
@@ -916,7 +922,9 @@ const hi: Dict = {
 
 const es: Dict = {
   'nav.today': 'Horario de hoy',
+  'nav.today.short': 'Hoy',
   'nav.weekly': 'Horario semanal',
+  'nav.weekly.short': 'Semanal',
   'nav.subjects': 'Asignaturas',
   'nav.calculator': 'Calculadora',
   'nav.sessions': 'Sesiones',
@@ -1263,6 +1271,7 @@ const es: Dict = {
   'settings.danger.confirmText': '¿Estás absolutamente seguro de que deseas eliminar tu cuenta? Esto eliminará permanentemente todos tus datos de asistencia, asignaturas y sesiones. Esta acción NO se puede deshacer.',
   'settings.danger.deleting': 'Eliminando...',
   'settings.danger.errorDelete': 'Error al eliminar la cuenta: {error}',
+  'subjects.title': 'Asignaturas',
   'subjects.viewSessionRollup': 'Ver resumen de sesión',
   'subjects.stat.subjectAttendance': 'Asistencia total de asignaturas',
   'subjects.stat.labAttendance': 'Asistencia total de laboratorios',
@@ -1302,7 +1311,9 @@ const es: Dict = {
 
 const fr: Dict = {
   'nav.today': "Programme d'aujourd'hui",
+  'nav.today.short': "Aujourd'hui",
   'nav.weekly': 'Programme hebdomadaire',
+  'nav.weekly.short': 'Semaine',
   'nav.subjects': 'Matières',
   'nav.calculator': 'Calculatrice',
   'nav.sessions': 'Sessions',
@@ -1649,6 +1660,7 @@ const fr: Dict = {
   'settings.danger.confirmText': 'Êtes-vous absolument sûr de vouloir supprimer votre compte ? Cela supprimera définitivement toutes vos données de présence, matières et sessions. Cette action NE PEUT PAS être annulée.',
   'settings.danger.deleting': 'Suppression...',
   'settings.danger.errorDelete': 'Échec de la suppression du compte : {error}',
+  'subjects.title': 'Matières',
   'subjects.viewSessionRollup': 'Voir le récapitulatif de session',
   'subjects.stat.subjectAttendance': 'Présence totale aux matières',
   'subjects.stat.labAttendance': 'Présence totale aux TP',
@@ -1688,7 +1700,9 @@ const fr: Dict = {
 
 const de: Dict = {
   'nav.today': 'Heutiger Plan',
+  'nav.today.short': 'Heute',
   'nav.weekly': 'Wochenplan',
+  'nav.weekly.short': 'Woche',
   'nav.subjects': 'Fächer',
   'nav.calculator': 'Rechner',
   'nav.sessions': 'Sitzungen',
@@ -2013,6 +2027,7 @@ const de: Dict = {
   'settings.danger.confirmText': 'Sind Sie sich absolut sicher, dass Sie Ihr Konto löschen möchten? Dadurch werden alle Ihre Anwesenheitsdaten, Fächer und Sitzungen dauerhaft entfernt. Diese Aktion KANN NICHT rückgängig gemacht werden.',
   'settings.danger.deleting': 'Löschen...',
   'settings.danger.errorDelete': 'Fehler beim Löschen des Kontos: {error}',
+  'subjects.title': 'Fächer',
   'subjects.viewSessionRollup': 'Sitzungszusammenfassung anzeigen',
   'subjects.stat.subjectAttendance': 'Gesamte Fächeranwesenheit',
   'subjects.stat.labAttendance': 'Gesamte Praktikumsanwesenheit',
@@ -2052,7 +2067,9 @@ const de: Dict = {
 
 const pt: Dict = {
   'nav.today': 'Agenda de hoje',
+  'nav.today.short': 'Hoje',
   'nav.weekly': 'Agenda semanal',
+  'nav.weekly.short': 'Semanal',
   'nav.subjects': 'Disciplinas',
   'nav.calculator': 'Calculadora',
   'nav.sessions': 'Períodos',
@@ -2372,6 +2389,7 @@ const pt: Dict = {
   'settings.danger.confirmText': 'Tem certeza absoluta de que deseja excluir sua conta? Isso removerá permanentemente todos os seus dados de presença, disciplinas e sessões. Esta ação NÃO pode ser desfeita.',
   'settings.danger.deleting': 'Excluindo...',
   'settings.danger.errorDelete': 'Falha ao excluir a conta: {error}',
+  'subjects.title': 'Disciplinas',
   'subjects.viewSessionRollup': 'Ver resumo da sessão',
   'subjects.stat.subjectAttendance': 'Presença total nas disciplinas',
   'subjects.stat.labAttendance': 'Presença total nos laboratórios',
@@ -2411,7 +2429,9 @@ const pt: Dict = {
 
 const ar: Dict = {
   'nav.today': 'جدول اليوم',
+  'nav.today.short': 'اليوم',
   'nav.weekly': 'الجدول الأسبوعي',
+  'nav.weekly.short': 'أسبوعي',
   'nav.subjects': 'المواد',
   'nav.calculator': 'الحاسبة',
   'nav.sessions': 'الفصول',
@@ -2721,6 +2741,7 @@ const ar: Dict = {
   'settings.danger.confirmText': 'هل أنت متأكد تماماً من رغبتك في حذف حسابك؟ سيؤدي هذا إلى إزالة جميع بيانات الحضور والمواد والجلسات نهائياً. لا يمكن التراجع عن هذا الإجراء.',
   'settings.danger.deleting': 'جاري الحذف...',
   'settings.danger.errorDelete': 'فشل حذف الحساب: {error}',
+  'subjects.title': 'المواد',
   'subjects.viewSessionRollup': 'عرض ملخص الجلسة',
   'subjects.stat.subjectAttendance': 'إجمالي حضور المواد',
   'subjects.stat.labAttendance': 'إجمالي حضور المختبرات',
@@ -2760,7 +2781,9 @@ const ar: Dict = {
 
 const zh: Dict = {
   'nav.today': '今日课表',
+  'nav.today.short': '今日',
   'nav.weekly': '每周课表',
+  'nav.weekly.short': '每周',
   'nav.subjects': '科目',
   'nav.calculator': '计算器',
   'nav.sessions': '学期',
@@ -3070,6 +3093,7 @@ const zh: Dict = {
   'settings.danger.confirmText': '您确定要删除账户吗？这将永久移除您的所有考勤数据、科目和学期。此操作无法撤销。',
   'settings.danger.deleting': '删除中...',
   'settings.danger.errorDelete': '删除账户失败：{error}',
+  'subjects.title': '科目',
   'subjects.viewSessionRollup': '查看学期汇总',
   'subjects.stat.subjectAttendance': '总科目考勤率',
   'subjects.stat.labAttendance': '总实验课考勤率',
@@ -3109,7 +3133,9 @@ const zh: Dict = {
 
 const ja: Dict = {
   'nav.today': '今日の時間割',
+  'nav.today.short': '今日',
   'nav.weekly': '週間時間割',
+  'nav.weekly.short': '週間',
   'nav.subjects': '科目',
   'nav.calculator': '計算ツール',
   'nav.sessions': '学期',
@@ -3419,6 +3445,7 @@ const ja: Dict = {
   'settings.danger.confirmText': 'アカウントを削除してもよろしいですか？これにより、すべての出席データ、科目、セッションが完全に削除されます。この操作は取り消せません。',
   'settings.danger.deleting': '削除中...',
   'settings.danger.errorDelete': 'アカウントの削除に失敗しました: {error}',
+  'subjects.title': '科目',
   'subjects.viewSessionRollup': 'セッションの集計を表示',
   'subjects.stat.subjectAttendance': '全科目の出席率',
   'subjects.stat.labAttendance': '全実験の出席率',
@@ -3458,7 +3485,9 @@ const ja: Dict = {
 
 const ru: Dict = {
   'nav.today': 'Расписание на сегодня',
+  'nav.today.short': 'Сегодня',
   'nav.weekly': 'Недельное расписание',
+  'nav.weekly.short': 'Неделя',
   'nav.subjects': 'Предметы',
   'nav.calculator': 'Калькулятор',
   'nav.sessions': 'Сессии',
@@ -3768,6 +3797,7 @@ const ru: Dict = {
   'settings.danger.confirmText': 'Вы абсолютно уверены, что хотите удалить свой аккаунт? Это навсегда удалит все данные о посещаемости, предметы и сессии. Это действие НЕЛЬЗЯ отменить.',
   'settings.danger.deleting': 'Удаление...',
   'settings.danger.errorDelete': 'Не удалось удалить аккаунт: {error}',
+  'subjects.title': 'Предметы',
   'subjects.viewSessionRollup': 'Просмотреть сводку сессии',
   'subjects.stat.subjectAttendance': 'Общая посещаемость предметов',
   'subjects.stat.labAttendance': 'Общая посещаемость лаб. работ',
