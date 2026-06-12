@@ -1,8 +1,6 @@
 import { defineDb, defineTable, column, NOW } from 'astro:db';
 
-/* ------------------------------------------------------------------ */
-/* Auth tables                                                         */
-/* ------------------------------------------------------------------ */
+
 const User = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
@@ -22,9 +20,6 @@ const Session = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     userId: column.text({ references: () => User.columns.id }),
-    /** SHA-256 hex digest of the opaque session token. Raw token lives
-     *  only in the user's cookie. Lookup uses tokenHash, so a DB leak
-     *  does not yield usable session tokens. */
     tokenHash: column.text({ unique: true }),
     expiresAt: column.date(),
     ipAddress: column.text({ optional: true }),
@@ -40,24 +35,22 @@ const Account = defineTable({
     userId: column.text({ references: () => User.columns.id }),
     providerId: column.text(),
     accountId: column.text(),
-    password: column.text({ optional: true }), // hashed
+    password: column.text({ optional: true }),
     createdAt: column.date({ default: NOW }),
     updatedAt: column.date({ default: NOW }),
   },
 });
 
-/* ------------------------------------------------------------------ */
-/* App tables                                                          */
-/* ------------------------------------------------------------------ */
+
 const AcademicSession = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     userId: column.text({ references: () => User.columns.id }),
     name: column.text(),
-    startDate: column.text(), // YYYY-MM-DD
-    endDate: column.text(),   // YYYY-MM-DD
+    startDate: column.text(),
+    endDate: column.text(),
     targetPct: column.number({ default: 75 }),
-    overallCalcMode: column.text({ default: 'subject' }), // subject|lab|both
+    overallCalcMode: column.text({ default: 'subject' }),
     isArchived: column.boolean({ default: false }),
     createdAt: column.date({ default: NOW }),
   },
@@ -82,9 +75,9 @@ const TimetableSlot = defineTable({
     id: column.text({ primaryKey: true }),
     sessionId: column.text({ references: () => AcademicSession.columns.id, onDelete: 'cascade' }),
     subjectId: column.text({ references: () => Subject.columns.id, onDelete: 'cascade' }),
-    dayOfWeek: column.number(), // 0=Sun .. 6=Sat
-    startTime: column.text(),   // HH:MM
-    endTime: column.text(),     // HH:MM
+    dayOfWeek: column.number(),
+    startTime: column.text(),
+    endTime: column.text(),
     location: column.text({ optional: true }),
     createdAt: column.date({ default: NOW }),
   },
@@ -94,8 +87,8 @@ const Day = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     sessionId: column.text({ references: () => AcademicSession.columns.id, onDelete: 'cascade' }),
-    date: column.text(),         // YYYY-MM-DD
-    status: column.text({ default: 'normal' }), // normal|holiday|sick|event
+    date: column.text(),
+    status: column.text({ default: 'normal' }),
     note: column.text({ optional: true }),
     createdAt: column.date({ default: NOW }),
   },
@@ -106,8 +99,8 @@ const AttendanceLog = defineTable({
     id: column.text({ primaryKey: true }),
     sessionId: column.text({ references: () => AcademicSession.columns.id, onDelete: 'cascade' }),
     subjectId: column.text({ references: () => Subject.columns.id, onDelete: 'cascade' }),
-    date: column.text(),         // YYYY-MM-DD
-    status: column.text(),       // present|absent|extra|off
+    date: column.text(),
+    status: column.text(),
     note: column.text({ optional: true }),
     createdAt: column.date({ default: NOW }),
     updatedAt: column.date({ default: NOW }),
