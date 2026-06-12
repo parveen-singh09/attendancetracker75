@@ -46,7 +46,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
             <span class="auth-brand-check" style="background-color: color-mix(in oklab, var(--color-safe) 18%, transparent); color: var(--color-safe);">✓</span>
             <div>
               <div class="auth-brand-point-title">Session-based</div>
-              <div class="auth-brand-point-body">One "Fall 2026", one "Spring 2027". Archive the rest.</div>
+              <div class="auth-brand-point-body">One "Fall 2026", one "Spring 2027". Organize your semesters.</div>
             </div>
           </li>
         </ul>
@@ -121,7 +121,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
             <span>or</span>
           </div>
 
-          <a href="/api/auth/google/login" class="btn btn-secondary flex items-center justify-center gap-2 w-full" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <a href="/api/auth/google/login?flow=signup" class="btn btn-secondary flex items-center justify-center gap-2 w-full" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />

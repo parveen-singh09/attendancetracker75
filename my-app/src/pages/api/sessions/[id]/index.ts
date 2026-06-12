@@ -9,7 +9,6 @@ const patchSchema = z.object({
   name: z.string().min(1).max(80).optional(),
   targetPct: z.number().min(50).max(100).optional(),
   overallCalcMode: z.enum(['subject', 'lab', 'both']).optional(),
-  isArchived: z.boolean().optional(),
 });
 
 export const GET: APIRoute = async ({ params, locals }) => {

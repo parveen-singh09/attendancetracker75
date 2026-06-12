@@ -105,10 +105,21 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     const { rawToken } = await createSessionFor(userId, request);
     const secure = import.meta.env.PROD || url.protocol === 'https:';
     
+    // 6. Determine redirect based on flow origin (login vs signup)
+    const flow = cookies.get('google_oauth_flow')?.value || 'login';
+    let redirectTo = '/app/today';
+    if (flow === 'signup') {
+      const freshUser = (await db.select().from(User).where(eq(User.id, userId)).limit(1))[0];
+      if (freshUser && freshUser.onboardingStep !== 'done') {
+        redirectTo = '/onboarding/welcome';
+      }
+    }
+
     // Return custom redirect Response to prevent Cloudflare immutable header errors
     const headers = new Headers();
-    headers.set('Location', '/app/today');
+    headers.set('Location', redirectTo);
     headers.append('Set-Cookie', 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+    headers.append('Set-Cookie', 'google_oauth_flow=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     headers.append('Set-Cookie', buildSessionCookie(rawToken, secure));
 
     return new Response(null, {

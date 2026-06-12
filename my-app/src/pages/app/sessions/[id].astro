@@ -91,16 +91,14 @@ for (const s of subjRows) {
     }));
   const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-  // If the session is active, apply default-absent logic for today's classes
-  if (!sess.isArchived) {
-    const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
-    const counts = todaysCounts.get(s.id)!;
-    const totalRows =
-      counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
-    if (hasRegularToday && totalRows === 0) {
-      stats.held += 1;
-      stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
-    }
+  // Apply default-absent logic for today's classes
+  const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
+  const counts = todaysCounts.get(s.id)!;
+  const totalRows =
+    counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
+  if (hasRegularToday && totalRows === 0) {
+    stats.held += 1;
+    stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
   }
 
   perSubject[s.id] = { name: s.name, color: s.color, isLab: s.isLab, stats };
@@ -149,17 +147,6 @@ const daysCount = logs.length > 0 ? new Set(logs.map((l) => l.date)).size : 0;
       {sess.startDate} → {sess.endDate} · {subjRows.length} subjects · target {
         sess.targetPct
       }%
-      {
-        sess.isArchived && (
-          <span
-            class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase"
-            style="background-color: var(--color-surface-2);"
-            data-i18n="sessions.labelArchived"
-          >
-            Archived
-          </span>
-        )
-      }
     </p>
 
     <div class="mt-4 card">

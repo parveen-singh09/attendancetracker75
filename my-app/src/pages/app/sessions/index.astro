@@ -77,16 +77,14 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
       }));
     const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-    // If the session is active, apply default-absent logic for today's classes
-    if (!sess.isArchived) {
-      const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
-      const counts = todaysCounts.get(s.id)!;
-      const totalRows =
-        counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
-      if (hasRegularToday && totalRows === 0) {
-        stats.held += 1;
-        stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
-      }
+    // Apply default-absent logic for today's classes
+    const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
+    const counts = todaysCounts.get(s.id)!;
+    const totalRows =
+      counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
+    if (hasRegularToday && totalRows === 0) {
+      stats.held += 1;
+      stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
     }
 
     perSubj[s.id] = stats;
@@ -165,15 +163,6 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
                       >
                         {s.startDate} → {s.endDate} · {r.subjects} subjects ·
                         target {s.targetPct}%
-                        {s.isArchived && (
-                          <span
-                            class="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase"
-                            style="background-color: var(--color-surface-2);"
-                            data-i18n="sessions.labelArchived"
-                          >
-                            Archived
-                          </span>
-                        )}
                       </div>
                     </div>
                     <div class="num text-2xl font-semibold">
@@ -195,21 +184,6 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
                     >
                       View rollup
                     </a>
-                    {!s.isArchived && (
-                      <form
-                        method="post"
-                        action={`/api/sessions/${s.id}/archive`}
-                        onsubmit="const activeLocale = localStorage.getItem('at75_locale') || 'en'; const msgs = { en: 'Archive this session? You can still view its rollup.', hi: 'इस सत्र को आर्काइव करें? आप अभी भी इसके रोलअप को देख सकते हैं।', es: '¿Archivar esta sesión? Aún puedes ver su resumen.', fr: 'Archiver cette session ? Vous pouvez toujours voir son récapitulatif.', de: 'Diese Sitzung archivieren? Sie können immer noch die Zusammenfassung anzeigen.', pt: 'Arquivar esta sessão? Você ainda poderá ver o resumo.', ar: 'هل تريد أرشفة هذه الجلسة؟ لا يزال بإمكانك عرض ملخصها.', zh: '归档此学期？您仍然可以查看其汇总。', ja: 'このセッションをアーカイブしますか？ロールアップは引き続き表示できます。', ru: 'Архивировать эту сессию? Вы все еще сможете просматривать её сводку.' }; return confirm(msgs[activeLocale] || msgs.en);"
-                      >
-                        <button
-                          type="submit"
-                          class="btn btn-ghost btn-sm"
-                          data-i18n="sessions.btnArchive"
-                        >
-                          Archive
-                        </button>
-                      </form>
-                    )}
                   </div>
                 </li>
               );
