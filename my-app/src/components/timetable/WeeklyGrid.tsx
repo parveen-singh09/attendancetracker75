@@ -140,36 +140,25 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
   };
 
   const initialSplit = splitEntries(initialSubjects);
-  const hasSavedAny = initialSubjects.length > 0;
-  const [subjects, setSubjects] = useState<Entry[]>(
-    initialSplit.subjects.length || hasSavedAny
-      ? (initialSplit.subjects as Entry[])
-      : [{ id: generateUniqueId(), name: 'Subject 1', color: getRandomColor(), isLab: false }]
-  );
-  const [labs, setLabs] = useState<Entry[]>(
-    initialSplit.labs.length || hasSavedAny
-      ? (initialSplit.labs as Entry[])
-      : [{ id: generateUniqueId(), name: 'Lab 1', color: getRandomColor(), isLab: true }]
-  );
+  const [subjects, setSubjects] = useState<Entry[]>(initialSplit.subjects as Entry[]);
+  const [labs, setLabs] = useState<Entry[]>(initialSplit.labs as Entry[]);
   const [slots, setSlots] = useState<DraftSlot[]>(initialSlots);
   const [saving, setSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const hasMounted = useRef(false);
+  // Track latest state so we can flush on unmount / beforeunload
+  const latestRef = useRef({ subjects, labs, slots });
+  const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => { latestRef.current = { subjects, labs, slots }; }, [subjects, labs, slots]);
 
-  async function syncTimetable(
+  function buildPayload(
     currentSubjects: Entry[],
     currentLabs: Entry[],
     currentSlots: DraftSlot[],
-    shouldRedirect = false
   ) {
-    if (currentSubjects.length === 0 && currentLabs.length === 0) {
-      if (shouldRedirect) setSaveError('Please add at least one subject to continue.');
-      return;
-    }
-
-    const payload = {
+    return {
       subjects: [
         ...currentSubjects.map((s) => ({ tempId: s.id, name: s.name, color: s.color, isLab: false })),
         ...currentLabs.map((s) => ({ tempId: s.id, name: s.name, color: s.color, isLab: true })),
@@ -184,6 +173,15 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         };
       }),
     };
+  }
+
+  async function syncTimetable(
+    currentSubjects: Entry[],
+    currentLabs: Entry[],
+    currentSlots: DraftSlot[],
+    shouldRedirect = false
+  ) {
+    const payload = buildPayload(currentSubjects, currentLabs, currentSlots);
 
     if (shouldRedirect) setSaving(true);
     else setAutoSaving(true);
@@ -201,6 +199,8 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         if (shouldRedirect) setSaveError(`Failed to save: ${detail}`);
         return;
       }
+      // Save succeeded — clear pending flag
+      pendingTimer.current = null;
       if (shouldRedirect) {
         window.location.href = '/app/today';
       }
@@ -216,6 +216,35 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     }
   }
 
+  // Flush pending changes via sendBeacon when the user navigates away
+  // (beforeunload fires before Astro's page transitions and hard navigations).
+  useEffect(() => {
+    function flushBeacon() {
+      if (!pendingTimer.current) return;
+      const { subjects: s, labs: l, slots: sl } = latestRef.current;
+
+      const payload = buildPayload(s, l, sl);
+      const url = `/api/timetable?sessionId=${encodeURIComponent(sessionId)}`;
+      // fetch with keepalive survives page unload (like sendBeacon) but allows PUT
+      fetch(url, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
+      pendingTimer.current = null;
+    }
+    window.addEventListener('beforeunload', flushBeacon);
+    // Also flush on Astro's before-preparation (soft nav)
+    document.addEventListener('astro:before-preparation', flushBeacon);
+    return () => {
+      window.removeEventListener('beforeunload', flushBeacon);
+      document.removeEventListener('astro:before-preparation', flushBeacon);
+      // Component unmount — flush if pending
+      flushBeacon();
+    };
+  }, [sessionId]);
+
   useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true;
@@ -224,6 +253,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     const timer = setTimeout(() => {
       syncTimetable(subjects, labs, slots, false);
     }, 1000);
+    pendingTimer.current = timer;
     return () => clearTimeout(timer);
   }, [subjects, labs, slots]);
 
@@ -295,7 +325,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     } else {
       setLabs(labs.filter((_, i) => i !== idx));
     }
-    if (removedId) setSlots(slots.filter((s) => s.subjectId !== removedId));
+    if (removedId) setSlots((prev) => prev.filter((s) => s.subjectId !== removedId));
   }
 
   function openAddForDay(day: number) {
@@ -680,7 +710,7 @@ function PoolEditor({
       <ul className="mt-2 space-y-2">
         {entries.map((s, i) => (
           <li 
-            key={i} 
+            key={s.id} 
             className="flex items-center gap-2 rounded-md border p-1 pl-2 pr-2" 
             style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}
           >

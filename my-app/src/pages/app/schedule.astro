@@ -98,15 +98,7 @@ const classesCount = slotRows.length;
       </div>
     </details>
 
-    {pool.length === 0 ? (
-      <div class="card mt-6 flex flex-col items-center gap-2 py-10 text-center">
-        <div class="text-3xl" aria-hidden="true">📚</div>
-        <p class="text-base font-medium" data-i18n="schedule.noSubjectsYet">No subjects or labs yet.</p>
-        <p class="text-sm" style="color: var(--color-text-subtle);" data-i18n="schedule.noSubjectsHelp">
-          Add at least one subject or lab in the pool below to start building your weekly schedule.
-        </p>
-      </div>
-    ) : null}
+
 
     <div class="mt-6">
       <WeeklyGrid

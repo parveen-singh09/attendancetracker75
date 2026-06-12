@@ -19,7 +19,7 @@ const putSchema = z.object({
     name: z.string().min(1).max(80),
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
     isLab: z.boolean().default(false),
-  })).min(1),
+  })).default([]),
   slots: z.array(slotSchema).default([]),
 });
 
