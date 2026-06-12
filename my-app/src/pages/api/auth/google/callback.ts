@@ -106,7 +106,8 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     const secure = import.meta.env.PROD || url.protocol === 'https:';
     
     // 6. Determine redirect based on flow origin (login vs signup)
-    const flow = cookies.get('google_oauth_flow')?.value || 'login';
+    // Flow is encoded in state as 'uuid:flow'
+    const flow = state.split(':')[1] || 'login';
     let redirectTo = '/app/today';
     if (flow === 'signup') {
       const freshUser = (await db.select().from(User).where(eq(User.id, userId)).limit(1))[0];
@@ -119,7 +120,6 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     const headers = new Headers();
     headers.set('Location', redirectTo);
     headers.append('Set-Cookie', 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
-    headers.append('Set-Cookie', 'google_oauth_flow=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     headers.append('Set-Cookie', buildSessionCookie(rawToken, secure));
 
     return new Response(null, {
