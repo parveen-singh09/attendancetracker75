@@ -43,7 +43,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
       if (saved) {
         setLocale(resolveLocale(saved));
       }
-    } catch {}
+    } catch { }
 
     const handleLocaleChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -92,7 +92,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     const newPct = newHeld === 0 ? 0 : Math.min(100, (newAttended / newHeld) * 100);
 
     const pctStr = newPct.toFixed(1) + '%';
-    
+
     const sideEl = document.getElementById('sidebar-session-pct');
     if (sideEl) sideEl.textContent = pctStr;
     const sideCollapsedEl = document.getElementById('sidebar-session-pct-collapsed');
@@ -114,24 +114,38 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     const todayFracEl = document.getElementById('today-overall-fraction');
     if (todayFracEl) todayFracEl.textContent = tr('today.attendedOf', { attended: newAttended, held: newHeld });
 
-    // Update Today Page Extra
-    const todayExtraEl = document.getElementById('today-overall-extra');
-    if (todayExtraEl) {
-      if (newExtra > 0) {
-        todayExtraEl.textContent = tr('today.extraCount', { extra: newExtra });
-        todayExtraEl.style.display = 'inline';
-      } else {
-        todayExtraEl.style.display = 'none';
-      }
-    }
+    // Update Stats Cards (Today's Totals)
+    let todayHeld = 0;
+    let todayAttended = 0;
+    let todayExtra = 0;
+    let todaySubjs = 0;
 
-    // Update Stats Cards
+    subjects.forEach((s) => {
+      const shouldInclude =
+        calcMode === 'both' ||
+        (calcMode === 'lab' && s.isLab) ||
+        (calcMode === 'subject' && !s.isLab);
+
+      if (shouldInclude) {
+        const isActiveToday = s.hasRegularSlot || s.regular > 0 || s.absent > 0 || s.extra > 0 || s.off;
+        if (isActiveToday) {
+          todaySubjs += 1;
+          const isDefaultAbsent = s.regular + s.absent + s.extra === 0 && s.hasRegularSlot && !s.off;
+          todayHeld += (s.regular + s.absent + (isDefaultAbsent ? 1 : 0));
+          todayAttended += s.regular;
+          todayExtra += s.extra;
+        }
+      }
+    });
+
     const heldEl = document.getElementById('stat-held');
-    if (heldEl) heldEl.textContent = String(newHeld);
+    if (heldEl) heldEl.textContent = String(todayHeld);
     const attendedEl = document.getElementById('stat-attended');
-    if (attendedEl) attendedEl.textContent = String(newAttended);
+    if (attendedEl) attendedEl.textContent = String(todayAttended);
     const extraEl = document.getElementById('stat-extra');
-    if (extraEl) extraEl.textContent = String(newExtra);
+    if (extraEl) extraEl.textContent = String(todayExtra);
+    const subjsEl = document.getElementById('stat-subjects');
+    if (subjsEl) subjsEl.textContent = String(todaySubjs);
 
     // Update Progress Bar
     const barContainer = document.getElementById('today-overall-bar');
@@ -143,7 +157,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         progressBar.setAttribute('aria-valuenow', String(Math.round(clamped)));
         progressBar.setAttribute('aria-label', `Attendance ${newPct.toFixed(1)} percent`);
         (progressFill as HTMLElement).style.width = `${clamped}%`;
-        
+
         // Update bar color
         let barTone = 'var(--color-danger)';
         if (newHeld > 0) {
@@ -261,8 +275,8 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         kind === 'regular'
           ? (delta === 1 ? tr('quickMarks.action.addRegular') : tr('quickMarks.action.removeRegular'))
           : kind === 'absent'
-          ? (delta === 1 ? tr('quickMarks.action.addAbsent') : tr('quickMarks.action.removeAbsent'))
-          : (delta === 1 ? tr('quickMarks.action.addExtra') : tr('quickMarks.action.removeExtra'));
+            ? (delta === 1 ? tr('quickMarks.action.addAbsent') : tr('quickMarks.action.removeAbsent'))
+            : (delta === 1 ? tr('quickMarks.action.addExtra') : tr('quickMarks.action.removeExtra'));
       showToast(tr('quickMarks.toast.action', { name: s.name, action }), () => change(prev, kind, delta === 1 ? -1 : 1));
     } catch (e) {
       setSubjects((arr) => arr.map((x) => x.id === s.id ? prev : x));
@@ -412,8 +426,8 @@ function Counter({
 }) {
   const activeColor =
     tone === 'safe' ? 'var(--color-safe)' :
-    tone === 'danger' ? 'var(--color-danger)' :
-    'var(--color-brand-600)';
+      tone === 'danger' ? 'var(--color-danger)' :
+        'var(--color-brand-600)';
   const minusDisabled = disabled || value === 0;
   const plusDisabled = disabled;
   return (

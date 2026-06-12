@@ -35,6 +35,7 @@ const initialSlots = slotRows.map((r) => ({
   dayOfWeek: r.slot.dayOfWeek,
   startTime: r.slot.startTime,
   endTime: r.slot.endTime,
+  subjectId: r.subject.id,
   subjectName: r.subject.name,
   isLab: r.subject.isLab,
   location: r.slot.location ?? undefined,

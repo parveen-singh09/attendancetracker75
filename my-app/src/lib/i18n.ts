@@ -123,6 +123,7 @@ const en: Dict = {
   'onboarding.session.startDate': 'Start date',
   'onboarding.session.endDate': 'End date',
   'onboarding.session.targetPct': 'Target percentage: {pct}%',
+  'onboarding.session.targetPctLabel': 'Target percentage',
   'onboarding.session.targetPctHint': '',
   'onboarding.session.continue': 'Continue',
   'onboarding.session.creating': 'Creating…',
@@ -321,6 +322,7 @@ const en: Dict = {
   'weeklyGrid.errorSave': 'Failed to save: {error}',
   'weeklyGrid.errorNetwork': 'Network error: {error}',
   'weeklyGrid.errorNoSubjects': 'Please add at least one subject to continue.',
+  'weeklyGrid.errorEmptyName': 'Subject and lab names cannot be empty.',
   'weeklyGrid.labLabel': 'Lab',
   'weeklyGrid.roomPlaceholder': 'e.g. Room 204',
   'weeklyGrid.couldNotSave': 'Couldn\'t save',
@@ -666,6 +668,7 @@ const hi: Dict = {
   'terms.h2.changes': 'परिवर्तन',
   'terms.changesP': 'हम इन शर्तों को अपडेट कर सकते हैं। "अंतिम अद्यतन" तिथि परिवर्तनों को दर्शाएगी।',
 
+  'onboarding.session.targetPctLabel': 'लक्ष्य प्रतिशत',
   'onboarding.timetable.clickToPreview': 'पूर्वावलोकन के लिए "Parse" पर क्लिक करें।',
   'onboarding.timetable.classesParsed': '{count} कक्षा पार्स की गई:',
   'onboarding.timetable.classesParsedPlural': '{count} कक्षाएं पार्स की गईं:',
@@ -713,6 +716,7 @@ const hi: Dict = {
   'weeklyGrid.errorSave': 'सहेजने में विफल: {error}',
   'weeklyGrid.errorNetwork': 'नेटवर्क त्रुटि: {error}',
   'weeklyGrid.errorNoSubjects': 'जारी रखने के लिए कृपया कम से कम एक विषय जोड़ें।',
+  'weeklyGrid.errorEmptyName': 'विषय और लैब का नाम खाली नहीं हो सकता।',
   'weeklyGrid.labLabel': 'लैब',
   'weeklyGrid.roomPlaceholder': 'जैसे रूम 204',
   'weeklyGrid.couldNotSave': 'सहेज नहीं सके',
@@ -1056,6 +1060,7 @@ const es: Dict = {
   'terms.h2.changes': 'Cambios',
   'terms.changesP': 'Podemos actualizar estos términos. La fecha de "Última actualización" reflejará los cambios.',
 
+  'onboarding.session.targetPctLabel': 'Porcentaje objetivo',
   'onboarding.timetable.clickToPreview': 'Haz clic en "Parse" para previsualizar.',
   'onboarding.timetable.classesParsed': '{count} clase analizada:',
   'onboarding.timetable.classesParsedPlural': '{count} clases analizadas:',
@@ -1446,6 +1451,7 @@ const fr: Dict = {
   'terms.h2.changes': 'Modifications',
   'terms.changesP': 'Nous pouvons mettre à jour ces conditions. La date de « Dernière mise à jour » en reflètera les changements.',
 
+  'onboarding.session.targetPctLabel': 'Pourcentage cible',
   'onboarding.timetable.clickToPreview': 'Cliquez sur "Parse" pour prévisualiser.',
   'onboarding.timetable.classesParsed': '{count} cours analysé :',
   'onboarding.timetable.classesParsedPlural': '{count} cours analysés :',
@@ -1813,6 +1819,7 @@ const de: Dict = {
   'terms.acceptableP': 'Missbrauche den Dienst nicht (Bots, Scraping, Denial-of-Service). Wir können den Verkehr drosseln oder blockieren.',
   'terms.changesP': 'Wir können diese Bedingungen aktualisieren. Das Datum „Zuletzt aktualisiert" spiegelt die Änderungen.',
 
+  'onboarding.session.targetPctLabel': 'Zielprozentsatz',
   'onboarding.timetable.clickToPreview': 'Klicke auf „Parse“, um die Vorschau anzuzeigen.',
   'onboarding.timetable.classesParsed': '{count} Klasse analysiert:',
   'onboarding.timetable.classesParsedPlural': '{count} Klassen analysiert:',
@@ -2175,6 +2182,7 @@ const pt: Dict = {
   'terms.acceptableP': 'Não abuse do serviço (bots, scraping, negação de serviço). Podemos limitar a taxa ou bloquear tráfego abusivo.',
   'terms.changesP': 'Podemos atualizar estes termos. A data de "Última atualização" refletirá as mudanças.',
 
+  'onboarding.session.targetPctLabel': 'Porcentagem alvo',
   'onboarding.timetable.clickToPreview': 'Clique em "Parse" para visualizar.',
   'onboarding.timetable.classesParsed': '{count} aula analisada:',
   'onboarding.timetable.classesParsedPlural': '{count} aulas analisadas:',
@@ -2527,6 +2535,7 @@ const ar: Dict = {
   'terms.acceptableP': 'لا تسيء استخدام الخدمة (روبوتات، كشط، حجب الخدمة). قد نحدد المعدل أو نحجب الحركة المسيئة.',
   'terms.changesP': 'قد نُحدّث هذه الشروط. سيُعكس تاريخ "آخر تحديث" التغييرات.',
 
+  'onboarding.session.targetPctLabel': 'النسبة المئوية المستهدفة',
   'onboarding.timetable.clickToPreview': 'انقر على "Parse" للمعاينة.',
   'onboarding.timetable.classesParsed': 'تم تحليل {count} حصة:',
   'onboarding.timetable.classesParsedPlural': 'تم تحليل {count} حصص:',
@@ -2879,6 +2888,7 @@ const zh: Dict = {
   'terms.acceptableP': '请勿滥用服务（机器人、爬虫、拒绝服务）。我们可能会限流或屏蔽滥用流量。',
   'terms.changesP': '我们可能会更新这些条款。"最后更新"日期将反映这些变更。',
 
+  'onboarding.session.targetPctLabel': '目标百分比',
   'onboarding.timetable.clickToPreview': '点击 "Parse" 预览课表。',
   'onboarding.timetable.classesParsed': '解析了 {count} 节课：',
   'onboarding.timetable.classesParsedPlural': '解析了 {count} 节课：',
@@ -3231,6 +3241,7 @@ const ja: Dict = {
   'terms.acceptableP': 'サービスを悪用しないでください（ボット、スクレイピング、DoS）。悪質なトラフィックを制限またはブロックする場合があります。',
   'terms.changesP': '本規約を更新する場合があります。「最終更新日」が変更を反映します。',
 
+  'onboarding.session.targetPctLabel': '目標出席率',
   'onboarding.timetable.clickToPreview': '「Parse」をクリックしてプレビューします。',
   'onboarding.timetable.classesParsed': '{count} 件の授業を解析しました:',
   'onboarding.timetable.classesParsedPlural': '{count} 件の授業を解析しました:',
@@ -3583,6 +3594,7 @@ const ru: Dict = {
   'terms.acceptableP': 'Не злоупотребляйте сервисом (боты, скрапинг, DoS). Мы можем ограничивать частоту или блокировать недобросовестный трафик.',
   'terms.changesP': 'Мы можем обновлять эти условия. Дата «Последнего обновления» отразит изменения.',
 
+  'onboarding.session.targetPctLabel': 'Целевой процент',
   'onboarding.timetable.clickToPreview': 'Нажмите "Parse" для предпросмотра.',
   'onboarding.timetable.classesParsed': 'Распознано занятие ({count}):',
   'onboarding.timetable.classesParsedPlural': 'Распознано занятий ({count}):',

@@ -49,14 +49,11 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
     return json({ error: { code: 'invalid', message: 'Invalid input', issues: parsed.error.issues } }, 400);
   }
 
-  // Reconcile by NAME (not by id). A subject's stable identity is its
-  // (name, isLab) tuple within a session — the client uses tempIds just
-  // for the round-trip. This way:
-  //   - renaming a subject updates one row, attendance history stays
+  // Reconcile by stable ID. Since the client assigns and preserves stable IDs
+  // (tempId) for all subjects, we reconcile by id. This way:
+  //   - renaming a subject updates the row in-place, preserving attendance history and slots
   //   - removing a subject deletes its slots (cascade) and logs (cascade)
-  //   - adding a new subject inserts one row
-  //   - existing rows with the same (name, isLab) keep their id, so all
-  //     existing TimetableSlot and AttendanceLog rows remain valid.
+  //   - adding a new subject inserts one row using its client-generated ID
   //
   // The whole reconcile runs inside a single transaction with
   // `PRAGMA foreign_keys = ON` so the schema's ON DELETE CASCADE on
@@ -71,10 +68,10 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
       .from(Subject)
       .where(eq(Subject.sessionId, sessionId));
 
-    // Group by (name, isLab) — within a session these are unique.
-    const existingByKey = new Map<string, typeof existing[number]>();
+    // Group by database ID
+    const existingById = new Map<string, typeof existing[number]>();
     for (const e of existing) {
-      existingByKey.set(`${e.isLab ? 'L' : 'S'}:${e.name}`, e);
+      existingById.set(e.id, e);
     }
 
     const tempToId = new Map<string, string>();
@@ -82,22 +79,24 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
     const subjectsToDelete: string[] = [];
 
     for (const s of parsed.data.subjects) {
-      const key = `${s.isLab ? 'L' : 'S'}:${s.name}`;
-      const found = existingByKey.get(key);
+      const found = existingById.get(s.tempId);
       if (found) {
-        // Reuse existing row. Update color in case it changed.
-        if (found.color !== s.color) {
-          await tx.update(Subject).set({ color: s.color }).where(eq(Subject.id, found.id));
+        // Reuse existing row. Update fields if they changed.
+        if (found.name !== s.name || found.color !== s.color || found.isLab !== s.isLab) {
+          await tx
+            .update(Subject)
+            .set({ name: s.name, color: s.color, isLab: s.isLab })
+            .where(eq(Subject.id, found.id));
         }
         tempToId.set(s.tempId, found.id);
         // Mark as seen so we don't delete it below.
-        existingByKey.delete(key);
+        existingById.delete(found.id);
       } else {
-        // Genuinely new subject.
-        const id = crypto.randomUUID();
-        tempToId.set(s.tempId, id);
+        // Genuinely new subject. Since client assigns and preserves stable IDs,
+        // we use the s.tempId directly as the primary key.
+        tempToId.set(s.tempId, s.tempId);
         newSubjectRows.push({
-          id,
+          id: s.tempId,
           sessionId,
           name: s.name,
           color: s.color,
@@ -107,12 +106,12 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
       }
     }
 
-    // Anything still in existingByKey is in the DB but not in the new
+    // Anything still in existingById is in the DB but not in the new
     // payload — drop it. The schema's ON DELETE CASCADE will wipe
     // child rows because we're inside a transaction with foreign_keys
     // enabled. We also issue explicit child-row deletes so the operation
     // is correct even if the cascade is ever dropped from the schema.
-    for (const leftover of existingByKey.values()) {
+    for (const leftover of existingById.values()) {
       subjectsToDelete.push(leftover.id);
     }
     if (subjectsToDelete.length) {

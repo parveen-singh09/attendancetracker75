@@ -330,7 +330,7 @@ const sess = (await db
             }
             setTimeout(() => window.location.reload(), 1000);
           } else {
-            const err = await res.json();
+            const err = await res.json() as any;
             if (msg) {
               msg.textContent = err.error || tr('settings.profile.errorGeneric');
               msg.style.color = 'var(--color-danger)';
@@ -382,7 +382,7 @@ const sess = (await db
               sessionMsg.hidden = false;
             }
           } else {
-            const err = await res.json();
+            const err = await res.json() as any;
             if (sessionMsg) {
               sessionMsg.textContent = err.error?.message || tr('settings.attendance.errorGeneric');
               sessionMsg.style.color = 'var(--color-danger)';
@@ -433,7 +433,7 @@ const sess = (await db
 
           let detail = '';
           try {
-            const body = await res.json();
+            const body = await res.json() as any;
             if (typeof body?.error === 'string') detail = body.error;
             else if (body?.error?.message) detail = body.error.message;
             else if (body?.message) detail = body.message;

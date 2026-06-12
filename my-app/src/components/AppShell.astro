@@ -1,9 +1,20 @@
 ---
-import Logo from './Logo.astro';
-import ThemeToggle from './ThemeToggle.astro';
-import Avatar from './Avatar.astro';
-import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and, desc, lte } from 'astro:db';
-import { computeStats, overallStats, toDateString } from '../lib/attendance';
+import Logo from "./Logo.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+import Avatar from "./Avatar.astro";
+import {
+  db,
+  AcademicSession,
+  Subject,
+  AttendanceLog,
+  Day,
+  TimetableSlot,
+  eq,
+  and,
+  desc,
+  lte,
+} from "astro:db";
+import { computeStats, overallStats, toDateString } from "../lib/attendance";
 
 interface Props {
   user: { id: string; name: string; email: string; image?: string | null };
@@ -19,17 +30,57 @@ const userSessions = await db
   .where(eq(AcademicSession.userId, user.id))
   .orderBy(desc(AcademicSession.createdAt));
 
-const activeSession = userSessions.find((s) => !s.isArchived) ?? userSessions[0];
+const activeSession =
+  userSessions.find((s) => !s.isArchived) ?? userSessions[0];
 
 let sessionPct: string | null = null;
 if (activeSession) {
-  const [subjRows, logs, dayOverrides] = await Promise.all([
+  const [subjRows, logs, dayOverrides, allSlots] = await Promise.all([
     db.select().from(Subject).where(eq(Subject.sessionId, activeSession.id)),
-    db.select().from(AttendanceLog).where(and(eq(AttendanceLog.sessionId, activeSession.id), lte(AttendanceLog.date, today))),
-    db.select().from(Day).where(eq(Day.sessionId, activeSession.id))
+    db
+      .select()
+      .from(AttendanceLog)
+      .where(
+        and(
+          eq(AttendanceLog.sessionId, activeSession.id),
+          lte(AttendanceLog.date, today),
+        ),
+      ),
+    db.select().from(Day).where(eq(Day.sessionId, activeSession.id)),
+    db
+      .select()
+      .from(TimetableSlot)
+      .where(eq(TimetableSlot.sessionId, activeSession.id)),
   ]);
 
-  const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as any }));
+  const dayArr = dayOverrides.map((d) => ({
+    date: d.date,
+    status: d.status as any,
+  }));
+
+  const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+  const subjectsWithRegularSlotToday = new Set(
+    allSlots
+      .filter((s: any) => s.dayOfWeek === jsDow)
+      .map((s: any) => s.subjectId),
+  );
+
+  const todaysCounts = new Map<
+    string,
+    { regular: number; absent: number; extra: number; off: boolean }
+  >();
+  for (const s of subjRows) {
+    todaysCounts.set(s.id, { regular: 0, absent: 0, extra: 0, off: false });
+  }
+  for (const l of logs) {
+    if (l.date !== today) continue;
+    if (!todaysCounts.has(l.subjectId)) continue;
+    const c = todaysCounts.get(l.subjectId)!;
+    if (l.status === "present") c.regular += 1;
+    else if (l.status === "absent") c.absent += 1;
+    else if (l.status === "extra") c.extra += 1;
+    else if (l.status === "off") c.off = true;
+  }
 
   const logsBySubj = new Map<string, any[]>();
   for (const l of logs) {
@@ -41,131 +92,287 @@ if (activeSession) {
   const perSubjectStats: Record<string, any> = {};
   for (const s of subjRows) {
     const sLogs = logsBySubj.get(s.id) ?? [];
-    perSubjectStats[s.id] = computeStats(sLogs, dayArr, activeSession.targetPct);
+    const stats = computeStats(sLogs, dayArr, activeSession.targetPct);
+
+    const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
+    const counts = todaysCounts.get(s.id)!;
+    const totalRows =
+      counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
+    if (hasRegularToday && totalRows === 0) {
+      stats.held += 1;
+      stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
+    }
+    perSubjectStats[s.id] = stats;
   }
 
-  const perSubjectOnlyStats: Record<string, any> = {};
+  const filteredStats: Record<string, any> = {};
+  const mode = activeSession.overallCalcMode;
   for (const s of subjRows) {
-    if (!s.isLab) {
-      perSubjectOnlyStats[s.id] = perSubjectStats[s.id];
+    const stats = perSubjectStats[s.id];
+    if (mode === "both") {
+      filteredStats[s.id] = stats;
+    } else if (mode === "lab") {
+      if (s.isLab) filteredStats[s.id] = stats;
+    } else {
+      if (!s.isLab) filteredStats[s.id] = stats;
     }
   }
-  const overall = overallStats(perSubjectOnlyStats);
-  sessionPct = overall.pct.toFixed(1) + '%';
+  const overall = overallStats(filteredStats, activeSession.targetPct);
+  sessionPct = Math.round(overall.pct) + "%";
 }
 
 const navItems = [
   {
-    href: '/app/today',
-    label: 'Today',
+    href: "/app/today",
+    label: "Today",
     fullLabel: "Today's Schedule",
-    i18nKey: 'nav.today',
-    mobileI18nKey: 'nav.today.short',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 6v6l4 2"/></svg>`
+    i18nKey: "nav.today",
+    mobileI18nKey: "nav.today.short",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 6v6l4 2"/></svg>`,
   },
   {
-    href: '/app/schedule',
-    label: 'Weekly',
-    fullLabel: 'Weekly Schedule',
-    i18nKey: 'nav.weekly',
-    mobileI18nKey: 'nav.weekly.short',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>`
+    href: "/app/schedule",
+    label: "Weekly",
+    fullLabel: "Weekly Schedule",
+    i18nKey: "nav.weekly",
+    mobileI18nKey: "nav.weekly.short",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>`,
   },
   {
-    href: '/app/subjects',
-    label: 'Subjects',
-    i18nKey: 'nav.subjects',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/><path d="M2 20h20"/></svg>`
+    href: "/app/subjects",
+    label: "Subjects",
+    i18nKey: "nav.subjects",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/><path d="M2 20h20"/></svg>`,
   },
   {
-    href: '/app/calculator',
-    label: 'Calculator',
-    i18nKey: 'nav.calculator',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>`
+    href: "/app/calculator",
+    label: "Calculator",
+    i18nKey: "nav.calculator",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>`,
   },
   {
-    href: '/app/sessions',
-    label: 'Sessions',
-    i18nKey: 'nav.sessions',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`
+    href: "/app/sessions",
+    label: "Sessions",
+    i18nKey: "nav.sessions",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
   },
   {
-    href: '/app/settings',
-    label: 'Settings',
-    i18nKey: 'nav.settings',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`
+    href: "/app/settings",
+    label: "Settings",
+    i18nKey: "nav.settings",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
   },
 ];
 
 function isActive(href: string): boolean {
-  if (href === '/app/today') return path === '/app/today' || path === '/app' || path === '/app/';
+  if (href === "/app/today")
+    return path === "/app/today" || path === "/app" || path === "/app/";
   return path.startsWith(href);
 }
 ---
+
 <div class="flex min-h-screen flex-col md:flex-row">
   <!-- Mobile Sidebar Overlay (Backdrop) -->
-  <div id="sidebar-backdrop" class="fixed inset-0 z-20 bg-black/50 opacity-0 pointer-events-none transition-opacity md:hidden"></div>
+  <div
+    id="sidebar-backdrop"
+    class="fixed inset-0 z-20 bg-black/50 opacity-0 pointer-events-none transition-opacity md:hidden"
+  >
+  </div>
 
   <!-- Sidebar (Dashboard section) -->
-  <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-30 w-72 -translate-x-full transition-all duration-300 flex flex-col md:relative md:w-80 md:translate-x-0 border-r group" data-state="closed" style="border-color: var(--color-border); background-color: var(--color-surface);">
-    <div class="flex h-14 items-center gap-2 border-b px-4 font-semibold overflow-hidden shrink-0 transition-all duration-300 group-[data-state=closed]:h-auto group-[data-state=closed]:py-4 group-[data-state=closed]:flex-col group-[data-state=closed]:justify-center group-[data-state=closed]:px-0" style="border-color: var(--color-border);">
-      <button id="toggle-sidebar" class="p-1 -ml-1 shrink-0 group-[data-state=closed]:ml-0" aria-label="Toggle menu" data-i18n-attr="aria-label:shell.toggleMenu">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  <aside
+    id="app-sidebar"
+    class="fixed inset-y-0 left-0 z-30 w-72 -translate-x-full transition-all duration-300 flex flex-col md:relative md:w-80 md:translate-x-0 border-r group"
+    data-state="closed"
+    style="border-color: var(--color-border); background-color: var(--color-surface);"
+  >
+    <div
+      class="flex h-14 items-center gap-2 border-b px-4 font-semibold overflow-hidden shrink-0 transition-all duration-300 group-[data-state=closed]:h-auto group-[data-state=closed]:py-4 group-[data-state=closed]:flex-col group-[data-state=closed]:justify-center group-[data-state=closed]:px-0"
+      style="border-color: var(--color-border);"
+    >
+      <button
+        id="toggle-sidebar"
+        class="p-1 -ml-1 shrink-0 group-[data-state=closed]:ml-0"
+        aria-label="Toggle menu"
+        data-i18n-attr="aria-label:shell.toggleMenu"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><line x1="3" y1="12" x2="21" y2="12"></line><line
+            x1="3"
+            y1="6"
+            x2="21"
+            y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg
+        >
       </button>
-      <a href="/app/today" class="flex items-center gap-2 truncate opacity-100 transition-opacity group-[data-state=closed]:hidden md:group-[data-state=closed]:hidden">
+      <a
+        href="/app/today"
+        class="flex items-center gap-2 truncate opacity-100 transition-opacity group-[data-state=closed]:hidden md:group-[data-state=closed]:hidden"
+      >
         <span class="md:hidden" data-i18n="shell.logoMobile">Attendance</span>
         <Logo class="h-5 w-5 hidden md:block" />
-        <span class="truncate hidden md:block text-sm" data-i18n="shell.logoDesktop">Attendance Tracker</span>
+        <span
+          class="truncate hidden md:block text-sm"
+          data-i18n="shell.logoDesktop">Attendance Tracker</span
+        >
       </a>
     </div>
 
-    {activeSession && (
-      <div class="border-b px-4 py-3 text-sm overflow-hidden transition-all duration-300 group-[data-state=closed]:h-14 group-[data-state=closed]:px-0 group-[data-state=closed]:py-0 group-[data-state=closed]:flex group-[data-state=closed]:items-center group-[data-state=closed]:justify-center shrink-0" style="border-color: var(--color-border); color: var(--color-text-subtle);">
-        <div id="session-info-expanded" class="group-[data-state=closed]:hidden w-full">
-          <div class="flex items-baseline justify-between gap-2">
-            <div class="font-normal truncate flex-1 group-[data-state=closed]:hidden" style="color: var(--color-text);">{activeSession.name}</div>
-            {sessionPct && <div id="sidebar-session-pct" class="num font-bold text-sm group-[data-state=closed]:hidden ml-2" style="color: var(--color-brand-600);">{Math.floor(parseFloat(sessionPct)) + '%'}</div>}
+    {
+      activeSession && (
+        <div
+          class="border-b px-4 py-3 text-sm overflow-hidden transition-all duration-300 group-[data-state=closed]:h-14 group-[data-state=closed]:px-0 group-[data-state=closed]:py-0 group-[data-state=closed]:flex group-[data-state=closed]:items-center group-[data-state=closed]:justify-center shrink-0"
+          style="border-color: var(--color-border); color: var(--color-text-subtle);"
+        >
+          <div
+            id="session-info-expanded"
+            class="group-[data-state=closed]:hidden w-full"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div
+                class="text-sm font-normal truncate flex-1 group-[data-state=closed]:hidden"
+                style="color: var(--color-text);"
+              >
+                {activeSession.name}
+              </div>
+              {sessionPct && (
+                <div
+                  id="sidebar-session-pct"
+                  class="num font-bold text-sm group-[data-state=closed]:hidden ml-2 shrink-0"
+                  style="color: var(--color-brand-600);"
+                >
+                  {Math.floor(parseFloat(sessionPct)) + "%"}
+                </div>
+              )}
+            </div>
+          </div>
+          <div
+            id="sidebar-session-pct-collapsed"
+            class="hidden group-[data-state=closed]:block num font-bold text-base text-center w-full"
+            style="color: var(--color-brand-600);"
+          >
+            {sessionPct ? Math.floor(parseFloat(sessionPct)) + "%" : ""}
           </div>
         </div>
-        <div id="sidebar-session-pct-collapsed" class="hidden group-[data-state=closed]:block num font-bold text-base text-center w-full" style="color: var(--color-brand-600);">
-          {sessionPct ? Math.floor(parseFloat(sessionPct)) + '%' : ''}
-        </div>
-      </div>
-    )}
+      )
+    }
 
-    <nav class="flex-1 space-y-0.5 p-2 overflow-y-auto overflow-x-hidden" aria-label="Main">
-      {navItems.map((item) => (
-        <a
-          href={item.href}
-          title={item.fullLabel ?? item.label}
-          aria-current={isActive(item.href) ? 'page' : undefined}
-          class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors overflow-hidden group-[data-state=closed]:justify-center group-[data-state=closed]:px-0 group-[data-state=closed]:gap-0"
-          style={isActive(item.href)
-            ? 'background-color: var(--color-brand-600); color: white;'
-            : 'color: var(--color-text-muted);'}
-        >
-          <span aria-hidden="true" class="leading-none shrink-0" set:html={item.icon} />
-          <span class="truncate opacity-100 transition-opacity group-[data-state=closed]:hidden" data-i18n={item.i18nKey}>{item.fullLabel ?? item.label}</span>
-        </a>
-      ))}
+    <nav
+      class="flex-1 space-y-0.5 p-2 overflow-y-auto overflow-x-hidden"
+      aria-label="Main"
+    >
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            title={item.fullLabel ?? item.label}
+            aria-current={isActive(item.href) ? "page" : undefined}
+            class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors overflow-hidden group-[data-state=closed]:justify-center group-[data-state=closed]:px-0 group-[data-state=closed]:gap-0"
+            style={
+              isActive(item.href)
+                ? "background-color: var(--color-brand-600); color: white;"
+                : "color: var(--color-text-muted);"
+            }
+          >
+            <span
+              aria-hidden="true"
+              class="leading-none shrink-0"
+              set:html={item.icon}
+            />
+            <span
+              class="truncate opacity-100 transition-opacity group-[data-state=closed]:hidden"
+              data-i18n={item.i18nKey}
+            >
+              {item.fullLabel ?? item.label}
+            </span>
+          </a>
+        ))
+      }
     </nav>
 
-    <div id="sidebar-profile-card" class="mx-3 mb-4 mt-3 ml-1 shrink-0 group-[data-state=closed]:mx-2 group-[data-state=closed]:mt-2 group-[data-state=closed]:mb-2 group-[data-state=closed]:p-1.5 group-[data-state=closed]:pr-2.5" style="padding: 0.75rem; background-color: transparent; border: none;">
-      <div class="flex items-center gap-2 mb-3 group-[data-state=closed]:flex-col group-[data-state=closed]:gap-0 group-[data-state=closed]:mb-0 group-[data-state=closed]:items-center group-[data-state=closed]:justify-center">
-        <a id="sidebar-profile-link" href="/app/settings" class="shrink-0 transition-transform hover:scale-105 group-[data-state=closed]:mx-auto" aria-label="Profile settings" data-i18n-attr="aria-label:shell.profileSettings">
-          <Avatar name={user.name} image={user.image ?? null} seed={user.id} size={32} />
+    <div
+      id="sidebar-profile-card"
+      class="mx-3 mb-4 mt-3 ml-1 shrink-0 group-[data-state=closed]:mx-2 group-[data-state=closed]:mt-2 group-[data-state=closed]:mb-2 group-[data-state=closed]:p-1.5 group-[data-state=closed]:pr-2.5"
+      style="padding: 0.75rem; background-color: transparent; border: none;"
+    >
+      <div
+        class="flex items-center gap-2 mb-3 group-[data-state=closed]:flex-col group-[data-state=closed]:gap-0 group-[data-state=closed]:mb-0 group-[data-state=closed]:items-center group-[data-state=closed]:justify-center"
+      >
+        <a
+          id="sidebar-profile-link"
+          href="/app/settings"
+          class="shrink-0 transition-transform hover:scale-105 group-[data-state=closed]:mx-auto"
+          aria-label="Profile settings"
+          data-i18n-attr="aria-label:shell.profileSettings"
+        >
+          <Avatar
+            name={user.name}
+            image={user.image ?? null}
+            seed={user.id}
+            size={32}
+          />
         </a>
-        <div id="sidebar-profile-info" class="min-w-0 flex-1 opacity-100 transition-opacity group-[data-state=closed]:hidden">
-          <a href="/app/settings" class="block truncate text-sm font-medium hover:underline" title={user.email}>{user.name}</a>
-          <div class="truncate text-xs" style="color: var(--color-text-subtle);">{user.email}</div>
+        <div
+          id="sidebar-profile-info"
+          class="min-w-0 flex-1 opacity-100 transition-opacity group-[data-state=closed]:hidden"
+        >
+          <a
+            href="/app/settings"
+            class="block truncate text-sm font-medium hover:underline"
+            title={user.email}>{user.name}</a
+          >
+          <div
+            class="truncate text-xs"
+            style="color: var(--color-text-subtle);"
+          >
+            {user.email}
+          </div>
         </div>
-        <div id="sidebar-profile-theme" class="shrink-0 group-[data-state=closed]:hidden">
+        <div
+          id="sidebar-profile-theme"
+          class="shrink-0 group-[data-state=closed]:hidden"
+        >
           <ThemeToggle />
         </div>
       </div>
-      <form id="logout-form" method="post" action="/api/auth/sign-out" class="opacity-100 transition-opacity group-[data-state=closed]:hidden md:group-[data-state=closed]:hidden" data-when-open>
-        <button class="btn btn-sm w-full justify-start bg-transparent hover:border-danger/30 hover:bg-danger/5 hover:text-danger transition-colors group-[data-state=closed]:hidden" style="color: var(--color-text-muted); padding-left: 0.5rem; border: 1px solid var(--color-border);" type="submit">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <form
+        id="logout-form"
+        method="post"
+        action="/api/auth/sign-out"
+        class="opacity-100 transition-opacity group-[data-state=closed]:hidden md:group-[data-state=closed]:hidden"
+        data-when-open
+      >
+        <button
+          class="btn btn-sm w-full justify-start bg-transparent hover:border-danger/30 hover:bg-danger/5 hover:text-danger transition-colors group-[data-state=closed]:hidden"
+          style="color: var(--color-text-muted); padding-left: 0.5rem; border: 1px solid var(--color-border);"
+          type="submit"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="mr-2"
+            ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline
+              points="16 17 21 12 16 7"></polyline><line
+              x1="21"
+              y1="12"
+              x2="9"
+              y2="12"></line></svg
+          >
           <span data-i18n="shell.logOut">Log out</span>
         </button>
       </form>
@@ -174,10 +381,33 @@ function isActive(href: string): boolean {
 
   <div class="flex flex-1 flex-col min-w-0">
     <!-- Top bar (mobile) -->
-    <header class="sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 md:hidden" style="border-color: var(--color-border); background-color: color-mix(in oklab, var(--color-bg) 80%, transparent); backdrop-filter: blur(8px);">
+    <header
+      class="sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 md:hidden"
+      style="border-color: var(--color-border); background-color: color-mix(in oklab, var(--color-bg) 80%, transparent); backdrop-filter: blur(8px);"
+    >
       <div class="flex items-center gap-2">
-        <button id="open-sidebar" class="p-1 -ml-1" aria-label="Open menu" data-i18n-attr="aria-label:shell.openMenu">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <button
+          id="open-sidebar"
+          class="p-1 -ml-1"
+          aria-label="Open menu"
+          data-i18n-attr="aria-label:shell.openMenu"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><line x1="3" y1="12" x2="21" y2="12"></line><line
+              x1="3"
+              y1="6"
+              x2="21"
+              y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg
+          >
         </button>
         <ThemeToggle />
         <a href="/app/today" class="flex items-center gap-2 font-semibold ml-1">
@@ -185,8 +415,18 @@ function isActive(href: string): boolean {
         </a>
       </div>
       <div class="flex items-center gap-2">
-        <a href="/app/settings" aria-label="Account settings" class="rounded-full" data-i18n-attr="aria-label:shell.accountSettings">
-          <Avatar name={user.name} image={user.image ?? null} seed={user.id} size={32} />
+        <a
+          href="/app/settings"
+          aria-label="Account settings"
+          class="rounded-full"
+          data-i18n-attr="aria-label:shell.accountSettings"
+        >
+          <Avatar
+            name={user.name}
+            image={user.image ?? null}
+            seed={user.id}
+            size={32}
+          />
         </a>
       </div>
     </header>
@@ -195,19 +435,35 @@ function isActive(href: string): boolean {
       <slot />
     </main>
 
-    <nav class="sticky bottom-0 z-10 grid grid-cols-6 border-t md:hidden" style="border-color: var(--color-border); background-color: var(--color-bg);" aria-label="Mobile">
-      {navItems.map((item) => (
-        <a
-          href={item.href}
-          title={item.fullLabel ?? item.label}
-          aria-current={isActive(item.href) ? 'page' : undefined}
-          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium"
-          style={isActive(item.href) ? 'color: var(--color-brand-600);' : 'color: var(--color-text-subtle);'}
-        >
-          <span aria-hidden="true" class="leading-none" set:html={item.icon} />
-          <span data-i18n={item.mobileI18nKey ?? item.i18nKey}>{item.label}</span>
-        </a>
-      ))}
+    <nav
+      class="sticky bottom-0 z-10 grid grid-cols-6 border-t md:hidden"
+      style="border-color: var(--color-border); background-color: var(--color-bg);"
+      aria-label="Mobile"
+    >
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            title={item.fullLabel ?? item.label}
+            aria-current={isActive(item.href) ? "page" : undefined}
+            class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium"
+            style={
+              isActive(item.href)
+                ? "color: var(--color-brand-600);"
+                : "color: var(--color-text-subtle);"
+            }
+          >
+            <span
+              aria-hidden="true"
+              class="leading-none"
+              set:html={item.icon}
+            />
+            <span data-i18n={item.mobileI18nKey ?? item.i18nKey}>
+              {item.label}
+            </span>
+          </a>
+        ))
+      }
     </nav>
   </div>
 </div>
@@ -215,80 +471,86 @@ function isActive(href: string): boolean {
 <script is:inline>
   // Sidebar Toggle logic with Persistence
   function initSidebar() {
-    var openBtn = document.getElementById('open-sidebar');
-    var toggleBtn = document.getElementById('toggle-sidebar');
-    var backdrop = document.getElementById('sidebar-backdrop');
-    var sidebar = document.getElementById('app-sidebar');
+    var openBtn = document.getElementById("open-sidebar");
+    var toggleBtn = document.getElementById("toggle-sidebar");
+    var backdrop = document.getElementById("sidebar-backdrop");
+    var sidebar = document.getElementById("app-sidebar");
 
     function updateSidebarState(forceState, skipSave) {
       if (!sidebar || !backdrop) return;
-      
+
       var isMobile = window.innerWidth < 768;
-      var currentState = sidebar.getAttribute('data-state');
+      var currentState = sidebar.getAttribute("data-state");
       var newState;
 
-      if (forceState === true) newState = 'open';
-      else if (forceState === false) newState = 'closed';
-      else newState = currentState === 'open' ? 'closed' : 'open';
+      if (forceState === true) newState = "open";
+      else if (forceState === false) newState = "closed";
+      else newState = currentState === "open" ? "closed" : "open";
 
       if (isMobile) {
         // Mobile Drawer behavior
-        if (newState === 'open') {
-          sidebar.classList.remove('-translate-x-full');
-          sidebar.setAttribute('data-state', 'open');
-          document.documentElement.setAttribute('data-sidebar', 'open');
-          backdrop.classList.remove('opacity-0', 'pointer-events-none');
-          document.body.style.overflow = 'hidden';
+        if (newState === "open") {
+          sidebar.classList.remove("-translate-x-full");
+          sidebar.setAttribute("data-state", "open");
+          document.documentElement.setAttribute("data-sidebar", "open");
+          backdrop.classList.remove("opacity-0", "pointer-events-none");
+          document.body.style.overflow = "hidden";
         } else {
-          sidebar.classList.add('-translate-x-full');
-          sidebar.setAttribute('data-state', 'closed');
-          document.documentElement.setAttribute('data-sidebar', 'closed');
-          backdrop.classList.add('opacity-0', 'pointer-events-none');
-          document.body.style.overflow = '';
+          sidebar.classList.add("-translate-x-full");
+          sidebar.setAttribute("data-state", "closed");
+          document.documentElement.setAttribute("data-sidebar", "closed");
+          backdrop.classList.add("opacity-0", "pointer-events-none");
+          document.body.style.overflow = "";
         }
       } else {
         // Desktop: explicitly hide the logout form when collapsed via
         // inline style — guaranteed to win over any class-based style.
-        var logoutForm = document.getElementById('logout-form');
+        var logoutForm = document.getElementById("logout-form");
         if (logoutForm) {
-          logoutForm.style.display = (newState === 'closed') ? 'none' : '';
+          logoutForm.style.display = newState === "closed" ? "none" : "";
         }
         // Same inline-style trick for the profile info + theme toggle in
         // the bottom card: when the sidebar is collapsed, only the avatar
         // should remain visible. The class-based variants are unreliable
         // for the dynamic [data-state=closed] attribute, so drive display
         // directly here.
-        var profileInfo = document.getElementById('sidebar-profile-info');
+        var profileInfo = document.getElementById("sidebar-profile-info");
         if (profileInfo) {
-          profileInfo.style.display = (newState === 'closed') ? 'none' : '';
+          profileInfo.style.display = newState === "closed" ? "none" : "";
         }
-        var profileTheme = document.getElementById('sidebar-profile-theme');
+        var profileTheme = document.getElementById("sidebar-profile-theme");
         if (profileTheme) {
-          profileTheme.style.display = (newState === 'closed') ? 'none' : '';
+          profileTheme.style.display = newState === "closed" ? "none" : "";
         }
         // Same inline-style trick for the expanded session info block:
         // Tailwind's group-[data-state=closed]:hidden is unreliable across
         // SSR/hydration, so drive display directly. The collapsed % block
         // stays visible via its own group-[data-state=closed]:block class.
-        var sessionInfoExpanded = document.getElementById('session-info-expanded');
+        var sessionInfoExpanded = document.getElementById(
+          "session-info-expanded",
+        );
         if (sessionInfoExpanded) {
-          sessionInfoExpanded.style.display = (newState === 'closed') ? 'none' : '';
+          sessionInfoExpanded.style.display =
+            newState === "closed" ? "none" : "";
         }
-        var sessionInfoCollapsed = document.getElementById('sidebar-session-pct-collapsed');
+        var sessionInfoCollapsed = document.getElementById(
+          "sidebar-session-pct-collapsed",
+        );
         if (sessionInfoCollapsed) {
-          sessionInfoCollapsed.style.display = (newState === 'closed') ? 'block' : 'none';
+          sessionInfoCollapsed.style.display =
+            newState === "closed" ? "block" : "none";
         }
         // Desktop Collapsible behavior
-        sidebar.setAttribute('data-state', newState);
-        document.documentElement.setAttribute('data-sidebar', newState);
-        if (newState === 'closed') {
-          sidebar.classList.replace('md:w-80', 'md:w-16');
+        sidebar.setAttribute("data-state", newState);
+        document.documentElement.setAttribute("data-sidebar", newState);
+        if (newState === "closed") {
+          sidebar.classList.replace("md:w-80", "md:w-16");
         } else {
-          sidebar.classList.replace('md:w-16', 'md:w-80');
+          sidebar.classList.replace("md:w-16", "md:w-80");
         }
         // Persist only on desktop
         if (!skipSave) {
-          localStorage.setItem('sidebar-state', newState);
+          localStorage.setItem("sidebar-state", newState);
         }
       }
     }
@@ -298,94 +560,112 @@ function isActive(href: string): boolean {
     // with the visual (-translate-x-full) state. On desktop we need to
     // flip it to "open" unless the user previously collapsed it.
     if (sidebar) {
-      var state = 'open';
+      var state = "open";
       var savedState;
-      try { savedState = localStorage.getItem('sidebar-state'); } catch (e) {}
-      var wantsCollapsed = savedState === 'closed' || document.documentElement.classList.contains('sidebar-init-closed');
+      try {
+        savedState = localStorage.getItem("sidebar-state");
+      } catch (e) {}
+      var wantsCollapsed =
+        savedState === "closed" ||
+        document.documentElement.classList.contains("sidebar-init-closed");
       if (wantsCollapsed && window.innerWidth >= 768) {
-        state = 'closed';
-        sidebar.setAttribute('data-state', 'closed');
-        sidebar.classList.replace('md:w-80', 'md:w-16');
+        state = "closed";
+        sidebar.setAttribute("data-state", "closed");
+        sidebar.classList.replace("md:w-80", "md:w-16");
         // Also hide the logout form on initial collapsed render.
-        var logoutForm0 = document.getElementById('logout-form');
-        if (logoutForm0) logoutForm0.style.display = 'none';
+        var logoutForm0 = document.getElementById("logout-form");
+        if (logoutForm0) logoutForm0.style.display = "none";
         // Profile info and theme toggle should also hide on initial render
         // (only the avatar stays visible when the sidebar is collapsed).
-        var profileInfo0 = document.getElementById('sidebar-profile-info');
-        if (profileInfo0) profileInfo0.style.display = 'none';
-        var profileTheme0 = document.getElementById('sidebar-profile-theme');
-        if (profileTheme0) profileTheme0.style.display = 'none';
+        var profileInfo0 = document.getElementById("sidebar-profile-info");
+        if (profileInfo0) profileInfo0.style.display = "none";
+        var profileTheme0 = document.getElementById("sidebar-profile-theme");
+        if (profileTheme0) profileTheme0.style.display = "none";
         // (No card styling to strip — the card has no .card class.)
         // Same for the expanded session info — hide it inline so it doesn't
         // briefly show before the Tailwind group variant kicks in.
-        var sessionInfo0 = document.getElementById('session-info-expanded');
-        if (sessionInfo0) sessionInfo0.style.display = 'none';
+        var sessionInfo0 = document.getElementById("session-info-expanded");
+        if (sessionInfo0) sessionInfo0.style.display = "none";
         // And force the collapsed % block to be visible on initial collapsed
         // render — Tailwind's group-[data-state=closed]:block may not have
         // generated, and we want this to appear even before hydration.
-        var sessionInfoCollapsed0 = document.getElementById('sidebar-session-pct-collapsed');
-        if (sessionInfoCollapsed0) sessionInfoCollapsed0.style.display = 'block';
+        var sessionInfoCollapsed0 = document.getElementById(
+          "sidebar-session-pct-collapsed",
+        );
+        if (sessionInfoCollapsed0)
+          sessionInfoCollapsed0.style.display = "block";
       } else {
         // Desktop default: expanded.
-        sidebar.setAttribute('data-state', 'open');
+        sidebar.setAttribute("data-state", "open");
       }
-      document.documentElement.setAttribute('data-sidebar', state);
+      document.documentElement.setAttribute("data-sidebar", state);
       // Remove the init class after a short delay to allow the script to take over fully
-      setTimeout(function() {
-        document.documentElement.classList.remove('sidebar-init-closed');
+      setTimeout(function () {
+        document.documentElement.classList.remove("sidebar-init-closed");
       }, 0);
     }
 
-    if (openBtn) openBtn.onclick = function() { updateSidebarState(); };
-    if (toggleBtn) toggleBtn.onclick = function() { updateSidebarState(); };
-    if (backdrop) backdrop.onclick = function() { updateSidebarState(false); };
+    if (openBtn)
+      openBtn.onclick = function () {
+        updateSidebarState();
+      };
+    if (toggleBtn)
+      toggleBtn.onclick = function () {
+        updateSidebarState();
+      };
+    if (backdrop)
+      backdrop.onclick = function () {
+        updateSidebarState(false);
+      };
 
     // Close on link click (for mobile drawer)
     if (sidebar) {
-      sidebar.querySelectorAll('a').forEach(function(link) {
-        link.onclick = function() {
+      sidebar.querySelectorAll("a").forEach(function (link) {
+        link.onclick = function () {
           if (window.innerWidth < 768) updateSidebarState(false);
         };
       });
     }
 
     // Logout: Astro 6's CSRF protection blocks native <form method="post">
-    var logoutForm = document.getElementById('logout-form');
+    var logoutForm = document.getElementById("logout-form");
     if (logoutForm) {
       logoutForm.onsubmit = function (e) {
         e.preventDefault();
         var btn = logoutForm.querySelector('button[type="submit"]');
         if (btn) {
           btn.disabled = true;
-          var activeLocale = localStorage.getItem('at75_locale') || 'en';
+          var activeLocale = localStorage.getItem("at75_locale") || "en";
           var logoutTexts = {
-            en: 'Logging out…',
-            hi: 'लॉग आउट किया जा रहा है…',
-            es: 'Cerrando sesión…',
-            fr: 'Déconnexion…',
-            de: 'Abmelden…',
-            pt: 'Saindo…',
-            ar: 'جاري تسجيل الخروج…',
-            zh: '正在退出…',
-            ja: 'ログアウト中…',
-            ru: 'Выход…'
+            en: "Logging out…",
+            hi: "लॉग आउट किया जा रहा है…",
+            es: "Cerrando sesión…",
+            fr: "Déconnexion…",
+            de: "Abmelden…",
+            pt: "Saindo…",
+            ar: "جاري تسجيل الخروج…",
+            zh: "正在退出…",
+            ja: "ログアウト中…",
+            ru: "Выход…",
           };
           btn.textContent = logoutTexts[activeLocale] || logoutTexts.en;
         }
-        fetch('/api/auth/sign-out', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'content-type': 'application/json' },
-          body: '{}',
-        }).catch(function () {}).finally(function () {
-          window.location.href = '/';
-        });
+        fetch("/api/auth/sign-out", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        })
+          .catch(function () {})
+          .finally(function () {
+            window.location.href = "/";
+          });
       };
     }
   }
 
   // Run on page load and on each navigation
-  document.addEventListener('astro:page-load', initSidebar);
+  document.addEventListener("astro:page-load", initSidebar);
 </script>
 
 <style is:global>
@@ -394,8 +674,12 @@ function isActive(href: string): boolean {
     width: 4rem !important; /* md:w-16 */
   }
   /* Ensure text and other elements are hidden immediately if sidebar is closed */
-  html.sidebar-init-closed #app-sidebar .group-\[\[data-state\=closed\]\]\:opacity-0,
-  html.sidebar-init-closed #app-sidebar .group-\[\[data-state\=closed\]\]\:pointer-events-none {
+  html.sidebar-init-closed
+    #app-sidebar
+    .group-\[\[data-state\=closed\]\]\:opacity-0,
+  html.sidebar-init-closed
+    #app-sidebar
+    .group-\[\[data-state\=closed\]\]\:pointer-events-none {
     opacity: 0 !important;
     pointer-events: none !important;
   }

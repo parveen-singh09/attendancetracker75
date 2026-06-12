@@ -5,13 +5,14 @@ export interface DraftSlot {
   dayOfWeek: number; // 0=Sun .. 6=Sat
   startTime: string; // HH:MM (24-hour, internal)
   endTime: string;
+  subjectId: string;
   subjectName: string;
   isLab: boolean;
   location?: string;
 }
 
 interface Entry {
-  id?: string;
+  id: string;
   name: string;
   color: string;
   isLab: boolean;
@@ -33,6 +34,13 @@ const DAYS_FULL = [
   { short: 'Fri', long: 'Friday' },
   { short: 'Sat', long: 'Saturday' },
 ];
+
+function generateUniqueId(): string {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return 'c_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
 function getRandomColor(seed?: string): string {
   let h: number;
@@ -132,11 +140,16 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
   };
 
   const initialSplit = splitEntries(initialSubjects);
+  const hasSavedAny = initialSubjects.length > 0;
   const [subjects, setSubjects] = useState<Entry[]>(
-    initialSplit.subjects.length ? initialSplit.subjects : [{ name: 'Subject 1', color: getRandomColor(), isLab: false }]
+    initialSplit.subjects.length || hasSavedAny
+      ? (initialSplit.subjects as Entry[])
+      : [{ id: generateUniqueId(), name: 'Subject 1', color: getRandomColor(), isLab: false }]
   );
   const [labs, setLabs] = useState<Entry[]>(
-    initialSplit.labs.length ? initialSplit.labs : [{ name: 'Lab 1', color: getRandomColor(), isLab: true }]
+    initialSplit.labs.length || hasSavedAny
+      ? (initialSplit.labs as Entry[])
+      : [{ id: generateUniqueId(), name: 'Lab 1', color: getRandomColor(), isLab: true }]
   );
   const [slots, setSlots] = useState<DraftSlot[]>(initialSlots);
   const [saving, setSaving] = useState(false);
@@ -155,22 +168,18 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
       if (shouldRedirect) setSaveError('Please add at least one subject to continue.');
       return;
     }
-    if (currentSlots.length === 0 && !shouldRedirect) return;
 
     const payload = {
       subjects: [
-        ...currentSubjects.map((s, i) => ({ tempId: `s${i}`, name: s.name, color: s.color, isLab: false })),
-        ...currentLabs.map((s, i) => ({ tempId: `l${i}`, name: s.name, color: s.color, isLab: true })),
+        ...currentSubjects.map((s) => ({ tempId: s.id, name: s.name, color: s.color, isLab: false })),
+        ...currentLabs.map((s) => ({ tempId: s.id, name: s.name, color: s.color, isLab: true })),
       ],
       slots: currentSlots.map((s) => {
-        const subjIdx = currentSubjects.findIndex((x) => x.name === s.subjectName);
-        const labIdx = currentLabs.findIndex((x) => x.name === s.subjectName);
-        const tempId = s.isLab ? `l${labIdx}` : `s${subjIdx}`;
         return {
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
           endTime: s.endTime,
-          subjectTempId: tempId,
+          subjectTempId: s.subjectId,
           location: s.location,
         };
       }),
@@ -235,12 +244,22 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         const target = sl.isLab ? newLabs : newSubjects;
         const existing = sl.isLab ? labs : subjects;
         if (!existing.some((x) => x.name === sl.subjectName) && !target.some((x) => x.name === sl.subjectName)) {
-          target.push({ name: sl.subjectName, color: getRandomColor(sl.subjectName), isLab: sl.isLab });
+          target.push({ id: generateUniqueId(), name: sl.subjectName, color: getRandomColor(sl.subjectName), isLab: sl.isLab });
         }
       }
+
+      const finalSlots = detail.map((sl) => {
+        const pool = sl.isLab ? [...labs, ...newLabs] : [...subjects, ...newSubjects];
+        const entry = pool.find((x) => x.name === sl.subjectName);
+        return {
+          ...sl,
+          subjectId: entry?.id || generateUniqueId(),
+        };
+      });
+
       if (newSubjects.length) setSubjects((arr) => [...arr, ...newSubjects]);
       if (newLabs.length) setLabs((arr) => [...arr, ...newLabs]);
-      setSlots((arr) => [...arr, ...detail]);
+      setSlots((arr) => [...arr, ...finalSlots]);
     }
     window.addEventListener('at75:import-slots', onImport);
     return () => window.removeEventListener('at75:import-slots', onImport);
@@ -249,39 +268,34 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
   function addSubject() {
     setSubjects([
       ...subjects,
-      { name: `Subject ${subjects.length + 1}`, color: getRandomColor(), isLab: false },
+      { id: generateUniqueId(), name: `Subject ${subjects.length + 1}`, color: getRandomColor(), isLab: false },
     ]);
   }
 
   function addLab() {
     setLabs([
       ...labs,
-      { name: `Lab ${labs.length + 1}`, color: getRandomColor(), isLab: true },
+      { id: generateUniqueId(), name: `Lab ${labs.length + 1}`, color: getRandomColor(), isLab: true },
     ]);
   }
 
   function renameInPool(kind: 'subject' | 'lab', idx: number, newName: string) {
-    const pool = kind === 'subject' ? subjects : labs;
-    const oldName = pool[idx]?.name;
-    if (oldName === newName) return;
     if (kind === 'subject') {
       setSubjects(subjects.map((x, j) => (j === idx ? { ...x, name: newName } : x)));
     } else {
       setLabs(labs.map((x, j) => (j === idx ? { ...x, name: newName } : x)));
     }
-    if (oldName) {
-      setSlots(slots.map((s) => (s.subjectName === oldName ? { ...s, subjectName: newName } : s)));
-    }
   }
 
   function removeFromPool(kind: 'subject' | 'lab', idx: number) {
-    const removedName = (kind === 'subject' ? subjects[idx] : labs[idx])?.name;
+    const pool = kind === 'subject' ? subjects : labs;
+    const removedId = pool[idx]?.id;
     if (kind === 'subject') {
       setSubjects(subjects.filter((_, i) => i !== idx));
     } else {
       setLabs(labs.filter((_, i) => i !== idx));
     }
-    if (removedName) setSlots(slots.filter((s) => s.subjectName !== removedName));
+    if (removedId) setSlots(slots.filter((s) => s.subjectId !== removedId));
   }
 
   function openAddForDay(day: number) {
@@ -324,6 +338,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         dayOfWeek: addForDay,
         startTime,
         endTime,
+        subjectId: entry.id,
         subjectName: entry.name,
         isLab: entry.isLab,
         location: location.trim() || undefined,
@@ -412,14 +427,15 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                           s.dayOfWeek === sl.dayOfWeek &&
                           s.startTime === sl.startTime &&
                           s.endTime === sl.endTime &&
-                          s.subjectName === sl.subjectName
+                          s.subjectId === sl.subjectId
                       );
                       const pool = sl.isLab ? labs : subjects;
-                      const entry = pool.find((x) => x.name === sl.subjectName);
+                      const entry = pool.find((x) => x.id === sl.subjectId);
+                      const name = entry?.name ?? sl.subjectName;
                       const color = entry?.color ?? '#3b82f6';
                       return (
                         <li
-                          key={`${sl.dayOfWeek}-${sl.startTime}-${sl.subjectName}`}
+                          key={`${sl.dayOfWeek}-${sl.startTime}-${sl.subjectId}`}
                           className="flex flex-wrap items-center gap-2 rounded-md border p-2 text-sm"
                           style={{ borderColor: 'var(--color-border)' }}
                         >
@@ -427,7 +443,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                             aria-hidden="true"
                             style={{ width: 4, alignSelf: 'stretch', borderRadius: 3, backgroundColor: color, flexShrink: 0, minHeight: 28 }}
                           />
-                          <span className="font-medium">{sl.subjectName}</span>
+                          <span className="font-medium">{name}</span>
                           {sl.isLab && (
                             <span
                               className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase"
@@ -449,7 +465,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               type="button"
                               className="btn btn-ghost btn-sm"
                               onClick={() => removeSlot(globalIdx)}
-                              aria-label={`${tr('weeklyGrid.remove')} ${sl.subjectName} ${fmt12(sl.startTime)}`}
+                              aria-label={`${tr('weeklyGrid.remove')} ${name} ${fmt12(sl.startTime)}`}
                             >
                               {tr('weeklyGrid.remove')}
                             </button>
@@ -673,7 +689,7 @@ function PoolEditor({
               style={{ width: 4, height: 24, borderRadius: 2, backgroundColor: s.color, flexShrink: 0 }}
             />
             <input
-              className="input flex-1 !border-none !ring-0 !shadow-none !outline-none bg-transparent"
+              className="input flex-1 border-none! ring-0! shadow-none! outline-none! bg-transparent"
               style={{ padding: '2px 8px', border: 'none' }}
               value={s.name}
               onChange={(e) => onRename(i, e.target.value)}

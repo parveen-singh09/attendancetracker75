@@ -1,29 +1,77 @@
 ---
 export const prerender = false;
-import AppLayout from '../../layouts/AppLayout.astro';
-import BunkCalculator from '../../components/attendance/BunkCalculator';
-import PercentageBar from '../../components/ui/PercentageBar.astro';
-import { db, AcademicSession, Subject, AttendanceLog, Day, eq, and, desc } from 'astro:db';
-import { computeStats, overallStats } from '../../lib/attendance';
+import AppLayout from "../../layouts/AppLayout.astro";
+import BunkCalculator from "../../components/attendance/BunkCalculator";
+import PercentageBar from "../../components/ui/PercentageBar.astro";
+import {
+  db,
+  AcademicSession,
+  Subject,
+  AttendanceLog,
+  Day,
+  TimetableSlot,
+  eq,
+  and,
+  desc,
+} from "astro:db";
+import { computeStats, overallStats, toDateString } from "../../lib/attendance";
 
 const user = Astro.locals.user;
-if (!user) return Astro.redirect('/login?next=/app/calculator');
+if (!user) return Astro.redirect("/login?next=/app/calculator");
 
-const sess = (await db
-  .select()
-  .from(AcademicSession)
-  .where(and(eq(AcademicSession.userId, user.id), eq(AcademicSession.isArchived, false)))
-  .orderBy(desc(AcademicSession.createdAt))
-  .limit(1))[0];
-if (!sess) return Astro.redirect('/onboarding/session');
+const sess = (
+  await db
+    .select()
+    .from(AcademicSession)
+    .where(
+      and(
+        eq(AcademicSession.userId, user.id),
+        eq(AcademicSession.isArchived, false),
+      ),
+    )
+    .orderBy(desc(AcademicSession.createdAt))
+    .limit(1)
+)[0];
+if (!sess) return Astro.redirect("/onboarding/session");
 
-const [subjRows, logs, dayOverrides] = await Promise.all([
+const today = toDateString(new Date());
+
+const [subjRows, allLogs, dayOverrides, allSlots] = await Promise.all([
   db.select().from(Subject).where(eq(Subject.sessionId, sess.id)),
   db.select().from(AttendanceLog).where(eq(AttendanceLog.sessionId, sess.id)),
-  db.select().from(Day).where(eq(Day.sessionId, sess.id))
+  db.select().from(Day).where(eq(Day.sessionId, sess.id)),
+  db.select().from(TimetableSlot).where(eq(TimetableSlot.sessionId, sess.id)),
 ]);
 
-const dayArr = dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' }));
+// Filter logs up to today for "current" attendance percentage
+const logs = allLogs.filter((l) => l.date <= today);
+
+const dayArr = dayOverrides.map((d) => ({
+  date: d.date,
+  status: d.status as "normal" | "holiday" | "sick" | "event",
+}));
+
+const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+const subjectsWithRegularSlotToday = new Set(
+  allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
+);
+
+const todaysCounts = new Map<
+  string,
+  { regular: number; absent: number; extra: number; off: boolean }
+>();
+for (const s of subjRows) {
+  todaysCounts.set(s.id, { regular: 0, absent: 0, extra: 0, off: false });
+}
+for (const l of logs) {
+  if (l.date !== today) continue;
+  if (!todaysCounts.has(l.subjectId)) continue;
+  const c = todaysCounts.get(l.subjectId)!;
+  if (l.status === "present") c.regular += 1;
+  else if (l.status === "absent") c.absent += 1;
+  else if (l.status === "extra") c.extra += 1;
+  else if (l.status === "off") c.off = true;
+}
 
 // Group logs by subjectId for performance
 const logsBySubj = new Map<string, any[]>();
@@ -33,13 +81,28 @@ for (const l of logs) {
   logsBySubj.set(l.subjectId, arr);
 }
 
-const perSubject: Record<string, { name: string; color: string; stats: ReturnType<typeof computeStats> }> = {};
+const perSubject: Record<
+  string,
+  { name: string; color: string; stats: ReturnType<typeof computeStats> }
+> = {};
 for (const s of subjRows) {
   const sLogs = logsBySubj.get(s.id) ?? [];
+  const stats = computeStats(sLogs, dayArr, sess.targetPct);
+
+  // Apply default-absent logic for today's classes
+  const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
+  const counts = todaysCounts.get(s.id)!;
+  const totalRows =
+    counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
+  if (hasRegularToday && totalRows === 0) {
+    stats.held += 1;
+    stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
+  }
+
   perSubject[s.id] = {
     name: s.name,
     color: s.color,
-    stats: computeStats(sLogs, dayArr, sess.targetPct),
+    stats,
   };
 }
 
@@ -47,9 +110,9 @@ const filtered: Record<string, ReturnType<typeof computeStats>> = {};
 const mode = sess.overallCalcMode;
 for (const s of subjRows) {
   const stats = perSubject[s.id]!.stats;
-  if (mode === 'both') {
+  if (mode === "both") {
     filtered[s.id] = stats;
-  } else if (mode === 'lab') {
+  } else if (mode === "lab") {
     if (s.isLab) filtered[s.id] = stats;
   } else {
     if (!s.isLab) filtered[s.id] = stats;
@@ -57,27 +120,52 @@ for (const s of subjRows) {
 }
 const overall = overallStats(filtered, sess.targetPct);
 ---
-<AppLayout title="Calculator" description="Quick and subject-wise attendance calculator.">
+
+<AppLayout
+  title="Calculator"
+  description="Quick and subject-wise attendance calculator."
+>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-    <h1 class="text-2xl font-semibold tracking-tight" data-i18n="calc.title">Calculator</h1>
+    <h1 class="text-2xl font-semibold tracking-tight" data-i18n="calc.title">
+      Calculator
+    </h1>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
-      <BunkCalculator
-        client:load
-        target={sess.targetPct}
-        logs={[]}
-        days={[]}
-      />
+      <BunkCalculator client:load target={sess.targetPct} logs={[]} days={[]} />
 
       <div class="card">
-        <h2 class="text-base font-semibold" data-i18n="calc.thisSessionLive">This session — live</h2>
-        <p class="mt-1 text-sm" style="color: var(--color-text-subtle);" data-i18n="calc.pulledFromLogs">Pulled from your logged attendance.</p>
+        <h2 class="text-base font-semibold" data-i18n="calc.thisSessionLive">
+          This session — live
+        </h2>
+        <p
+          class="mt-1 text-sm"
+          style="color: var(--color-text-subtle);"
+          data-i18n="calc.pulledFromLogs"
+        >
+          Pulled from your logged attendance.
+        </p>
         <div class="mt-4 flex items-center justify-between">
           <div>
-            <div class="text-xs uppercase tracking-wide" style="color: var(--color-text-subtle);" data-i18n="calc.overall">Overall</div>
-            <div class="num text-3xl font-semibold">{overall.pct.toFixed(1)}%</div>
+            <div
+              class="text-xs uppercase tracking-wide"
+              style="color: var(--color-text-subtle);"
+              data-i18n="calc.overall"
+            >
+              Overall
+            </div>
+            <div class="num text-3xl font-semibold">
+              {overall.pct.toFixed(1)}%
+            </div>
           </div>
-          <div class="text-right text-sm" style="color: var(--color-text-subtle);" data-i18n="calc.classesCount" data-i18n-params={JSON.stringify({ attended: overall.attended, held: overall.held })}>
+          <div
+            class="text-right text-sm"
+            style="color: var(--color-text-subtle);"
+            data-i18n="calc.classesCount"
+            data-i18n-params={JSON.stringify({
+              attended: overall.attended,
+              held: overall.held,
+            })}
+          >
             {overall.attended} / {overall.held} classes
           </div>
         </div>
@@ -87,43 +175,106 @@ const overall = overallStats(filtered, sess.targetPct);
       </div>
     </div>
 
-    <h2 class="mt-10 text-lg font-semibold" data-i18n="calc.perSubject">Per subject</h2>
-    {subjRows.length === 0 ? (
-      <p class="mt-2 text-sm" style="color: var(--color-text-subtle);" data-i18n="calc.noSubjectsYet">No subjects yet. Add them in your timetable.</p>
-    ) : (
-      <ul class="mt-3 space-y-2">
-        {subjRows.map((s) => {
-          const item = perSubject[s.id]!;
-          return (
-            <li class="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div class="flex items-center gap-3">
-                <span aria-hidden="true" style={`width: 4px; height: 32px; border-radius: 4px; background-color: ${s.color};`}></span>
-                <div>
-                  <a href={`/app/subjects/${s.id}`} class="font-medium hover:underline">{s.name}</a>
-                  {s.code && <span class="ml-2 text-xs" style="color: var(--color-text-subtle);">{s.code}</span>}
+    <h2 class="mt-10 text-lg font-semibold" data-i18n="calc.perSubject">
+      Per subject
+    </h2>
+    {
+      subjRows.length === 0 ? (
+        <p
+          class="mt-2 text-sm"
+          style="color: var(--color-text-subtle);"
+          data-i18n="calc.noSubjectsYet"
+        >
+          No subjects yet. Add them in your timetable.
+        </p>
+      ) : (
+        <ul class="mt-3 space-y-2">
+          {subjRows.map((s) => {
+            const item = perSubject[s.id]!;
+            return (
+              <li class="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    style={`width: 4px; height: 32px; border-radius: 4px; background-color: ${s.color};`}
+                  />
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <a
+                        href={`/app/subjects/${s.id}`}
+                        class="font-medium hover:underline"
+                      >
+                        {s.name}
+                      </a>
+                      {s.code && (
+                        <span
+                          class="text-xs"
+                          style="color: var(--color-text-subtle);"
+                        >
+                          {s.code}
+                        </span>
+                      )}
+                      {s.isLab && (
+                        <span
+                          class="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase"
+                          style="background-color: var(--color-surface-2); color: var(--color-text-subtle);"
+                          data-i18n="subjects.labelLab"
+                        >
+                          Lab
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="flex-1 sm:mx-6">
-                <PercentageBar pct={item.stats.pct} target={sess.targetPct} size="sm" />
-              </div>
-              <div class="grid grid-cols-3 gap-4 text-right sm:flex sm:gap-6">
-                <div>
-                  <div class="num text-lg font-semibold">{item.stats.pct.toFixed(1)}%</div>
-                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);" data-i18n="calc.stat.pct">Pct</div>
+                <div class="flex-1 sm:mx-6">
+                  <PercentageBar
+                    pct={item.stats.pct}
+                    target={sess.targetPct}
+                    size="sm"
+                  />
                 </div>
-                <div>
-                  <div class="num text-lg font-semibold">{item.stats.canMiss}</div>
-                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);" data-i18n="calc.stat.canMiss">Can miss</div>
+                <div class="grid grid-cols-3 gap-4 text-right sm:flex sm:gap-6">
+                  <div>
+                    <div class="num text-lg font-semibold">
+                      {item.stats.pct.toFixed(1)}%
+                    </div>
+                    <div
+                      class="text-[10px] uppercase"
+                      style="color: var(--color-text-subtle);"
+                    >
+                      {item.stats.attended}/{item.stats.held}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="num text-lg font-semibold">
+                      {item.stats.canMiss}
+                    </div>
+                    <div
+                      class="text-[10px] uppercase"
+                      style="color: var(--color-text-subtle);"
+                      data-i18n="calc.stat.canMiss"
+                    >
+                      Can miss
+                    </div>
+                  </div>
+                  <div>
+                    <div class="num text-lg font-semibold">
+                      {item.stats.mustAttend}
+                    </div>
+                    <div
+                      class="text-[10px] uppercase"
+                      style="color: var(--color-text-subtle);"
+                      data-i18n="calc.stat.need"
+                    >
+                      Need
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div class="num text-lg font-semibold">{item.stats.mustAttend}</div>
-                  <div class="text-[10px] uppercase" style="color: var(--color-text-subtle);" data-i18n="calc.stat.need">Need</div>
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    )}
+              </li>
+            );
+          })}
+        </ul>
+      )
+    }
   </div>
 </AppLayout>
