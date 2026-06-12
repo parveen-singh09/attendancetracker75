@@ -88,7 +88,6 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 
     const newHeld = initialOverall.held + deltaHeld;
     const newAttended = initialOverall.attended + deltaAttended;
-    const newExtra = initialOverall.extra + deltaExtra;
     const newPct = newHeld === 0 ? 0 : Math.min(100, (newAttended / newHeld) * 100);
 
     const pctStr = newPct.toFixed(1) + '%';

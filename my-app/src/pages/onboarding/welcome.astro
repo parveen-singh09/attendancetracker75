@@ -9,30 +9,6 @@ if (user.onboardingStep === 'done') {
   return Astro.redirect('/app/today');
 }
 
-// "Back" target: send the user to whatever same-origin page they came from
-// (Referer). Fall back to / for typed URLs / cross-origin referrals. We never
-// point at /signup or /login because those pages redirect authed users back
-// into onboarding — and we never point at /app/* because for a not-yet-done
-// user those pages redirect back into onboarding too. So the only safe
-// referer is the marketing landing or another non-onboarding, non-app page.
-const referer = Astro.request.headers.get('referer');
-let backHref = '/';
-if (referer) {
-  try {
-    const refUrl = new URL(referer);
-    if (refUrl.origin === Astro.url.origin
-        && !refUrl.pathname.startsWith('/onboarding')
-        && !refUrl.pathname.startsWith('/app')
-        && !refUrl.pathname.startsWith('/signup')
-        && !refUrl.pathname.startsWith('/login')
-        && !refUrl.pathname.startsWith('/forgot-password')
-        && !refUrl.pathname.startsWith('/api')) {
-      backHref = refUrl.pathname + refUrl.search;
-    }
-  } catch {
-    // Malformed referer — fall through to the default '/'.
-  }
-}
 ---
 <BaseLayout title="Welcome" description="Let's set up your attendance tracking.">
   <div class="grid min-h-screen place-items-center px-4 py-8">
