@@ -381,6 +381,7 @@ const sess = (await db
               sessionMsg.style.color = 'var(--color-safe)';
               sessionMsg.hidden = false;
             }
+            setTimeout(() => window.location.reload(), 1000);
           } else {
             const err = await res.json() as any;
             if (sessionMsg) {
