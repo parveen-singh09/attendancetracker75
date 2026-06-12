@@ -54,7 +54,7 @@ const dayArr = dayOverrides.map((d: any) => ({
   status: d.status as "normal" | "holiday" | "sick" | "event",
 }));
 
-const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+const jsDow = new Date().getDay(); 
 const subjectsWithRegularSlotToday = new Set(
   allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
 );
@@ -76,7 +76,6 @@ for (const l of logs) {
   else if (l.status === "off") c.off = true;
 }
 
-// Group logs by subjectId for performance
 const logsBySubj = new Map<string, any[]>();
 for (const l of logs) {
   const arr = logsBySubj.get(l.subjectId) ?? [];
@@ -89,7 +88,7 @@ const enriched = subjRows
     const sLogs = logsBySubj.get(s.id) ?? [];
     const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-    // If the session is active, apply default-absent logic for today's classes
+    
     if (!sess.isArchived) {
       const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
       const counts = todaysCounts.get(s.id)!;

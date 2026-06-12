@@ -1,9 +1,7 @@
-
-
 export interface ParsedSlot {
-  dayOfWeek: number; // 0=Sun .. 6=Sat
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
+  dayOfWeek: number; 
+  startTime: string; 
+  endTime: string; 
   subjectName: string;
   location?: string;
   isLab: boolean;
@@ -27,7 +25,7 @@ const DAYS: Record<string, number> = {
 };
 
 function toMin(t: string): number | null {
-  // accepts "9", "9:00", "9:30", "09:00", "9am", "9:30am", "9 AM"
+  
   const m = t
     .toLowerCase()
     .replace(/\s+/g, '')
@@ -112,7 +110,7 @@ export function parseTimetableText(input: string): ParseResult {
       warnings.push(`Could not parse time in: "${g}"`);
       continue;
     }
-    if (endMin <= startMin) endMin += 12 * 60; // PM/AM wrap
+    if (endMin <= startMin) endMin += 12 * 60; 
 
     let subject = g
       .replace(new RegExp(`\\b(mon|tue|wed|thu|fri|sat|sun)(?:day|\\.|s|\\b)`, 'i'), '')
@@ -124,19 +122,19 @@ export function parseTimetableText(input: string): ParseResult {
 
     let location: string | undefined = undefined;
 
-    // 1. Try matching with @ symbol first (e.g. "Calculus @ Room 204" or "DS @ 204")
+    
     const atMatch = subject.match(/@\s*(.+)$/);
     if (atMatch) {
       location = atMatch[1]!.trim();
       subject = subject.replace(/@\s*(.+)$/, '').trim();
     } else {
-      // 2. Try matching room/rm/hall/building/bldg/lab keywords followed by code
+      
       const locMatch = subject.match(/\b(?:room|rm|hall|building|bldg)\s+[a-z0-9\-]+\b/i) || subject.match(/\blab\s+\d+\b/i);
       if (locMatch) {
         location = locMatch[0];
         subject = subject.replace(locMatch[0], '').trim();
       } else {
-         // 3. Try matching trailing room codes (e.g. A-101, LT-3, LH-2, 202, 104)
+         
          const trailingLoc = subject.match(/\s+([a-z]{1,2}\-?\d{1,4}|\d{3,4})$/i);
          if (trailingLoc && !/\b(lab|tutorial|tut|prac)\b/i.test(trailingLoc[1]!)) {
            location = trailingLoc[1];

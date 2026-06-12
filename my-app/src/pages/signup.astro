@@ -2,16 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Logo from '../components/Logo.astro';
 
-// Already logged in? Bounce straight to the app (or ?next=) so users
-// never see the sign-up form again. Guest accounts are allowed
-// to view the sign-up form to register a permanent account.
 if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
   return Astro.redirect(Astro.url.searchParams.get('next') ?? '/app/today');
 }
 ---
 <BaseLayout title="Sign up" description="Create a free Attendance Tracker account.">
   <div class="auth-shell">
-    <!-- Left: brand / value panel -->
+    
     <aside class="auth-brand" aria-hidden="true">
       <div class="auth-brand-inner">
         <a href="/" class="auth-brand-logo">
@@ -58,7 +55,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
       </div>
     </aside>
 
-    <!-- Right: form panel -->
+    
     <section class="auth-form-wrap">
       <div class="auth-card card">
         <header class="auth-head">
@@ -387,16 +384,16 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
     const next = new URLSearchParams(window.location.search).get('next') || '/onboarding/welcome';
 
-    // Re-read the locale every time we need to translate a string, so
-    // the user changing languages mid-flow sees the new copy.
+    
+    
     const currentLocale = (): Locale => {
       try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
       catch { return 'en'; }
     };
     const tr = (key: string): string => t(currentLocale(), key);
 
-    // Smart landing: respect an explicit `?next=`, otherwise route
-    // brand-new users to onboarding and completed users to the dashboard.
+    
+    
     const resolveDestination = async (): Promise<string> => {
       if (next && next !== '/signup' && next !== '/login') return next;
       try {
@@ -408,7 +405,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
           }
         }
       } catch {
-        // fall through
+        
       }
       return next || '/onboarding/welcome';
     };

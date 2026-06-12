@@ -23,7 +23,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-
   const isProtectedRoute = path.startsWith(APP_PREFIX) || path.startsWith(ONBOARDING_PREFIX);
   const isApiRoute = path.startsWith('/api/');
 

@@ -1,13 +1,7 @@
-
 import { db, User, Session, Account, AcademicSession, Subject, TimetableSlot, Day, AttendanceLog, eq } from 'astro:db';
 
-// Web Crypto (works on Node 22+, Workers, and modern browsers — no
-// node:crypto import needed, so this module runs identically on
-// Cloudflare Workers and on the local dev server).
-// We use `globalThis.crypto` so the bundler doesn't tree-shake it.
-
 const SESSION_COOKIE = 'at75_session';
-const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; 
 
 export type AuthUser = {
   id: string;
@@ -33,11 +27,8 @@ export type AuthSession = {
   updatedAt: Date;
 };
 
-
 const PBKDF2_ITERS = 100_000;
 const PBKDF2_KEYLEN = 32;
-
-// ---------- Web Crypto helpers ----------
 
 function randomBytes(n: number): Uint8Array {
   const buf = new Uint8Array(n);
@@ -46,7 +37,7 @@ function randomBytes(n: number): Uint8Array {
 }
 
 function toBase64(bytes: Uint8Array): string {
-  // Workers / Node 22 both provide btoa on a binary string.
+  
   let s = '';
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]!);
   return btoa(s);
@@ -104,8 +95,6 @@ async function sha256Hex(input: string): Promise<string> {
   return toHex(new Uint8Array(buf));
 }
 
-// ---------- Password hashing ----------
-
 async function hashPassword(plain: string): Promise<string> {
   const salt = toBase64(randomBytes(16));
   const hash = toBase64(await pbkdf2(plain, salt, PBKDF2_ITERS, PBKDF2_KEYLEN));
@@ -122,8 +111,6 @@ async function verifyPassword(plain: string, stored: string): Promise<boolean> {
   const actual = toBase64(await pbkdf2(plain, salt, iters, PBKDF2_KEYLEN));
   return constantTimeEqual(fromBase64(actual), fromBase64(expected));
 }
-
-// ---------- Tokens ----------
 
 function genToken(): string {
   return toBase64Url(randomBytes(32));
@@ -199,7 +186,6 @@ function rowToSession(row: any): AuthSession {
     updatedAt: row.updatedAt,
   };
 }
-
 
 export type SignUpInput = { email: string; password: string; name: string };
 export type SignInInput = { email: string; password: string };
@@ -287,7 +273,7 @@ export async function signInAnonymous(
   const userId = genUserId();
   const guestEmail = `guest-${userId}@guest.local`;
   
-  // 1. Insert User with onboardingStep as done
+  
   await db.insert(User).values({
     id: userId,
     email: guestEmail,
@@ -300,7 +286,7 @@ export async function signInAnonymous(
     updatedAt: now,
   });
 
-  // 2. Insert Account
+  
   await db.insert(Account).values({
     id: genUserId(),
     userId,
@@ -311,7 +297,7 @@ export async function signInAnonymous(
     updatedAt: now,
   });
 
-  // 3. Create default AcademicSession
+  
   const sessionId = genUserId();
   const startDate = new Date();
   const endDate = new Date();
@@ -342,7 +328,7 @@ export async function signInAnonymous(
     createdAt: now,
   });
 
-  // 4. Create default Subjects
+  
   const defaultSubjects = [
     { name: 'Mathematics', color: '#3b82f6' },
     { name: 'Physics', color: '#ef4444' },
@@ -402,7 +388,7 @@ export async function signOut(
       const user = userRows[0];
       if (user && user.isAnonymous) {
         const userId = user.id;
-        // Fetch all academic sessions to delete child records manually first (LibSQL doesn't cascade correctly)
+        
         const userSessions = await db.select({ id: AcademicSession.id }).from(AcademicSession).where(eq(AcademicSession.userId, userId));
         for (const sess of userSessions) {
           await db.delete(AttendanceLog).where(eq(AttendanceLog.sessionId, sess.id));
@@ -415,14 +401,13 @@ export async function signOut(
         await db.delete(Session).where(eq(Session.userId, userId));
         await db.delete(User).where(eq(User.id, userId));
       } else {
-        // Regular user: only delete this session
+        
         await db.delete(Session).where(eq(Session.tokenHash, tokenHash));
       }
     }
   }
   return { ok: true, cookie: clearSessionCookie() };
 }
-
 
 export async function createSessionFor(userId: string, request: Request): Promise<{ session: AuthSession; rawToken: string }> {
   const now = new Date();

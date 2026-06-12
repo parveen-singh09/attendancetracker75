@@ -133,9 +133,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       await db.delete(AttendanceLog).where(eq(AttendanceLog.id, toRemove.id));
     }
   } else {
-    // Block adding present/absent/extra when the slot is already marked off,
-    // either by a per-slot Off toggle (existing 'off' AttendanceLog) or by
-    // a day-level override (Day.status !== 'normal' for this date).
+    
+    
+    
     if (parsed.data.status !== 'off') {
       const [offLog, dayOverride] = await Promise.all([
         db

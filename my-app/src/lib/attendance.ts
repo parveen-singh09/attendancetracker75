@@ -1,4 +1,3 @@
-
 export type LogStatus = 'present' | 'absent' | 'extra' | 'off';
 export type DayStatus = 'normal' | 'holiday' | 'sick' | 'event';
 
@@ -99,12 +98,11 @@ export function whatIf(base: Stats, n: number, mode: 'attend' | 'miss'): Stats {
     return { ...base, held, attended, pct };
   } else {
     const held = base.held + n;
-    const attended = base.attended; // missed
+    const attended = base.attended; 
     const pct = held === 0 ? 0 : Math.min(100, (attended / held) * 100);
     return { ...base, held, attended, pct };
   }
 }
-
 
 export function toDateString(d: Date): string {
   const y = d.getFullYear();
@@ -123,4 +121,3 @@ export function addDays(d: Date, n: number): Date {
   out.setDate(out.getDate() + n);
   return out;
 }
-

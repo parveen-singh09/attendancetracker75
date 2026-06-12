@@ -1,4 +1,3 @@
-
 export const LOCALES = ['en', 'hi', 'es', 'fr', 'de', 'pt', 'ar', 'zh', 'ja', 'ru'] as const;
 export type Locale = (typeof LOCALES)[number];
 
@@ -7,7 +6,6 @@ export const RTL_LOCALES: ReadonlySet<Locale> = new Set(['ar']);
 export const DEFAULT_LOCALE: Locale = 'en';
 
 export const STORAGE_KEY = 'at75_locale';
-
 
 type Dict = Record<string, string>;
 
@@ -29,7 +27,6 @@ const en: Dict = {
   'shell.profileSettings': 'Profile settings',
   'shell.accountSettings': 'Account settings',
 
-
   'btn.continue': 'Continue',
   'btn.back': 'Back',
   'btn.continueAsGuest': 'Continue as Guest',
@@ -47,7 +44,6 @@ const en: Dict = {
   'btn.sendResetLink': 'Send reset link',
   'btn.pleaseWait': 'Please wait…',
 
-
   'auth.login.title': 'Welcome back',
   'auth.login.subtitle': 'Log in to keep your streak going.',
   'auth.login.emailLabel': 'Email',
@@ -59,7 +55,6 @@ const en: Dict = {
   'auth.login.createAccount': 'Create a free account',
   'auth.login.error.missingFields': 'Please enter your email and password.',
   'auth.login.error.generic': 'Login failed. Check your email/password.',
-
 
   'auth.signup.title': 'Create your account',
   'auth.signup.subtitle': 'Start tracking in under a minute.',
@@ -78,7 +73,6 @@ const en: Dict = {
   'auth.signup.privacy': 'Privacy Policy',
   'auth.signup.error.shortPassword': 'Password must be at least 8 characters.',
   'auth.signup.error.generic': 'Signup failed. Please check your info.',
-
 
   'auth.forgot.title': 'Reset your password',
   'auth.forgot.subtitle': 'Enter your email and we will send a reset link.',
@@ -100,7 +94,7 @@ const en: Dict = {
   'landing.urlLabel': '/today',
   'landing.brand.logoLink': 'Attendance Tracker',
 
-  // Onboarding
+  
   'onboarding.welcome.step': 'Step 1 of 2',
   'onboarding.welcome.title': 'Welcome, {name}.',
   'onboarding.welcome.body':
@@ -141,7 +135,7 @@ const en: Dict = {
   'onboarding.timetable.applySchedule': 'Apply Schedule',
   'onboarding.timetable.applied': 'Applied',
 
-  // Today page
+  
   'today.title': 'Today',
   'today.empty.title': 'No classes today',
   'today.empty.body': 'Enjoy your day off',
@@ -150,20 +144,20 @@ const en: Dict = {
   'today.scheduleTitle': "Today's schedule",
   'today.overall': 'Overall Attendance',
 
-  // Empty state copy
+  
   'empty.noSession': 'No session yet',
   'empty.startSetup': 'Start setup',
   'empty.useCalculator': 'Use calculator',
 
-  // Errors
+  
   'error.network': 'Network error. Please try again.',
   'error.generic': 'Something went wrong. Please try again.',
 
-  // FAQ section title
+  
   'faq.title': 'Why Students Love Our Free Attendance Tracker',
   'faq.subtitle': 'Everything students ask about the free attendance tracker.',
 
-  // FAQ Q/A pairs
+  
   'faq.q1': 'Is this attendance tracker really free?',
   'faq.a1': "Yes — 100% free, no credit card, no trial, no hidden paywalls. You can use our free attendance tracker to log your classes, build your weekly schedule, and see your running percentage for as long as you want. The paid version is the same version; we don't gate features behind a subscription.",
   'faq.q2': 'How do I track my attendance as a student?',
@@ -187,7 +181,7 @@ const en: Dict = {
   'faq.q11': 'How do you compare to a spreadsheet or attendance tracking sheet?',
   'faq.a11': 'A tracking student attendance spreadsheet works until you have to count present days, weight labs, or remember holidays. Our app does the counting, the percentage math, the lab weighting, and the holiday detection automatically — and it works on your phone, which a spreadsheet usually does not.',
 
-  // Marketing long-form copy (SEO paragraphs on the landing page)
+  
   'seo.h2': 'The Ultimate Online Attendance Tracker for Students',
   'seo.p1':
     "Finding the {emph1}easiest way to track attendance{emphEnd} shouldn't be a chore. Whether you are a college student dealing with strict cutoff rules or a parent looking for a {emph2}homeschool attendance tracker{emphEnd}, our tool is built to simplify your academic life. In today's fast-paced educational environment, {emph3}tracking student attendance{emphEnd} manually using paper logs or complicated spreadsheets is outdated and prone to errors. Our {emph4}online attendance system{emphEnd} provides a seamless, digital alternative that fits right in your pocket.",
@@ -213,7 +207,7 @@ const en: Dict = {
   'seo.p5':
     "Stop worrying about the math and start focusing on what matters. Use the {emph1}easiest way to track attendance{emphEnd} and keep your record clean. Built for everyone — join thousands who have made {emph2}my attendance tracker{emphEnd} their daily companion.",
 
-  // About page
+  
   'about.h1': 'About Attendance Tracker',
   'about.p1': 'We built Attendance Tracker because every other "attendance calculator" is a stateless widget. You paste two numbers, get a percentage, and forget the site exists.',
   'about.p2': "Real students live in a timetable. Monday 9am is always Calculus. The hard part of tracking attendance isn't the math — it's the daily logging. So we built a tool that knows your schedule, turns the question into one tap, and shows you what to do next.",
@@ -223,7 +217,7 @@ const en: Dict = {
   'about.principle3': '{strong1}Fast and accessible.{strongEnd} Works on a 2G connection, on a low-end Android, with a screen reader.',
   'about.principle4': '{strong1}Honest math.{strongEnd} We show our assumptions (target %, day overrides) instead of hiding them.',
 
-  // Contact page
+  
   'contact.h1': 'Contact us',
   'contact.p1': "We'd love to hear from you — bug reports, feature ideas, or just a hello. Pick whichever channel works for you.",
   'contact.emailLabel': 'Email',
@@ -239,7 +233,7 @@ const en: Dict = {
   'contact.headsUp':
     '{strong1}Heads-up:{strongEnd} the Attendance Tracker is a small, student-built project. We do our best to respond quickly, but if your issue is blocking an exam or a deadline, please fall back to your institution\'s official record first.',
 
-  // Privacy page
+  
   'privacy.h1': 'Privacy Policy',
   'privacy.lastUpdated': 'Last updated: {date}',
   'privacy.h2.collect': 'What we collect',
@@ -260,7 +254,7 @@ const en: Dict = {
   'privacy.contactP':
     'Questions? Email {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
-  // Terms page
+  
   'terms.h1': 'Terms of Service',
   'terms.lastUpdated': 'Last updated: {date}',
   'terms.intro':
@@ -515,9 +509,7 @@ const en: Dict = {
   'sessions.newSession': '+ New session',
   'sessions.noSessions': 'No sessions yet.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} subjects · target {target}%',
-  'sessions.labelArchived': 'Archived',
   'sessions.viewRollup': 'View rollup',
-  'sessions.btnArchive': 'Archive',
   'sessions.modal.title': 'Reset session data?',
   'sessions.modal.body': 'Creating a new session will permanently erase all your current data, including active sessions, subjects, timetables, and attendance logs. This action cannot be undone.',
   'sessions.modal.cancel': 'Cancel',
@@ -534,8 +526,8 @@ const en: Dict = {
 };
 
 const hi: Dict = {
-  // Phase 1: spot translations for the most-visible chrome. Missing
-  // entries fall back to English at runtime.
+  
+  
   'nav.today': 'आज का शेड्यूल',
   'nav.today.short': 'आज',
   'nav.weekly': 'साप्ताहिक शेड्यूल',
@@ -569,7 +561,7 @@ const hi: Dict = {
   'today.title': 'आज',
   'today.overall': 'कुल उपस्थिति',
 
-  // FAQ (phase 2)
+  
   'faq.title': 'छात्र हमारे मुफ़्त उपस्थिति ट्रैकर को क्यों पसंद करते हैं',
   'faq.subtitle': 'छात्र मुफ़्त उपस्थिति ट्रैकर के बारे में जो कुछ भी पूछते हैं।',
   'faq.q1': 'क्या यह उपस्थिति ट्रैकर सच में मुफ़्त है?',
@@ -595,7 +587,7 @@ const hi: Dict = {
   'faq.q11': 'स्प्रेडशीट या उपस्थिति ट्रैकिंग शीट से आपकी तुलना कैसे होती है?',
   'faq.a11': 'छात्र उपस्थिति ट्रैकिंग स्प्रेडशीट तब तक काम करती है जब तक आपको उपस्थित दिनों की गिनती नहीं करनी, लैब को वेट नहीं करना, या छुट्टियाँ याद नहीं रखनी। हमारा ऐप स्वचालित रूप से गिनती, प्रतिशत गणित, लैब वेटिंग और छुट्टी का पता लगाना करता है — और यह आपके फ़ोन पर काम करता है, जो स्प्रेडशीट आमतौर पर नहीं करती।',
 
-  // Marketing long-form (phase 2)
+  
   'seo.h2': 'छात्रों के लिए अंतिम ऑनलाइन उपस्थिति ट्रैकर',
   'seo.p1': '{emph1}उपस्थिति ट्रैक करने का सबसे आसान तरीका{emphEnd} ढूंढना कोई कठिन काम नहीं होना चाहिए। चाहे आप कठोर कटऑफ नियमों वाले कॉलेज छात्र हों या {emph2}होमस्कूल उपस्थिति ट्रैकर{emphEnd} की तलाश में अभिभावक, हमारा टूल आपके शैक्षणिक जीवन को सरल बनाने के लिए बनाया गया है। आज की तेज़-रफ़्तार शैक्षणिक वातावरण में कागज़ी लॉग या जटिल स्प्रेडशीट का उपयोग करके मैन्युअल रूप से {emph3}छात्र उपस्थिति ट्रैक करना{emphEnd} पुराना और त्रुटि-प्रवण है। हमारा {emph4}ऑनलाइन उपस्थिति सिस्टम{emphEnd} एक सहज, डिजिटल विकल्प प्रदान करता है जो आपकी जेब में फिट हो जाता है।',
   'seo.h3.app': 'छात्र उपस्थिति ट्रैकर ऐप का उपयोग क्यों करें?',
@@ -616,7 +608,7 @@ const hi: Dict = {
   'seo.h3.conclusion': 'निष्कर्ष: आज ही अपना ऑनलाइन उपस्थिति ट्रैकर उपयोग करना शुरू करें',
   'seo.p5': 'गणित की चिंता करना बंद करें और जो मायने रखता है उस पर ध्यान देना शुरू करें। {emph1}उपस्थिति ट्रैक करने का सबसे आसान तरीका{emphEnd} उपयोग करें और अपना रिकॉर्ड साफ़ रखें। सभी के लिए बनाया गया — हज़ारों लोगों से जुड़ें जिन्होंने {emph2}मेरा उपस्थिति ट्रैकर{emphEnd} को अपना दैनिक साथी बनाया है।',
 
-  // About page
+  
   'about.h1': 'अटेंडेंस ट्रैकर के बारे में',
   'about.p1': 'हमने अटेंडेंस ट्रैकर इसलिए बनाया क्योंकि हर अन्य "उपस्थिति कैलकुलेटर" एक स्टेटलेस विजेट है। आप दो नंबर पेस्ट करते हैं, एक प्रतिशत प्राप्त करते हैं, और साइट को भूल जाते हैं।',
   'about.p2': 'असली छात्र एक टाइमटेबल में रहते हैं। सोमवार सुबह 9 बजे हमेशा कैलकुलस होता है। उपस्थिति ट्रैक करने का कठिन हिस्सा गणित नहीं है — यह दैनिक लॉगिंग है। इसलिए हमने एक ऐसा टूल बनाया है जो आपका शेड्यूल जानता है, सवाल को एक टैप में बदल देता है, और आपको बताता है कि आगे क्या करना है।',
@@ -626,7 +618,7 @@ const hi: Dict = {
   'about.principle3': '{strong1}तेज़ और सुलभ।{strongEnd} 2G कनेक्शन पर, कम-स्तर के Android पर, स्क्रीन रीडर के साथ काम करता है।',
   'about.principle4': '{strong1}ईमानदार गणित।{strongEnd} हम अपनी मान्यताओं (लक्ष्य %, दिन ओवरराइड) दिखाते हैं उन्हें छिपाने के बजाय।',
 
-  // Contact page
+  
   'contact.h1': 'हमसे संपर्क करें',
   'contact.p1': 'हम आपसे सुनना पसंद करेंगे — बग रिपोर्ट, सुविधा विचार, या बस एक नमस्ते। जो भी चैनल आपके लिए काम करे उसे चुनें।',
   'contact.emailLabel': 'ईमेल',
@@ -640,7 +632,7 @@ const hi: Dict = {
   'contact.privacyLink': 'गोपनीयता नीति',
   'contact.headsUp': '{strong1}ध्यान दें:{strongEnd} अटेंडेंस ट्रैकर एक छोटा, छात्र-निर्मित प्रोजेक्ट है। हम जल्दी जवाब देने की पूरी कोशिश करते हैं, लेकिन अगर आपका मुद्दा किसी परीक्षा या समय सीमा को रोक रहा है, तो कृपया पहले अपने संस्थान के आधिकारिक रिकॉर्ड पर वापस जाएं।',
 
-  // Privacy page
+  
   'privacy.h1': 'गोपनीयता नीति',
   'privacy.lastUpdated': 'अंतिम अद्यतन: {date}',
   'privacy.h2.collect': 'हम क्या एकत्र करते हैं',
@@ -657,7 +649,7 @@ const hi: Dict = {
   'privacy.h2.contact': 'संपर्क',
   'privacy.contactP': 'प्रश्न? ईमेल करें {emph1}contactfeedback9@gmail.com{emphEnd}।',
 
-  // Terms page
+  
   'terms.h1': 'सेवा की शर्तें',
   'terms.lastUpdated': 'अंतिम अद्यतन: {date}',
   'terms.intro': 'अटेंडेंस ट्रैकर एक मुफ़्त टूल है जो जैसा है वैसा प्रदान किया गया है। इसका उपयोग करके, आप अपना डेटा सटीक रूप से दर्ज करने पर सहमत होते हैं। प्रतिशत गणना अनुमान हैं — आपके कॉलेज का आधिकारिक रिकॉर्ड स्रोत है।',
@@ -909,9 +901,7 @@ const hi: Dict = {
   'sessions.newSession': '+ नया सत्र',
   'sessions.noSessions': 'अभी तक कोई सत्र नहीं है।',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} विषय · लक्ष्य {target}%',
-  'sessions.labelArchived': 'आर्काइव किया गया',
   'sessions.viewRollup': 'रोलअप देखें',
-  'sessions.btnArchive': 'आर्काइव',
   'sessions.modal.title': 'सत्र डेटा रीसेट करें?',
   'sessions.modal.body': 'एक नया सत्र बनाने से आपके वर्तमान सभी डेटा स्थायी रूप से मिट जाएंगे, जिसमें सक्रिय सत्र, विषय, टाइमटेबल और उपस्थिति लॉग शामिल हैं। इस क्रिया को पूर्ववत नहीं किया जा सकता।',
   'sessions.modal.cancel': 'रद्द करें',
@@ -961,7 +951,7 @@ const es: Dict = {
   'today.title': 'Hoy',
   'today.overall': 'Asistencia total',
 
-  // FAQ (phase 2)
+  
   'faq.title': 'Por qué los estudiantes aman nuestro registro de asistencia gratis',
   'faq.subtitle': 'Todo lo que preguntan los estudiantes sobre el registro de asistencia gratis.',
   'faq.q1': '¿Este registro de asistencia es realmente gratis?',
@@ -987,7 +977,7 @@ const es: Dict = {
   'faq.q11': '¿Cómo se compara con una hoja de cálculo o una hoja de registro de asistencia?',
   'faq.a11': 'Una hoja de cálculo de registro de asistencia de estudiantes funciona hasta que tienes que contar días presentes, ponderar labs o recordar festivos. Nuestra app hace el conteo, el cálculo del porcentaje, la ponderación de labs y la detección de festivos automáticamente — y funciona en tu móvil, cosa que una hoja de cálculo normalmente no.',
 
-  // Marketing long-form (phase 2)
+  
   'seo.h2': 'El mejor registro de asistencia online para estudiantes',
   'seo.p1': 'Encontrar la {emph1}forma más fácil de registrar asistencia{emphEnd} no debería ser una tarea pesada. Tanto si eres un estudiante universitario con reglas estrictas de corte como si eres un padre en busca de un {emph2}registro de asistencia para homeschooling{emphEnd}, nuestra herramienta está diseñada para simplificar tu vida académica. En el vertiginoso entorno educativo actual, {emph3}registrar la asistencia de los estudiantes{emphEnd} manualmente con hojas de papel o hojas de cálculo complicadas está obsoleto y es propenso a errores. Nuestro {emph4}sistema de asistencia online{emphEnd} ofrece una alternativa digital y sin fisuras que cabe en tu bolsillo.',
   'seo.h3.app': '¿Por qué usar una app de registro de asistencia para estudiantes?',
@@ -1008,7 +998,7 @@ const es: Dict = {
   'seo.h3.conclusion': 'Conclusión: empieza a usar hoy tu registro de asistencia online',
   'seo.p5': 'Deja de preocuparte por las cuentas y céntrate en lo que importa. Usa la {emph1}forma más fácil de registrar asistencia{emphEnd} y mantén tu expediente limpio. Hecho para todos — únete a los miles que ya han hecho de {emph2}mi registro de asistencia{emphEnd} su compañero diario.',
 
-  // About page
+  
   'about.h1': 'Sobre Attendance Tracker',
   'about.p1': 'Construimos Attendance Tracker porque todas las demás "calculadoras de asistencia" son widgets sin estado. Pegas dos números, obtienes un porcentaje y olvidas que el sitio existe.',
   'about.p2': 'Los estudiantes de verdad viven dentro de un horario. El lunes a las 9 es siempre Cálculo. La parte difícil de registrar la asistencia no es el cálculo — es el registro diario. Así que construimos una herramienta que conoce tu horario, convierte la pregunta en un toque y te muestra qué hacer a continuación.',
@@ -1018,7 +1008,7 @@ const es: Dict = {
   'about.principle3': '{strong1}Rápido y accesible.{strongEnd} Funciona con 2G, en un Android básico, con un lector de pantalla.',
   'about.principle4': '{strong1}Matemáticas honestas.{strongEnd} Mostramos nuestras suposiciones (% objetivo, excepciones) en lugar de ocultarlas.',
 
-  // Contact page
+  
   'contact.h1': 'Contáctanos',
   'contact.p1': 'Nos encantaría saber de ti — informes de errores, ideas de funciones o simplemente un saludo. Elige el canal que te resulte más cómodo.',
   'contact.emailLabel': 'Correo',
@@ -1032,7 +1022,7 @@ const es: Dict = {
   'contact.privacyLink': 'Política de privacidad',
   'contact.headsUp': '{strong1}Aviso:{strongEnd} Attendance Tracker es un proyecto pequeño, creado por estudiantes. Hacemos lo posible por responder rápido, pero si tu problema bloquea un examen o una fecha límite, recurre primero al registro oficial de tu institución.',
 
-  // Privacy page
+  
   'privacy.h1': 'Política de privacidad',
   'privacy.lastUpdated': 'Última actualización: {date}',
   'privacy.h2.collect': 'Qué recopilamos',
@@ -1049,7 +1039,7 @@ const es: Dict = {
   'privacy.h2.contact': 'Contacto',
   'privacy.contactP': '¿Preguntas? Escribe a {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
-  // Terms page
+  
   'terms.h1': 'Términos del servicio',
   'terms.lastUpdated': 'Última actualización: {date}',
   'terms.intro': 'Attendance Tracker es una herramienta gratuita ofrecida tal cual. Al usarla, aceptas introducir tus propios datos con precisión. Los cálculos de porcentaje son estimaciones — el registro oficial de tu universidad es la fuente de verdad.',
@@ -1300,9 +1290,7 @@ const es: Dict = {
   'sessions.newSession': '+ Nueva sesión',
   'sessions.noSessions': 'Aún no hay sesiones.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} asignaturas · objetivo {target}%',
-  'sessions.labelArchived': 'Archivado',
   'sessions.viewRollup': 'Ver resumen',
-  'sessions.btnArchive': 'Archivar',
   'sessions.modal.title': '¿Restablecer datos de sesión?',
   'sessions.modal.body': 'Crear una nueva sesión borrará permanentemente todos tus datos actuales, incluyendo sesiones activas, asignaturas, horarios y registros de asistencia. Esta acción no se puede deshacer.',
   'sessions.modal.cancel': 'Cancelar',
@@ -1352,7 +1340,7 @@ const fr: Dict = {
   'today.title': "Aujourd'hui",
   'today.overall': 'Présence globale',
 
-  // FAQ (phase 2)
+  
   'faq.title': 'Pourquoi les étudiants adorent notre suivi de présence gratuit',
   'faq.subtitle': 'Tout ce que les étudiants demandent sur le suivi de présence gratuit.',
   'faq.q1': 'Ce suivi de présence est-il vraiment gratuit ?',
@@ -1378,7 +1366,7 @@ const fr: Dict = {
   'faq.q11': 'Comment vous comparez-vous à un tableur ou une feuille de suivi de présence ?',
   'faq.a11': 'Un tableur de suivi de présence étudiant fonctionne jusqu’à ce qu’il faille compter les jours présents, pondérer les TP ou se souvenir des jours fériés. Notre application fait le comptage, le calcul du pourcentage, la pondération des TP et la détection des jours fériés automatiquement — et elle fonctionne sur votre téléphone, ce qu’un tableur ne fait généralement pas.',
 
-  // Marketing long-form (phase 2)
+  
   'seo.h2': 'Le meilleur suivi de présence en ligne pour les étudiants',
   'seo.p1': 'Trouver la {emph1}manière la plus simple de suivre les présences{emphEnd} ne devrait pas être une corvée. Que vous soyez étudiant avec des règles de seuil strictes ou parent cherchant un {emph2}suivi de présence pour l’école à la maison{emphEnd}, notre outil est conçu pour simplifier votre vie scolaire. Dans l’environnement éducatif actuel, {emph3}suivre les présences des étudiants{emphEnd} à la main via des feuilles de papier ou des tableurs est dépassé et source d’erreurs. Notre {emph4}système de présence en ligne{emphEnd} offre une alternative numérique fluide qui tient dans votre poche.',
   'seo.h3.app': 'Pourquoi utiliser une application de suivi de présence étudiant ?',
@@ -1399,7 +1387,7 @@ const fr: Dict = {
   'seo.h3.conclusion': 'Conclusion : commencez dès aujourd’hui votre suivi de présence en ligne',
   'seo.p5': 'Arrêtez de vous soucier des calculs et concentrez-vous sur l’essentiel. Utilisez la {emph1}manière la plus simple de suivre les présences{emphEnd} et gardez un dossier propre. Conçu pour tous — rejoignez les milliers de personnes qui ont fait de {emph2}mon suivi de présence{emphEnd} leur compagnon quotidien.',
 
-  // About page
+  
   'about.h1': 'À propos d’Attendance Tracker',
   'about.p1': 'Nous avons construit Attendance Tracker parce que toutes les autres « calculatrices de présence » sont des widgets sans état. Vous collez deux chiffres, obtenez un pourcentage, et oubliez que le site existe.',
   'about.p2': 'Les vrais étudiants vivent dans un emploi du temps. Lundi 9 h, c’est toujours Calcul. Le plus dur dans le suivi des présences, ce n’est pas le calcul — c’est l’enregistrement quotidien. Alors nous avons créé un outil qui connaît votre planning, réduit la question à un seul toucher, et vous montre la suite.',
@@ -1409,7 +1397,7 @@ const fr: Dict = {
   'about.principle3': '{strong1}Rapide et accessible.{strongEnd} Fonctionne en 2G, sur un Android d’entrée de gamme, avec un lecteur d’écran.',
   'about.principle4': '{strong1}Calculs honnêtes.{strongEnd} Nous montrons nos hypothèses (% cible, exceptions) au lieu de les cacher.',
 
-  // Contact page
+  
   'contact.h1': 'Nous contacter',
   'contact.p1': 'Nous serions ravis d’avoir de vos nouvelles — rapports de bugs, idées de fonctionnalités, ou simplement un bonjour. Choisissez le canal qui vous convient.',
   'contact.emailLabel': 'E-mail',
@@ -1423,7 +1411,7 @@ const fr: Dict = {
   'contact.privacyLink': 'politique de confidentialité',
   'contact.headsUp': '{strong1}À noter :{strongEnd} Attendance Tracker est un petit projet, construit par des étudiants. Nous faisons de notre mieux pour répondre rapidement, mais si votre problème bloque un examen ou une échéance, utilisez d’abord le registre officiel de votre établissement.',
 
-  // Privacy page
+  
   'privacy.h1': 'Politique de confidentialité',
   'privacy.lastUpdated': 'Dernière mise à jour : {date}',
   'privacy.h2.collect': 'Ce que nous collectons',
@@ -1440,7 +1428,7 @@ const fr: Dict = {
   'privacy.h2.contact': 'Contact',
   'privacy.contactP': 'Des questions ? Écrivez à {emph1}contactfeedback9@gmail.com{emphEnd}.',
 
-  // Terms page
+  
   'terms.h1': 'Conditions d’utilisation',
   'terms.lastUpdated': 'Dernière mise à jour : {date}',
   'terms.intro': 'Attendance Tracker est un outil gratuit fourni en l’état. En l’utilisant, vous acceptez de saisir vos propres données avec exactitude. Les calculs de pourcentage sont des estimations — le registre officiel de votre université fait foi.',
@@ -1690,9 +1678,7 @@ const fr: Dict = {
   'sessions.newSession': '+ Nouvelle session',
   'sessions.noSessions': 'Aucune session pour le moment.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} matières · cible {target}%',
-  'sessions.labelArchived': 'Archivé',
   'sessions.viewRollup': 'Voir le récapitulatif',
-  'sessions.btnArchive': 'Archiver',
   'sessions.modal.title': 'Réinitialiser les données de session ?',
   'sessions.modal.body': 'La création d\'une nouvelle session effacera définitivement toutes vos données actuelles, y compris les sessions actives, les matières, les emplois du temps et les journaux de présence. Cette action ne peut pas être annulée.',
   'sessions.modal.cancel': 'Annuler',
@@ -1742,7 +1728,7 @@ const de: Dict = {
   'today.title': 'Heute',
   'today.overall': 'Gesamtanwesenheit',
 
-  // FAQ (phase 2)
+  
   'faq.title': 'Warum Studierende unseren kostenlosen Anwesenheits-Tracker lieben',
   'faq.subtitle': 'Alles, was Studierende zum kostenlosen Anwesenheits-Tracker fragen.',
   'faq.q1': 'Ist dieser Anwesenheits-Tracker wirklich kostenlos?',
@@ -1756,8 +1742,8 @@ const de: Dict = {
   'faq.q9': 'Kann ich mein Anwesenheitsblatt teilen oder exportieren?',
   'faq.q10': 'Funktioniert das als Anwesenheits-Tracker für Mitarbeiter?',
   'faq.q11': 'Wie schneidet ihr im Vergleich zu einer Tabelle ab?',
-  // (Long FAQ answers intentionally left as English fallback for German
-  //  in phase 2 — native-speaker review recommended.)
+  
+  
   'faq.a1': 'Ja — 100% kostenlos, keine Kreditkarte, keine Testphase, keine versteckten Paywalls. Du kannst unseren kostenlosen Anwesenheits-Tracker so lange nutzen, wie du willst, um deine Kurse zu protokollieren, deinen Wochenplan zu erstellen und deinen aktuellen Prozentsatz zu sehen. Die kostenpflichtige Version ist dieselbe Version; wir schalten keine Funktionen hinter einem Abo frei.',
   'faq.a2': 'Melde dich an, füge deine Fächer und Praktika hinzu, füge deinen Wochenplan ein oder erstelle ihn, und markiere dann jede Stunde als anwesend, abwesend oder frei. Unser Studierenden-Anwesenheits-Tracker übernimmt die Prozentrechnung und sagt dir genau, wie viele Stunden du pro Fach noch versäumen kannst, ohne unter dein Ziel zu fallen.',
   'faq.a3': 'Ja. Unser Online-Anwesenheits-Tracker läuft in jedem modernen Browser, auf jedem Gerät — Handy, Tablet oder Laptop. Nichts herunterzuladen, nichts zu installieren. Einmal anmelden und deine Daten folgen dir.',
@@ -1770,18 +1756,18 @@ const de: Dict = {
   'faq.a10': 'Die App ist auf den akademischen Wochenzyklus zugeschnitten (Mo–So-Plan, Praktika, Prozentziele), sie ist also kein Mitarbeiter-Anwesenheits-Tracker im HR/Payroll-Sinn. Für ein persönliches Logbuch deiner freien Tage kannst du sie so nutzen, aber für Stempelzeiten, Urlaub und Gehaltsabrechnung brauchst du ein Workforce-Tool.',
   'faq.a11': 'Eine Tabellenkalkulation funktioniert, bis du Anwesenheitstage zählen, Praktika gewichten oder Ferien beachten musst. Unsere App erledigt Zählen, Prozentrechnung, Praktikumsgewichtung und Feiertagserkennung automatisch — und sie läuft auf deinem Handy, was eine Tabelle meistens nicht tut.',
 
-  // Marketing long-form (phase 2) — German
+  
   'seo.h2': 'Der ultimative Online-Anwesenheits-Tracker für Studierende',
   'seo.h3.app': 'Warum eine Studierenden-Anwesenheits-Tracker-App nutzen?',
   'seo.h3.free': '100% kostenlose Studierenden-Anwesenheit',
   'seo.h3.features': 'Funktionen unserer Online-Anwesenheit für Studierende',
   'seo.h3.school': 'Der beste kostenlose Schul-Anwesenheits-Tracker',
   'seo.h3.conclusion': 'Fazit: Starte noch heute mit deinem Online-Anwesenheits-Tracker',
-  // Long body paragraphs intentionally left to fall back to English in
-  // German — too much marketing copy to translate accurately in phase 2.
-  // (TODO: de-translate all `seo.p*` keys when a native German speaker reviews.)
+  
+  
+  
 
-  // About page (German)
+  
   'about.h1': 'Über Attendance Tracker',
   'about.principles.h2': 'Unsere Prinzipien',
   'about.principle1': '{strong1}Kostenlos, für immer.{strongEnd} Keine Paywall, kein Pro-Tarif, keine Werbung.',
@@ -1789,7 +1775,7 @@ const de: Dict = {
   'about.principle3': '{strong1}Schnell und barrierefrei.{strongEnd} Funktioniert mit 2G, auf günstigen Android-Geräten, mit Screenreadern.',
   'about.principle4': '{strong1}Ehrliche Mathematik.{strongEnd} Wir zeigen unsere Annahmen (Ziel-%, Tag-Ausnahmen) statt sie zu verstecken.',
 
-  // Contact (German)
+  
   'contact.h1': 'Kontakt',
   'contact.emailLabel': 'E-Mail',
   'contact.emailResponse': 'Wir versuchen, so schnell wie möglich zu antworten.',
@@ -1799,7 +1785,7 @@ const de: Dict = {
   'contact.privacyLink': 'Datenschutzerklärung',
   'contact.headsUp': '{strong1}Hinweis:{strongEnd} Attendance Tracker ist ein kleines, von Studierenden gebautes Projekt. Wir antworten so schnell wie möglich, aber wenn dein Problem eine Prüfung oder Frist blockiert, nutze zuerst das offizielle Register deiner Einrichtung.',
 
-  // Privacy (German headlines only)
+  
   'privacy.h1': 'Datenschutzerklärung',
   'privacy.h2.collect': 'Was wir erheben',
   'privacy.h2.dontDo': 'Was wir nicht tun',
@@ -1811,7 +1797,7 @@ const de: Dict = {
   'privacy.bullet2': 'Wir nutzen keine Werbe-Tracker von Drittanbietern.',
   'privacy.bullet3': 'Wir protokollieren deine IP nicht über das hinaus, was für das Rate-Limiting nötig ist.',
 
-  // Terms (German headlines only)
+  
   'terms.h1': 'Nutzungsbedingungen',
   'terms.h2.warranty': 'Keine Garantie',
   'terms.h2.acceptable': 'Akzeptable Nutzung',
@@ -2058,9 +2044,7 @@ const de: Dict = {
   'sessions.newSession': '+ Neue Sitzung',
   'sessions.noSessions': 'Noch keine Sitzungen.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} Fächer · Ziel {target}%',
-  'sessions.labelArchived': 'Archiviert',
   'sessions.viewRollup': 'Zusammenfassung anzeigen',
-  'sessions.btnArchive': 'Archivieren',
   'sessions.modal.title': 'Sitzungsdaten zurücksetzen?',
   'sessions.modal.body': 'Das Erstellen einer neuen Sitzung löscht dauerhaft alle Ihre aktuellen Daten, einschließlich aktiver Sitzungen, Fächer, Stundenpläne und Anwesenheitsprotokolle. Diese Aktion kann nicht rückgängig gemacht werden.',
   'sessions.modal.cancel': 'Abbrechen',
@@ -2110,7 +2094,7 @@ const pt: Dict = {
   'today.title': 'Hoje',
   'today.overall': 'Presença geral',
 
-  // FAQ (phase 2)
+  
   'faq.title': 'Por que os estudantes adoram nosso registro de presença gratuito',
   'faq.subtitle': 'Tudo o que os estudantes perguntam sobre o registro de presença gratuito.',
   'faq.q1': 'Este registro de presença é realmente gratuito?',
@@ -2136,7 +2120,7 @@ const pt: Dict = {
   'faq.a10': 'O app foi feito para o ciclo semanal acadêmico (seg–dom, laboratórios, metas em porcentagem), então não é um registro de presença para funcionários no sentido de RH/folha. Se você quer um registro pessoal dos seus dias de folga, dá para usar assim, mas para ponto, PTO e folha, você vai querer uma ferramenta de workforce dedicada.',
   'faq.a11': 'Uma planilha de registro de presença para estudantes funciona até você precisar contar dias presentes, ponderar laboratórios ou lembrar feriados. Nosso app faz a contagem, a porcentagem, a ponderação de laboratórios e a detecção de feriados automaticamente — e funciona no seu celular, o que uma planilha normalmente não faz.',
 
-  // Marketing long-form (phase 2) — Portuguese (headlines only)
+  
   'seo.h2': 'O melhor registro de presença online para estudantes',
   'seo.h3.app': 'Por que usar um app de registro de presença para estudantes?',
   'seo.h3.free': '100% de presença gratuita para estudantes',
@@ -2144,7 +2128,7 @@ const pt: Dict = {
   'seo.h3.school': 'O melhor registro de presença para a escola gratuito',
   'seo.h3.conclusion': 'Conclusão: comece a usar seu registro de presença online hoje',
 
-  // About (Portuguese)
+  
   'about.h1': 'Sobre o Attendance Tracker',
   'about.principles.h2': 'Nossos princípios',
   'about.principle1': '{strong1}Gratuito, para sempre.{strongEnd} Sem paywall, sem plano Pro, sem anúncios.',
@@ -2152,7 +2136,7 @@ const pt: Dict = {
   'about.principle3': '{strong1}Rápido e acessível.{strongEnd} Funciona em 2G, em um Android básico, com leitor de tela.',
   'about.principle4': '{strong1}Matemática honesta.{strongEnd} Mostramos nossas premissas (meta %, exceções) em vez de escondê-las.',
 
-  // Contact (Portuguese)
+  
   'contact.h1': 'Fale conosco',
   'contact.emailLabel': 'E-mail',
   'contact.emailResponse': 'Tentamos responder o mais rápido possível.',
@@ -2162,7 +2146,7 @@ const pt: Dict = {
   'contact.privacyLink': 'Política de privacidade',
   'contact.headsUp': '{strong1}Atenção:{strongEnd} o Attendance Tracker é um projeto pequeno, feito por estudantes. Fazemos o possível para responder rápido, mas se o seu problema está bloqueando uma prova ou prazo, recorra primeiro ao registro oficial da sua instituição.',
 
-  // Privacy (Portuguese headlines)
+  
   'privacy.h1': 'Política de privacidade',
   'privacy.h2.collect': 'O que coletamos',
   'privacy.h2.dontDo': 'O que não fazemos',
@@ -2174,7 +2158,7 @@ const pt: Dict = {
   'privacy.bullet2': 'Não usamos rastreadores de anúncios de terceiros.',
   'privacy.bullet3': 'Não registramos seu IP além do necessário para limitar a taxa.',
 
-  // Terms (Portuguese headlines)
+  
   'terms.h1': 'Termos de serviço',
   'terms.h2.warranty': 'Sem garantia',
   'terms.h2.acceptable': 'Uso aceitável',
@@ -2421,9 +2405,7 @@ const pt: Dict = {
   'sessions.newSession': '+ Nova sessão',
   'sessions.noSessions': 'Nenhuma sessão ainda.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} disciplinas · alvo {target}%',
-  'sessions.labelArchived': 'Arquivado',
   'sessions.viewRollup': 'Ver resumo',
-  'sessions.btnArchive': 'Arquivar',
   'sessions.modal.title': 'Redefinir dados da sessão?',
   'sessions.modal.body': 'A criação de uma nova sessão apagará permanentemente todos os seus dados atuais, incluindo sessões ativas, disciplinas, agendas e registros de presença. Esta ação não pode ser desfeita.',
   'sessions.modal.cancel': 'Cancelar',
@@ -2473,7 +2455,7 @@ const ar: Dict = {
   'today.title': 'اليوم',
   'today.overall': 'الحضور الإجمالي',
 
-  // FAQ (phase 2) — Arabic
+  
   'faq.title': 'لماذا يحب الطلاب متتبع الحضور المجاني',
   'faq.subtitle': 'كل ما يسأل عنه الطلاب حول متتبع الحضور المجاني.',
   'faq.q1': 'هل متتبع الحضور هذا مجاني فعلاً؟',
@@ -2487,9 +2469,9 @@ const ar: Dict = {
   'faq.q9': 'هل يمكنني مشاركة ورقة الحضور أو تصديرها؟',
   'faq.q10': 'هل يعمل كمتتبع حضور للموظفين؟',
   'faq.q11': 'كيف تقارنون بجدول بيانات أو ورقة تتبع حضور؟',
-  // (Long FAQ answers left to fall back to English in Arabic for phase 2.)
+  
 
-  // Marketing long-form (Arabic headlines only)
+  
   'seo.h2': 'أفضل متتبع حضور عبر الإنترنت للطلاب',
   'seo.h3.app': 'لماذا تستخدم تطبيق متتبع حضور للطلاب؟',
   'seo.h3.free': 'حضور طلابي مجاني 100%',
@@ -2497,7 +2479,7 @@ const ar: Dict = {
   'seo.h3.school': 'أفضل متتبع حضور للمدرسة مجانًا',
   'seo.h3.conclusion': 'الخلاصة: ابدأ باستخدام متتبع الحضور عبر الإنترنت اليوم',
 
-  // About (Arabic)
+  
   'about.h1': 'حول متعقب الحضور',
   'about.principles.h2': 'مبادئنا',
   'about.principle1': '{strong1}مجاني، للأبد.{strongEnd} لا جدران دفع، لا خطة Pro، لا إعلانات.',
@@ -2505,7 +2487,7 @@ const ar: Dict = {
   'about.principle3': '{strong1}سريع ومتاح للجميع.{strongEnd} يعمل على شبكة 2G، وعلى هاتف أندرويد منخفض المواصفات، مع قارئ شاشة.',
   'about.principle4': '{strong1}رياضيات صادقة.{strongEnd} نُظهر افتراضاتنا (النسبة المستهدفة، استثناءات اليوم) بدل إخفائها.',
 
-  // Contact (Arabic)
+  
   'contact.h1': 'اتصل بنا',
   'contact.emailLabel': 'البريد الإلكتروني',
   'contact.emailResponse': 'نحاول الرد في أسرع وقت ممكن.',
@@ -2515,7 +2497,7 @@ const ar: Dict = {
   'contact.privacyLink': 'سياسة الخصوصية',
   'contact.headsUp': '{strong1}تنبيه:{strongEnd} متعقب الحضور مشروع صغير بناه طلاب. نبذل قصارى جهدنا للرد بسرعة، لكن إذا كانت مشكلتك تعيق امتحانًا أو موعدًا نهائيًا، فاعتمد أولًا على السجل الرسمي لمؤسستك.',
 
-  // Privacy (Arabic headlines)
+  
   'privacy.h1': 'سياسة الخصوصية',
   'privacy.h2.collect': 'ما الذي نجمعه',
   'privacy.h2.dontDo': 'ما لا نفعله',
@@ -2527,7 +2509,7 @@ const ar: Dict = {
   'privacy.bullet2': 'لا نستخدم متعقبات إعلانية لطرف ثالث.',
   'privacy.bullet3': 'لا نسجل عنوان IP الخاص بك أكثر مما يلزم لتحديد المعدل.',
 
-  // Terms (Arabic headlines)
+  
   'terms.h1': 'شروط الخدمة',
   'terms.h2.warranty': 'بدون ضمان',
   'terms.h2.acceptable': 'الاستخدام المقبول',
@@ -2774,9 +2756,7 @@ const ar: Dict = {
   'sessions.newSession': '+ جلسة جديدة',
   'sessions.noSessions': 'لا توجد جلسات بعد.',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} مواد · النسبة المستهدفة {target}%',
-  'sessions.labelArchived': 'مؤرشفة',
   'sessions.viewRollup': 'عرض الملخص',
-  'sessions.btnArchive': 'أرشفة',
   'sessions.modal.title': 'إعادة تعيين بيانات الجلسة؟',
   'sessions.modal.body': 'سيؤدي إنشاء جلسة جديدة إلى مسح جميع بياناتك الحالية نهائياً، بما في ذلك الجلسات النشطة والمواد والجداول الزمنية وسجلات الحضور. لا يمكن التراجع عن هذا الإجراء.',
   'sessions.modal.cancel': 'إلغاء',
@@ -2826,7 +2806,7 @@ const zh: Dict = {
   'today.title': '今天',
   'today.overall': '总出勤率',
 
-  // FAQ (phase 2) — Chinese
+  
   'faq.title': '为什么学生喜爱我们的免费考勤追踪器',
   'faq.subtitle': '学生关于免费考勤追踪器的所有常见问题。',
   'faq.q1': '这个考勤追踪器真的免费吗？',
@@ -2840,9 +2820,9 @@ const zh: Dict = {
   'faq.q9': '我可以分享或导出我的出勤表吗？',
   'faq.q10': '它能作为员工出勤追踪器使用吗？',
   'faq.q11': '相比电子表格，你们有什么优势？',
-  // (Long FAQ answers left to fall back to English in Chinese for phase 2.)
+  
 
-  // Marketing long-form (Chinese headlines only)
+  
   'seo.h2': '最适合学生的在线考勤追踪器',
   'seo.h3.app': '为什么要使用学生考勤追踪器应用？',
   'seo.h3.free': '100% 免费的学生出勤',
@@ -2850,7 +2830,7 @@ const zh: Dict = {
   'seo.h3.school': '最好的免费学校考勤追踪器',
   'seo.h3.conclusion': '结论：今天就开始使用你的在线考勤追踪器',
 
-  // About (Chinese)
+  
   'about.h1': '关于考勤追踪器',
   'about.principles.h2': '我们的原则',
   'about.principle1': '{strong1}永久免费。{strongEnd}无付费墙、无 Pro 套餐、无广告。',
@@ -2858,7 +2838,7 @@ const zh: Dict = {
   'about.principle3': '{strong1}快速且可访问。{strongEnd}在 2G 网络、低端安卓设备、屏幕阅读器上都能用。',
   'about.principle4': '{strong1}诚实的算法。{strongEnd}我们公开假设（目标百分比、日期例外）而不是隐藏它们。',
 
-  // Contact (Chinese)
+  
   'contact.h1': '联系我们',
   'contact.emailLabel': '邮箱',
   'contact.emailResponse': '我们尝试尽快回复。',
@@ -2868,7 +2848,7 @@ const zh: Dict = {
   'contact.privacyLink': '隐私政策',
   'contact.headsUp': '{strong1}提示：{strongEnd}考勤追踪器是一个由学生开发的小项目。我们会尽力快速回复，但如果你的问题影响到了考试或截止日期，请先以你所在学校的官方记录为准。',
 
-  // Privacy (Chinese headlines)
+  
   'privacy.h1': '隐私政策',
   'privacy.h2.collect': '我们收集什么',
   'privacy.h2.dontDo': '我们不做什么',
@@ -2880,7 +2860,7 @@ const zh: Dict = {
   'privacy.bullet2': '我们不运行第三方广告追踪器。',
   'privacy.bullet3': '我们不会超出限流所需记录你的 IP。',
 
-  // Terms (Chinese headlines)
+  
   'terms.h1': '服务条款',
   'terms.h2.warranty': '无担保',
   'terms.h2.acceptable': '可接受的使用',
@@ -3127,9 +3107,7 @@ const zh: Dict = {
   'sessions.newSession': '+ 新学期',
   'sessions.noSessions': '暂无学期。',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects} 个科目 · 目标 {target}%',
-  'sessions.labelArchived': '已归档',
   'sessions.viewRollup': '查看汇总',
-  'sessions.btnArchive': '归档',
   'sessions.modal.title': '重置学期数据吗？',
   'sessions.modal.body': '创建新学期将永久清除您当前的所有数据，包括活动学期、科目、课表和考勤记录。此操作无法撤销。',
   'sessions.modal.cancel': '取消',
@@ -3179,7 +3157,7 @@ const ja: Dict = {
   'today.title': '今日',
   'today.overall': '全体の出席',
 
-  // FAQ (phase 2) — Japanese
+  
   'faq.title': '学生が無料出席トラッカーを気に入る理由',
   'faq.subtitle': '無料出席トラッカーについて学生からよくある質問。',
   'faq.q1': 'この出席トラッカーは本当に無料ですか？',
@@ -3193,9 +3171,9 @@ const ja: Dict = {
   'faq.q9': '出席表を共有したりエクスポートできますか？',
   'faq.q10': '従業員出席トラッカーとして機能しますか？',
   'faq.q11': 'スプレッドシートや出席追跡シートとどう違いますか？',
-  // (Long FAQ answers left to fall back to English in Japanese for phase 2.)
+  
 
-  // Marketing long-form (Japanese headlines only)
+  
   'seo.h2': '学生のための究極のオンライン出席トラッカー',
   'seo.h3.app': '学生出席トラッカーアプリを使う理由は？',
   'seo.h3.free': '100% 無料の学生出席',
@@ -3203,7 +3181,7 @@ const ja: Dict = {
   'seo.h3.school': '学校向けの最高無料出席トラッカー',
   'seo.h3.conclusion': 'まとめ：今日からオンライン出席トラッカーを使おう',
 
-  // About (Japanese)
+  
   'about.h1': '出席トラッカーについて',
   'about.principles.h2': '私たちの原則',
   'about.principle1': '{strong1}ずっと無料。{strongEnd}有料壁、Pro プラン、広告はなし。',
@@ -3211,7 +3189,7 @@ const ja: Dict = {
   'about.principle3': '{strong1}高速でアクセシブル。{strongEnd}2G回線、低スペックAndroid、スクリーンリーダーでも動作。',
   'about.principle4': '{strong1}正直な計算。{strongEnd}前提（目標%、休日の例外）を隠さずにお見せします。',
 
-  // Contact (Japanese)
+  
   'contact.h1': 'お問い合わせ',
   'contact.emailLabel': 'メール',
   'contact.emailResponse': 'できるだけ早く返信するよう努めます。',
@@ -3221,7 +3199,7 @@ const ja: Dict = {
   'contact.privacyLink': 'プライバシーポリシー',
   'contact.headsUp': '{strong1}ご注意：{strongEnd}出席トラッカーは学生による小さなプロジェクトです。迅速な返信を心がけますが、試験や締切を妨げる問題については、まず所属機関の公式記録に従ってください。',
 
-  // Privacy (Japanese headlines)
+  
   'privacy.h1': 'プライバシーポリシー',
   'privacy.h2.collect': '収集する情報',
   'privacy.h2.dontDo': 'しないこと',
@@ -3233,7 +3211,7 @@ const ja: Dict = {
   'privacy.bullet2': '第三者広告トラッカーを使用しません。',
   'privacy.bullet3': 'レート制限に必要な範囲を超えて IP を記録しません。',
 
-  // Terms (Japanese headlines)
+  
   'terms.h1': '利用規約',
   'terms.h2.warranty': '無保証',
   'terms.h2.acceptable': '許容される利用',
@@ -3480,9 +3458,7 @@ const ja: Dict = {
   'sessions.newSession': '+ 新規セッション',
   'sessions.noSessions': 'セッションはありません。',
   'sessions.detailLine': '{startDate} → {endDate} · {subjects}科目 · 目標{target}%',
-  'sessions.labelArchived': 'アーカイブ済',
   'sessions.viewRollup': '集計を表示',
-  'sessions.btnArchive': 'アーカイブ',
   'sessions.modal.title': 'セッションデータをリセットしますか？',
   'sessions.modal.body': '新しいセッションを作成すると、現在のアクティブなセッション、科目、時間割、出席ログを含むすべてのデータが完全に消去されます。この操作は取り消せません。',
   'sessions.modal.cancel': 'キャンセル',
@@ -3532,7 +3508,7 @@ const ru: Dict = {
   'today.title': 'Сегодня',
   'today.overall': 'Общая посещаемость',
 
-  // FAQ (phase 2) — Russian
+  
   'faq.title': 'Почему студенты любят наш бесплатный трекер посещаемости',
   'faq.subtitle': 'Что студенты спрашивают о бесплатном трекере посещаемости.',
   'faq.q1': 'Этот трекер посещаемости действительно бесплатный?',
@@ -3546,9 +3522,9 @@ const ru: Dict = {
   'faq.q9': 'Можно ли поделиться или экспортировать лист посещаемости?',
   'faq.q10': 'Подойдёт ли это как трекер посещаемости для сотрудников?',
   'faq.q11': 'Чем вы отличаетесь от электронной таблицы?',
-  // (Long FAQ answers left to fall back to English in Russian for phase 2.)
+  
 
-  // Marketing long-form (Russian headlines only)
+  
   'seo.h2': 'Лучший онлайн-трекер посещаемости для студентов',
   'seo.h3.app': 'Зачем использовать приложение-трекер посещаемости для студентов?',
   'seo.h3.free': '100% бесплатная посещаемость для студентов',
@@ -3556,7 +3532,7 @@ const ru: Dict = {
   'seo.h3.school': 'Лучший бесплатный трекер посещаемости для школы',
   'seo.h3.conclusion': 'Итог: начните пользоваться онлайн-трекером сегодня',
 
-  // About (Russian)
+  
   'about.h1': 'О трекере посещаемости',
   'about.principles.h2': 'Наши принципы',
   'about.principle1': '{strong1}Бесплатно навсегда.{strongEnd} Без платных стен, без Pro-тарифа, без рекламы.',
@@ -3564,7 +3540,7 @@ const ru: Dict = {
   'about.principle3': '{strong1}Быстро и доступно.{strongEnd} Работает в 2G, на слабом Android, со скринридером.',
   'about.principle4': '{strong1}Честная математика.{strongEnd} Мы показываем наши допущения (целевой %, исключения дней), а не прячем их.',
 
-  // Contact (Russian)
+  
   'contact.h1': 'Связаться с нами',
   'contact.emailLabel': 'Эл. почта',
   'contact.emailResponse': 'Мы стараемся ответить как можно скорее.',
@@ -3574,7 +3550,7 @@ const ru: Dict = {
   'contact.privacyLink': 'Политика конфиденциальности',
   'contact.headsUp': '{strong1}Внимание:{strongEnd} Attendance Tracker — небольшой проект, созданный студентами. Мы стараемся отвечать быстро, но если ваша проблема блокирует экзамен или дедлайн, сначала сверьтесь с официальной записью вашего учебного заведения.',
 
-  // Privacy (Russian headlines)
+  
   'privacy.h1': 'Политика конфиденциальности',
   'privacy.h2.collect': 'Что мы собираем',
   'privacy.h2.dontDo': 'Чего мы не делаем',
@@ -3586,7 +3562,7 @@ const ru: Dict = {
   'privacy.bullet2': 'Мы не используем сторонние рекламные трекеры.',
   'privacy.bullet3': 'Мы не логируем ваш IP больше, чем нужно для ограничения частоты запросов.',
 
-  // Terms (Russian headlines)
+  
   'terms.h1': 'Условия использования',
   'terms.h2.warranty': 'Без гарантий',
   'terms.h2.acceptable': 'Допустимое использование',
@@ -3833,9 +3809,7 @@ const ru: Dict = {
   'sessions.newSession': '+ Новая сессия',
   'sessions.noSessions': 'Сессий пока нет.',
   'sessions.detailLine': '{startDate} → {endDate} · предметов: {subjects} · цель: {target}%',
-  'sessions.labelArchived': 'Архивировано',
   'sessions.viewRollup': 'Сводка',
-  'sessions.btnArchive': 'В архив',
   'sessions.modal.title': 'Сбросить данные сессии?',
   'sessions.modal.body': 'Создание новой сессии приведет к безвозвратному удалению всех текущих данных, включая активные сессии, предметы, расписание и журналы посещаемости. Это действие нельзя отменить.',
   'sessions.modal.cancel': 'Отмена',
@@ -3855,12 +3829,10 @@ export const translations: Record<Locale, Dict> = {
   en, hi, es, fr, de, pt, ar, zh, ja, ru,
 };
 
-/** Look up a key with English fallback. Returns the raw key if missing. */
 export function t(locale: Locale, key: string): string {
   return translations[locale]?.[key] ?? translations.en[key] ?? key;
 }
 
-/** Format a translated string with placeholders. `{name}` → value. */
 export function fmt(locale: Locale, key: string, params: Record<string, string | number> = {}): string {
   let s = t(locale, key);
   for (const [k, v] of Object.entries(params)) {
@@ -3869,25 +3841,11 @@ export function fmt(locale: Locale, key: string, params: Record<string, string |
   return s;
 }
 
-/**
- * Parse a translated string with `{emphN}...{emphEnd}` markers into
- * segments. The runtime uses this to render paragraphs that contain
- * inline emphasis without losing the bold markup when the user
- * switches locales.
- *
- *   tSegments('en', 'seo.p1')
- *     => [
- *       { text: 'Finding the ', bold: false },
- *       { text: 'easiest way to track attendance', bold: true },
- *       { text: " shouldn't be a chore...", bold: false },
- *       ...
- *     ]
- */
 export type Segment = { text: string; bold: boolean; strong?: boolean };
 export function tSegments(locale: Locale, key: string): Segment[] {
   const raw = t(locale, key);
   const segments: Segment[] = [];
-  // Match {emph1}...{emphEnd} or {strong1}...{strongEnd}.
+  
   const re = /\{(emph|strong)\d+\}([\s\S]*?)\{\1End\}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -3908,7 +3866,6 @@ export function tSegments(locale: Locale, key: string): Segment[] {
   return segments;
 }
 
-/** Resolve a stored value to a known locale, falling back to default. */
 export function resolveLocale(stored: string | null | undefined): Locale {
   if (stored && (LOCALES as readonly string[]).includes(stored)) {
     return stored as Locale;

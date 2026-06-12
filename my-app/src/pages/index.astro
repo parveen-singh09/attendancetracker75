@@ -3,19 +3,11 @@ import MarketingLayout from '../layouts/MarketingLayout.astro';
 import FaqSection from '../components/marketing/FaqSection.astro';
 import { db, AcademicSession, eq, and, desc } from 'astro:db';
 
-// If the visitor is signed in AND has finished onboarding, send them
-// straight to the dashboard. Mid-onboarding users (e.g. a guest who
-// pressed "Continue as Guest" and is now on step 1) are allowed to see
-// the landing — otherwise the Back button on the onboarding pages would
-// loop them right back into onboarding via / -> /app/today -> /onboarding.
 const authedUser = Astro.locals.user;
 if (authedUser && authedUser.onboardingStep === 'done') {
   return Astro.redirect('/app/today');
 }
 
-// If a mid-onboarding user comes back to /, we need their active session
-// id so the guest button can route them back to the timetable step
-// (which requires ?sessionId=...).
 let activeSessionIdForAuthed: string | null = null;
 if (authedUser && (authedUser.onboardingStep === 'session' || authedUser.onboardingStep === 'timetable')) {
   const rows = await db
@@ -42,10 +34,10 @@ const features = [
   keywords="attendance tracker, attendance tracker app, my attendance tracker, student attendance tracker, free attendance tracker, online attendance tracker, homeschool attendance tracker, attendance tracker for students, attendance online free, online attendance system, online attendance for students, free online attendance monitoring system, tracking student attendance, 100% free student attendance, attendance tracker for school free, easiest way to track attendance"
 >
   <section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-24">
-    <!-- Mobile order: "Built for everyone" intro → CTAs → Today card. -->
-    <!-- Desktop order: intro on the left, Today card on the right, CTAs at the bottom of the left column. -->
+    
+    
     <div class="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
-      <!-- Top row on mobile: the "Built for everyone" intro (badge + headline + subheadline). -->
+      
       <div class="order-1 lg:order-1">
         <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium" style="border-color: var(--color-border); color: var(--color-text-muted);">
           <span aria-hidden="true">🎓</span> <span data-i18n="landing.badge">Built for everyone</span>
@@ -58,8 +50,8 @@ const features = [
         </p>
       </div>
 
-      <!-- Middle row on mobile: the two CTAs, full-width, easy access. -->
-      <!-- Desktop: the two CTAs sit side by side (horizontal) under the intro. -->
+      
+      
       <div class="order-2 flex flex-row flex-wrap gap-3 lg:order-3">
         <a href="/signup" class="btn btn-primary flex-1 sm:flex-none text-center justify-center" data-i18n="landing.ctaPrimary">Start Tracking</a>
         <button id="guest-btn" class="btn btn-secondary flex-1 sm:flex-none text-center justify-center" data-authed={authedUser ? '1' : '0'} data-onboarding-step={authedUser?.onboardingStep ?? ''} data-onboarding-session-id={activeSessionIdForAuthed ?? ''} data-i18n={authedUser ? 'btn.loginAsGuest' : 'btn.continueAsGuest'}>
@@ -67,7 +59,7 @@ const features = [
         </button>
       </div>
 
-      <!-- Bottom row on mobile: the Today card. -->
+      
       <div class="order-3 card relative overflow-hidden p-0 mx-auto w-full max-w-md lg:max-w-none lg:order-2">
         <div class="flex items-center gap-2 border-b px-4 py-3 text-xs" style="border-color: var(--color-border); color: var(--color-text-subtle);">
           <span class="size-2 rounded-full" style="background-color: var(--color-danger)"></span>
@@ -213,14 +205,14 @@ const features = [
         const step = btn.dataset.onboardingStep || '';
         btn.textContent = 'Continuing…';
         if (isAuthed) {
-          // Already signed in (e.g. a guest who pressed Back from onboarding).
-          // Don't create a second guest row — just send them back to where
-          // they were in the onboarding flow.
+          
+          
+          
           if (step === 'timetable') {
-            // Need the sessionId for the timetable step. Read it from the
-            // button's data attribute (set server-side from
-            // authedUser.onboardingSessionId) — fall back to a query-param
-            // version of the same.
+            
+            
+            
+            
             const sid = (btn as HTMLElement).dataset.onboardingSessionId || '';
             window.location.href = '/onboarding/timetable' + (sid ? '?sessionId=' + encodeURIComponent(sid) : '');
           } else if (step === 'session') {

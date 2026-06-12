@@ -1,4 +1,3 @@
-
 type SignUp = { email: string; password: string; name: string };
 type SignIn = { email: string; password: string };
 

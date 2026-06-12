@@ -49,16 +49,16 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
     return json({ error: { code: 'invalid', message: 'Invalid input', issues: parsed.error.issues } }, 400);
   }
 
-  // Reconcile by stable ID. Since the client assigns and preserves stable IDs
-  // (tempId) for all subjects, we reconcile by id. This way:
-  //   - renaming a subject updates the row in-place, preserving attendance history and slots
-  //   - removing a subject deletes its slots (cascade) and logs (cascade)
-  //   - adding a new subject inserts one row using its client-generated ID
-  //
-  // The whole reconcile runs inside a single transaction with
-  // `PRAGMA foreign_keys = ON` so the schema's ON DELETE CASCADE on
-  // TimetableSlot/AttendanceLog → Subject fires reliably. We still
-  // issue explicit child-row deletes as defense-in-depth.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   const now = new Date();
 
@@ -68,7 +68,7 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
       .from(Subject)
       .where(eq(Subject.sessionId, sessionId));
 
-    // Group by database ID
+    
     const existingById = new Map<string, typeof existing[number]>();
     for (const e of existing) {
       existingById.set(e.id, e);
@@ -81,7 +81,7 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
     for (const s of parsed.data.subjects) {
       const found = existingById.get(s.tempId);
       if (found) {
-        // Reuse existing row. Update fields if they changed.
+        
         if (found.name !== s.name || found.color !== s.color || found.isLab !== s.isLab) {
           await tx
             .update(Subject)
@@ -89,11 +89,11 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
             .where(eq(Subject.id, found.id));
         }
         tempToId.set(s.tempId, found.id);
-        // Mark as seen so we don't delete it below.
+        
         existingById.delete(found.id);
       } else {
-        // Genuinely new subject. Since client assigns and preserves stable IDs,
-        // we use the s.tempId directly as the primary key.
+        
+        
         tempToId.set(s.tempId, s.tempId);
         newSubjectRows.push({
           id: s.tempId,
@@ -106,11 +106,11 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
       }
     }
 
-    // Anything still in existingById is in the DB but not in the new
-    // payload — drop it. The schema's ON DELETE CASCADE will wipe
-    // child rows because we're inside a transaction with foreign_keys
-    // enabled. We also issue explicit child-row deletes so the operation
-    // is correct even if the cascade is ever dropped from the schema.
+    
+    
+    
+    
+    
     for (const leftover of existingById.values()) {
       subjectsToDelete.push(leftover.id);
     }
@@ -123,11 +123,11 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
       await tx.insert(Subject).values(newSubjectRows);
     }
 
-    // Reconcile slots. Drop every existing slot for this session, then
-    // insert the new set. We do delete-all + insert-all for slots because
-    // there's no stable identity the client can supply (a user can
-    // legitimately have two Calculus slots on Monday). The cascade above
-    // for subject deletion already removed the orphaned slots.
+    
+    
+    
+    
+    
     await tx.delete(TimetableSlot).where(eq(TimetableSlot.sessionId, sessionId));
     const slotRows = parsed.data.slots
       .map((slot) => {
@@ -148,8 +148,8 @@ export const PUT: APIRoute = async ({ request, url, locals }) => {
     if (slotRows.length) await tx.insert(TimetableSlot).values(slotRows);
   });
 
-  // mark onboarding complete (outside the transaction — a tiny optimization;
-  // the user-step update is independent of the timetable save).
+  
+  
   await db
     .update(User)
     .set({ onboardingStep: 'done', updatedAt: now })

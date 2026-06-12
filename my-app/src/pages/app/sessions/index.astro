@@ -37,7 +37,7 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
     db.select().from(TimetableSlot).where(eq(TimetableSlot.sessionId, sess.id)),
   ]);
 
-  // Filter logs up to today for "current" attendance percentage
+  
   const logs = allLogs.filter((l) => l.date <= today);
 
   const dayArr = dayOverrides.map((d) => ({
@@ -45,7 +45,7 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
     status: d.status as "normal" | "holiday" | "sick" | "event",
   }));
 
-  const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+  const jsDow = new Date().getDay(); 
   const subjectsWithRegularSlotToday = new Set(
     allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
   );
@@ -77,7 +77,7 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
       }));
     const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-    // Apply default-absent logic for today's classes
+    
     const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
     const counts = todaysCounts.get(s.id)!;
     const totalRows =
@@ -292,7 +292,7 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
       modal.close();
     });
 
-    // Close on clicking backdrop
+    
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
         modal.close();

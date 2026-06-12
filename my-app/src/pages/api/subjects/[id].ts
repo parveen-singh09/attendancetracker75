@@ -14,8 +14,6 @@ const patchSchema = z.object({
   isLab: z.boolean().optional(),
 });
 
-/** Verify the current user owns the subject's parent session. Returns the
- *  subject row, or a ready-to-return Response. */
 async function loadOwnedSubject(locals: App.Locals, subjectId: string) {
   const user = requireUser(locals);
   if (user instanceof Response) return user;
@@ -40,10 +38,10 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
 export const DELETE: APIRoute = async ({ params, locals }) => {
   const owned = await loadOwnedSubject(locals, params.id!);
   if (owned instanceof Response) return owned;
-  // Run inside a transaction with FK enforcement on. The schema's
-  // ON DELETE CASCADE on TimetableSlot/AttendanceLog → Subject will
-  // wipe the child rows; we still issue explicit deletes as
-  // defense-in-depth in case the cascade is ever dropped.
+  
+  
+  
+  
   await inTransaction(async (tx) => {
     await tx.delete(TimetableSlot).where(eq(TimetableSlot.subjectId, owned.subj.id));
     await tx.delete(AttendanceLog).where(eq(AttendanceLog.subjectId, owned.subj.id));

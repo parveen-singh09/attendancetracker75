@@ -2,16 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Logo from '../components/Logo.astro';
 
-// Already logged in? Bounce straight to the app (or ?next=) so users
-// never see the form again after authenticating. Guest accounts are allowed
-// to view the login form to authenticate to a permanent account.
 if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
   return Astro.redirect(Astro.url.searchParams.get('next') ?? '/app/today');
 }
 ---
 <BaseLayout title="Log in" description="Log in to your Attendance Tracker account.">
   <div class="auth-shell">
-    <!-- Left: brand / value panel -->
+    
     <aside class="auth-brand" aria-hidden="true">
       <div class="auth-brand-inner">
         <a href="/" class="auth-brand-logo">
@@ -58,7 +55,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
       </div>
     </aside>
 
-    <!-- Right: form panel -->
+    
     <section class="auth-form-wrap">
       <div class="auth-card card">
         <header class="auth-head">
@@ -136,7 +133,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     min-height: 100dvh;
   }
 
-  /* Brand panel — hidden on small screens, gradient panel on lg+ */
+  
   .auth-brand {
     display: none;
     background:
@@ -222,7 +219,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     gap: 0.5rem;
   }
 
-  /* Form panel */
+  
   .auth-form-wrap {
     display: flex;
     flex-direction: column;
@@ -352,7 +349,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     color: var(--color-text-muted);
   }
 
-  /* Two-column layout on larger screens */
+  
   @media (min-width: 1024px) {
     .auth-shell { grid-template-columns: 1.05fr 1fr; }
     .auth-brand { display: block; }
@@ -370,8 +367,8 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
     const next = new URLSearchParams(window.location.search).get('next') || '/app/today';
 
-    // Re-read the locale every time we need to translate a string, so
-    // the user changing languages mid-flow sees the new copy.
+    
+    
     const currentLocale = (): Locale => {
       try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
       catch { return 'en'; }
@@ -395,10 +392,10 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
       btn.textContent = submitting ? tr('btn.pleaseWait') : label;
     };
 
-    // Pick the right destination after a successful login.
-    // We can't decide purely from the URL: the server knows the user's
-    // onboarding state. Always honour an explicit `?next=...`, otherwise
-    // skip onboarding for completed users and route fresh ones into it.
+    
+    
+    
+    
     const resolveDestination = async (): Promise<string> => {
       if (next && next !== '/app/today' && next !== '/login') return next;
       try {
@@ -410,13 +407,12 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
           }
         }
       } catch {
-        // Fall through to the default.
+        
       }
       return next || '/app/today';
     };
 
     form?.addEventListener('submit', (e) => e.preventDefault());
-
 
     submitBtn?.addEventListener('click', async () => {
       clearError();
@@ -436,8 +432,8 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
         const { data, error } = await authClient.signIn({ email, password });
 
         if (error) {
-          // Server-provided errors may already be in English. Keep them
-          // as-is — we don't translate backend strings in phase 1.
+          
+          
           setError(error.message || tr('auth.login.error.generic'));
           setSubmitting(submitBtn, false, tr('btn.logIn'));
           return;

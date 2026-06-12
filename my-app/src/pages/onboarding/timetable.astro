@@ -29,10 +29,7 @@ if (!owned) return Astro.redirect('/onboarding/session');
       Add your subjects, then click cells to add classes. You can also paste a plain-text timetable below and we&apos;ll fill the grid for you.
     </p>
 
-    <!-- Paste-text disclosure sits above the weekly grid: it's a fast
-         shortcut for users who already have a timetable in plain text,
-         and putting it first lets them skip the manual subject-entry
-         step entirely. -->
+    
     <details class="card mt-6 [[open]]:mb-4">
       <summary class="cursor-pointer font-semibold" data-i18n="onboarding.timetable.pasteTitle">📋 Paste timetable text</summary>
       <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">
@@ -69,7 +66,7 @@ if (!owned) return Astro.redirect('/onboarding/session');
     return t(getLocale(), key);
   };
 
-  // Tiny client glue: textarea → /api/timetable/parse → preview → apply
+  
   const input = document.getElementById('tt-input') as HTMLTextAreaElement;
   const preview = document.getElementById('tt-warn') as HTMLElement;
   const apply = document.getElementById('tt-apply') as HTMLButtonElement;
@@ -149,21 +146,21 @@ if (!owned) return Astro.redirect('/onboarding/session');
 
   apply?.addEventListener('click', () => {
     if (!lastResult || lastResult.slots.length === 0) return;
-    // Dispatch a custom event the WeeklyGrid island listens for.
+    
     window.dispatchEvent(new CustomEvent('at75:import-slots', { detail: lastResult.slots }));
 
-    // Feedback: show "Applied"
+    
     const originalText = apply.textContent;
     apply.textContent = tr('onboarding.timetable.applied');
 
-    // Force styles via JS to bypass any CSS conflicts
+    
     const originalBg = apply.style.backgroundColor;
     const originalColor = apply.style.color;
     const originalBorder = apply.style.borderColor;
 
     apply.classList.remove('btn-primary');
     apply.style.backgroundColor = 'transparent';
-    apply.style.color = '#16a34a'; // Green
+    apply.style.color = '#16a34a'; 
     apply.style.borderColor = 'transparent';
     apply.style.fontWeight = '600';
     

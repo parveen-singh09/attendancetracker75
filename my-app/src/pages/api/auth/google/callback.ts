@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
   const state = url.searchParams.get('state');
   const storedState = cookies.get('google_oauth_state')?.value;
 
-  // 1. Verify CSRF State
+  
   if (!code || !state || !storedState || state !== storedState) {
     return new Response('Invalid state or authentication request.', {
       status: 400,
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     const clientSecret = (env as any).GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `${url.origin}/api/auth/google/callback`;
 
-    // 2. Exchange Authorization Code for Tokens
+    
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     }
     const { access_token } = await tokenRes.json() as { access_token: string };
 
-    // 3. Fetch User Info from Google APIs
+    
     const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${access_token}` },
     });
@@ -55,13 +55,13 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
     const googleId = googleUser.sub;
     const now = new Date();
 
-    // 4. Reconcile with Database
+    
     let userId: string;
     const existingUser = (await db.select().from(User).where(eq(User.email, email)).limit(1))[0];
 
     if (existingUser) {
       userId = existingUser.id;
-      // Link Google Account if it's not already linked
+      
       const link = (await db.select().from(Account).where(
         and(eq(Account.userId, userId), eq(Account.providerId, 'google'))
       ).limit(1))[0];
@@ -76,7 +76,7 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
         });
       }
     } else {
-      // Register new user
+      
       userId = crypto.randomUUID();
       await db.insert(User).values({
         id: userId,
@@ -101,12 +101,12 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
       });
     }
 
-    // 5. Establish App Session
+    
     const { rawToken } = await createSessionFor(userId, request);
     const secure = import.meta.env.PROD || url.protocol === 'https:';
     
-    // 6. Determine redirect based on flow origin (login vs signup)
-    // Flow is encoded in state as 'uuid:flow'
+    
+    
     const flow = state.split(':')[1] || 'login';
     let redirectTo = '/app/today';
     if (flow === 'signup') {
@@ -116,7 +116,7 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
       }
     }
 
-    // Return custom redirect Response to prevent Cloudflare immutable header errors
+    
     const headers = new Headers();
     headers.set('Location', redirectTo);
     headers.append('Set-Cookie', 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');

@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   if (user instanceof Response) return user;
   const sessionId = url.searchParams.get('sessionId');
   if (!sessionId) return json({ error: { code: 'invalid', message: 'sessionId required' } }, 400);
-  // Verify the user owns this session before exposing its subjects.
+  
   const sess = (await db.select().from(AcademicSession).where(eq(AcademicSession.id, sessionId)).limit(1))[0];
   if (!sess || sess.userId !== user.id) return json({ error: { code: 'notfound', message: 'Not found' } }, 404);
   const rows = await db.select().from(Subject).where(eq(Subject.sessionId, sessionId));
@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (user instanceof Response) return user;
   const parsed = await readJson(request, createSchema);
   if (!parsed.ok) return parsed.response;
-  // Don't trust the client-supplied sessionId — verify the user owns it.
+  
   const sess = (await db.select().from(AcademicSession).where(eq(AcademicSession.id, parsed.data.sessionId)).limit(1))[0];
   if (!sess || sess.userId !== user.id) return json({ error: { code: 'unauth', message: 'Not your session' } }, 403);
   const id = crypto.randomUUID();

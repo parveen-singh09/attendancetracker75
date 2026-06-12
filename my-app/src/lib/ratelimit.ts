@@ -1,11 +1,3 @@
-
-// In-process rate limiter. NOTE: on Cloudflare Workers (or any
-// horizontally-scaled runtime), each isolate / replica has its own
-// `counters` Map, so an attacker can bypass this by spreading requests
-// across isolates. This is defense-in-depth only — for real
-// rate-limiting on Workers, configure Cloudflare Rate Limiting Rules
-// in the dashboard, or use a KV-based counter.
-
 export interface RateLimitOptions {
   limit: number;
   windowSec: number;

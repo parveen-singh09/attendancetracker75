@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ locals }) => {
 
   try {
     await inTransaction(async (tx) => {
-      // Find all sessions belonging to the user
+      
       const userSessions = await tx
         .select({ id: AcademicSession.id })
         .from(AcademicSession)
@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ locals }) => {
       const sessionIds = userSessions.map((s) => s.id);
 
       if (sessionIds.length > 0) {
-        // Delete records bottom-up to prevent SQLite FOREIGN KEY cascading constraint issues
+        
         await tx.delete(AttendanceLog).where(inArray(AttendanceLog.sessionId, sessionIds));
         await tx.delete(TimetableSlot).where(inArray(TimetableSlot.sessionId, sessionIds));
         await tx.delete(Day).where(inArray(Day.sessionId, sessionIds));
@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ locals }) => {
         await tx.delete(AcademicSession).where(inArray(AcademicSession.id, sessionIds));
       }
 
-      // Reset the user's onboardingStep back to 'welcome'
+      
       await tx
         .update(User)
         .set({ onboardingStep: 'welcome', updatedAt: new Date() })

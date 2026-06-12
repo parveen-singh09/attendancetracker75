@@ -97,11 +97,11 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     const sideCollapsedEl = document.getElementById('sidebar-session-pct-collapsed');
     if (sideCollapsedEl) sideCollapsedEl.textContent = Math.floor(newPct) + '%';
 
-    // Update Today Page Pct
+    
     const todayPctEl = document.getElementById('today-overall-pct');
     if (todayPctEl) {
       todayPctEl.textContent = pctStr;
-      // Update color based on target
+      
       if (newHeld > 0) {
         if (newPct >= targetPct) todayPctEl.style.color = 'var(--color-safe)';
         else if (newPct >= targetPct - 5) todayPctEl.style.color = 'var(--color-warn)';
@@ -109,11 +109,11 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
       }
     }
 
-    // Update Today Page Fraction
+    
     const todayFracEl = document.getElementById('today-overall-fraction');
     if (todayFracEl) todayFracEl.textContent = tr('today.attendedOf', { attended: newAttended, held: newHeld });
 
-    // Update Stats Cards (Today's Totals)
+    
     let todayHeld = 0;
     let todayAttended = 0;
     let todayExtra = 0;
@@ -146,7 +146,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
     const subjsEl = document.getElementById('stat-subjects');
     if (subjsEl) subjsEl.textContent = String(todaySubjs);
 
-    // Update Progress Bar
+    
     const barContainer = document.getElementById('today-overall-bar');
     if (barContainer) {
       const progressBar = barContainer.querySelector('[role="progressbar"]');
@@ -157,7 +157,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
         progressBar.setAttribute('aria-label', `Attendance ${newPct.toFixed(1)} percent`);
         (progressFill as HTMLElement).style.width = `${clamped}%`;
 
-        // Update bar color
+        
         let barTone = 'var(--color-danger)';
         if (newHeld > 0) {
           if (newPct >= targetPct) barTone = 'var(--color-safe)';
@@ -185,11 +185,11 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 
   function adjust(s: Subject, kind: CounterKind, delta: 1 | -1): Subject {
     if (kind === 'off') {
-      // Off is a single toggle. delta=+1 flips it; delta=-1 no-op.
+      
       if (delta !== 1) return s;
       const nextOff = !s.off;
       if (nextOff) {
-        // If turning OFF on, reset all other counters to 0
+        
         return recompute({ ...s, off: nextOff, regular: 0, absent: 0, extra: 0 });
       }
       return recompute({ ...s, off: nextOff });
@@ -204,7 +204,7 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
       if (next === s.absent) return s;
       return recompute({ ...s, absent: next });
     }
-    // extra
+    
     const next = Math.max(0, s.extra + delta);
     if (next === s.extra) return s;
     return recompute({ ...s, extra: next });
@@ -226,13 +226,13 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
 
   async function change(s: Subject, kind: CounterKind, delta: 1 | -1) {
     if (kind === 'off') {
-      if (delta !== 1) return; // no decrement for off
+      if (delta !== 1) return; 
       const prev = s;
       const optimistic = adjust(s, kind, 1);
       setSubjects((arr) => arr.map((x) => x.id === s.id ? optimistic : x));
       try {
         if (optimistic.off) {
-          // If turning OFF on, clear existing logs first
+          
           await callApi(s, kind, 'clear');
           await callApi(s, kind, 'add');
         } else {
@@ -251,14 +251,14 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
       return;
     }
 
-    // Defense-in-depth: if the class is marked Off, don't fire the request.
-    // The server would reject it with 409, but skipping saves a round trip.
+    
+    
     if (s.off) {
       showToast(tr('quickMarks.toast.isOffClearFirst', { name: s.name }));
       return;
     }
 
-    // Floor at 0.
+    
     if (delta === -1) {
       if (kind === 'regular' && s.regular === 0) return;
       if (kind === 'absent' && s.absent === 0) return;

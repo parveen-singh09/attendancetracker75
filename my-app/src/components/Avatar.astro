@@ -4,8 +4,8 @@ import { avatarColor, initials } from '../lib/avatar';
 interface Props {
   name: string;
   image?: string | null;
-  seed?: string; // optional override (defaults to name); use user.id for stable per-user color
-  size?: number; // px, default 40
+  seed?: string; 
+  size?: number; 
 }
 
 const { name, image, seed, size = 40 } = Astro.props;

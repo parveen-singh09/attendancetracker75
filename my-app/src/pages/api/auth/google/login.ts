@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ url }) => {
     const redirectUri = `${url.origin}/api/auth/google/callback`;
     const scope = encodeURIComponent('openid profile email');
     
-    // Encode which page (login vs signup) initiated the flow into the state
+    
     const flow = url.searchParams.get('flow') === 'signup' ? 'signup' : 'login';
     const state = `${uuid}:${flow}`;
 

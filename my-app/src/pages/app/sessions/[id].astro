@@ -43,7 +43,6 @@ const [subjRows, allLogs, dayOverrides, allSlots] = await Promise.all([
   db.select().from(TimetableSlot).where(eq(TimetableSlot.sessionId, sess.id)),
 ]);
 
-// Filter logs up to today for "current" attendance percentage
 const logs = allLogs.filter((l) => l.date <= today);
 
 const dayArr = dayOverrides.map((d) => ({
@@ -51,7 +50,7 @@ const dayArr = dayOverrides.map((d) => ({
   status: d.status as "normal" | "holiday" | "sick" | "event",
 }));
 
-const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+const jsDow = new Date().getDay(); 
 const subjectsWithRegularSlotToday = new Set(
   allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
 );
@@ -91,7 +90,7 @@ for (const s of subjRows) {
     }));
   const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-  // Apply default-absent logic for today's classes
+  
   const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
   const counts = todaysCounts.get(s.id)!;
   const totalRows =

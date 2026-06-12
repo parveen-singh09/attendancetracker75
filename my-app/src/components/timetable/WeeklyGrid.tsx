@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n';
 
 export interface DraftSlot {
-  dayOfWeek: number; // 0=Sun .. 6=Sat
-  startTime: string; // HH:MM (24-hour, internal)
+  dayOfWeek: number; 
+  startTime: string; 
   endTime: string;
   subjectId: string;
   subjectName: string;
@@ -53,7 +53,7 @@ function getRandomColor(seed?: string): string {
   } else {
     h = Math.floor(Math.random() * 360);
   }
-  // We use 70% saturation and 45% lightness for vibrant, accessible colors on light/dark backgrounds
+  
   return hslToHex(h, 70, 45);
 }
 
@@ -68,7 +68,6 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-
 function toMin(t: string): number {
   const [h, m] = t.split(':').map(Number);
   return (h ?? 0) * 60 + (m ?? 0);
@@ -78,7 +77,6 @@ function fromMin(m: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
-/** "08:00" -> "8 AM" */
 function fmt12(t: string): string {
   const m = toMin(t);
   const h24 = Math.floor(m / 60);
@@ -92,7 +90,6 @@ function fmt12(t: string): string {
 function sortByTime(slots: DraftSlot[]): DraftSlot[] {
   return [...slots].sort((a, b) => toMin(a.startTime) - toMin(b.startTime));
 }
-
 
 export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, isOnboarding = false }: Props) {
   const [locale, setLocale] = useState<Locale>('en');
@@ -148,7 +145,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const hasMounted = useRef(false);
-  // Track latest state so we can flush on unmount / beforeunload
+  
   const latestRef = useRef({ subjects, labs, slots });
   const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { latestRef.current = { subjects, labs, slots }; }, [subjects, labs, slots]);
@@ -199,7 +196,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
         if (shouldRedirect) setSaveError(`Failed to save: ${detail}`);
         return;
       }
-      // Save succeeded — clear pending flag
+      
       pendingTimer.current = null;
       if (shouldRedirect) {
         window.location.href = '/app/today';
@@ -216,8 +213,8 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     }
   }
 
-  // Flush pending changes via sendBeacon when the user navigates away
-  // (beforeunload fires before Astro's page transitions and hard navigations).
+  
+  
   useEffect(() => {
     function flushBeacon() {
       if (!pendingTimer.current) return;
@@ -225,7 +222,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
 
       const payload = buildPayload(s, l, sl);
       const url = `/api/timetable?sessionId=${encodeURIComponent(sessionId)}`;
-      // fetch with keepalive survives page unload (like sendBeacon) but allows PUT
+      
       fetch(url, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
@@ -235,12 +232,12 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
       pendingTimer.current = null;
     }
     window.addEventListener('beforeunload', flushBeacon);
-    // Also flush on Astro's before-preparation (soft nav)
+    
     document.addEventListener('astro:before-preparation', flushBeacon);
     return () => {
       window.removeEventListener('beforeunload', flushBeacon);
       document.removeEventListener('astro:before-preparation', flushBeacon);
-      // Component unmount — flush if pending
+      
       flushBeacon();
     };
   }, [sessionId]);
@@ -521,7 +518,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                           onChange={(e) => {
                             const newName = e.target.value;
                             setEntryName(newName);
-                            // auto-detect type from the pool.
+                            
                             const inLabs = labs.some((l) => l.name === newName);
                             setEntryIsLab(inLabs);
                           }}
@@ -556,7 +553,7 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
                               onChange={(e) => {
                                 const v = e.target.value;
                                   setStartTime(v);
-                                  // If end <= start, push end to start+1h
+                                  
                                   if (toMin(v) >= toMin(endTime)) {
                                     setEndTime(fromMin(Math.min(toMin(v) + 60, 23 * 60 + 59)));
                                   }
@@ -677,7 +674,6 @@ export default function WeeklyGrid({ initialSlots, initialSubjects, sessionId, i
     </div>
   );
 }
-
 
 function PoolEditor({
   kind, title, entries, onAdd, onRename, onRemove, emptyHint, tr,

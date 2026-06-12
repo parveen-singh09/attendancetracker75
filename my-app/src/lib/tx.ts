@@ -1,4 +1,3 @@
-
 import { db, sql } from 'astro:db';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];

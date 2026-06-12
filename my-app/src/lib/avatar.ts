@@ -1,18 +1,15 @@
-
-
 const PALETTE: string[] = [
-  '#2563eb', // blue
-  '#7c3aed', // violet
-  '#db2777', // pink
-  '#dc2626', // red
-  '#ea580c', // orange
-  '#ca8a04', // amber
-  '#16a34a', // green
-  '#0d9488', // teal
-  '#0891b2', // cyan
-  '#475569', // slate
+  '#2563eb', 
+  '#7c3aed', 
+  '#db2777', 
+  '#dc2626', 
+  '#ea580c', 
+  '#ca8a04', 
+  '#16a34a', 
+  '#0d9488', 
+  '#0891b2', 
+  '#475569', 
 ];
-
 
 export function avatarColor(seed: string): string {
   let h = 5381;

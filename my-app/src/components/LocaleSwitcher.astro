@@ -1,17 +1,5 @@
 ---
-/**
- * Language switcher dropdown. Picks one of 10 locales; persists the
- * choice to `localStorage.at75_locale`; on change, calls
- * `applyLocale()` from `../lib/i18n-runtime` to swap every
- * `[data-i18n]` element on the page.
- *
- * The full translation dictionary lives in `../lib/i18n` and is keyed
- * by dotted paths (e.g. `nav.today`). Adding a new key:
- *   1. Add an English entry to `translations.en` in `i18n.ts`.
- *   2. Mark the element with `data-i18n="theKey"`.
- *   3. (Optional) Translate into other locales. Missing entries fall
- *      back to English at runtime.
- */
+
 import { LOCALES, type Locale } from '../lib/i18n';
 
 const localeData: Record<Locale, { label: string; flag: string }> = {
@@ -76,14 +64,14 @@ const locales = LOCALES.map((code) => ({ code, ...localeData[code] }));
   }
 
   function paintSwitcher(code: string): void {
-    // Update the visible label in the summary.
+    
     const current = document.querySelector('[data-locale-current]');
     if (current) {
       const opt = document.querySelector(`.locale-option[data-locale="${code}"]`);
       const label = opt?.getAttribute('data-locale-label') ?? code;
       current.textContent = label ?? code;
     }
-    // Update check marks across all switchers on the page.
+    
     document.querySelectorAll('.locale-option').forEach((opt) => {
       const check = opt.querySelector('.locale-check');
       if (!check) return;
@@ -92,17 +80,17 @@ const locales = LOCALES.map((code) => ({ code, ...localeData[code] }));
     });
   }
 
-  // Wire up click handlers (one set per switcher instance on the page).
+  
   function wireSwitcher(): void {
     document.querySelectorAll('.locale-option').forEach((opt) => {
       opt.addEventListener('click', () => {
         const code = opt.getAttribute('data-locale');
         if (!code) return;
         applyLocale(code as any);
-        // Persist + paint after the runtime has updated <html lang>/dir.
+        
         try { localStorage.setItem(STORAGE_KEY, code); } catch {}
         paintSwitcher(code);
-        // Close all open switchers.
+        
         document.querySelectorAll('details.locale-switcher').forEach((sw) => {
           sw.removeAttribute('open');
         });
@@ -110,7 +98,7 @@ const locales = LOCALES.map((code) => ({ code, ...localeData[code] }));
     });
   }
 
-  // Click-outside closes any open switcher.
+  
   function wireClickOutside(): void {
     document.addEventListener('click', (e) => {
       const t = e.target as Node | null;
@@ -120,9 +108,9 @@ const locales = LOCALES.map((code) => ({ code, ...localeData[code] }));
     });
   }
 
-  // React to locale changes triggered by other components (e.g. the
-  // initial page-load run from i18n-runtime). Repaint every switcher
-  // on the page so the active label stays in sync.
+  
+  
+  
   function wireLocaleChanged(): void {
     document.addEventListener('at75:locale-changed', (e) => {
       const ce = e as CustomEvent<{ locale: string }>;
@@ -138,6 +126,6 @@ const locales = LOCALES.map((code) => ({ code, ...localeData[code] }));
     wireLocaleChanged();
   }
 
-  // Run on every page load (Astro view transitions).
+  
   document.addEventListener('astro:page-load', init);
 </script>

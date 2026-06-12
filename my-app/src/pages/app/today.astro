@@ -62,16 +62,13 @@ const sess = (
 )[0];
 
 if (!sess) {
-  // This fallback handles edge cases where step is 'done' but no active session is found
+  
   return Astro.redirect("/onboarding/session");
 }
 
 const today = toDateString(new Date());
-const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+const jsDow = new Date().getDay(); 
 
-// Which subjects have a regular timetable slot scheduled for today?
-// Also load the *slots themselves* (with subject + location) so we can
-// render "Today's schedule" with class times.
 const [allSlots, logs, dayOverrides, allSubjects] = await Promise.all([
   db
     .select({ slot: TimetableSlot, subject: Subject })
@@ -94,14 +91,13 @@ const subjectsWithRegularSlotToday = new Set(
     .map((s: any) => s.slot.subjectId),
 );
 
-// Today's classes (subject/lab), sorted by start time.
 interface TodayClass {
   slotId: string;
   subjectId: string;
   name: string;
   color: string;
   isLab: boolean;
-  startTime: string; // HH:MM
+  startTime: string; 
   endTime: string;
   location: string | null;
 }
@@ -125,7 +121,6 @@ for (const s of allSubjects) {
   subjById.set(s.id, s);
 }
 
-// Per-(subject, today) counters by status.
 const todaysCounts = new Map<
   string,
   { regular: number; absent: number; extra: number; off: boolean }
@@ -143,7 +138,6 @@ for (const l of logs) {
   else if (l.status === "off") c.off = true;
 }
 
-// Group logs by subjectId for performance
 const logsBySubj = new Map<string, any[]>();
 for (const l of logs) {
   const arr = logsBySubj.get(l.subjectId) ?? [];
@@ -159,8 +153,8 @@ const dayArr = dayOverrides.map((d: any) => ({
 for (const sid of subjById.keys()) {
   const subjLogs = logsBySubj.get(sid) ?? [];
   perSubjectStats[sid] = computeStats(subjLogs, dayArr, sess.targetPct);
-  // Default-absent: a subject with a regular slot today and 0 rows yet
-  // counts as 1 held, 0 attended.
+  
+  
   const hasRegularToday = subjectsWithRegularSlotToday.has(sid);
   const counts = todaysCounts.get(sid)!;
   const totalRows =
@@ -174,7 +168,6 @@ for (const sid of subjById.keys()) {
   }
 }
 
-// Filter overall stats based on session preference.
 const filteredStats: Record<string, ReturnType<typeof computeStats>> = {};
 for (const [sid, stats] of Object.entries(perSubjectStats)) {
   const isLab = subjById.get(sid)?.isLab;
@@ -460,7 +453,7 @@ function fmt12(t: string): string {
     try {
       const locale = resolveLocale(localStorage.getItem(STORAGE_KEY));
 
-      // Format date
+      
       const dateEl = document.getElementById("today-date-str");
       if (dateEl) {
         const ms = parseInt(dateEl.getAttribute("data-time") || "0", 10);
@@ -473,7 +466,7 @@ function fmt12(t: string): string {
         }
       }
 
-      // Format Day X
+      
       const dayEl = document.getElementById("today-day-str");
       if (dayEl) {
         const dayNum = dayEl.getAttribute("data-day") || "1";

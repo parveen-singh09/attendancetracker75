@@ -1,4 +1,3 @@
-
 import { DEFAULT_LOCALE, RTL_LOCALES, STORAGE_KEY, resolveLocale, t, tSegments, fmt, type Locale, type Segment } from './i18n';
 
 function getSavedLocale(): Locale {

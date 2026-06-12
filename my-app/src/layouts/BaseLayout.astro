@@ -32,14 +32,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
     <meta name="theme-color" content="#0a0f1c" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
-    <!-- Primary Meta Tags -->
+    
     <title>{fullTitle}</title>
     <meta name="title" content={fullTitle} />
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords} />
     <link rel="canonical" href={canonicalURL} />
 
-    <!-- Open Graph / Facebook -->
+    
     <meta property="og:type" content="website" />
     <meta property="og:url" content={url} />
     <meta property="og:title" content={fullTitle} />
@@ -47,7 +47,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
     <meta property="og:image" content={new URL(image, url)} />
     <meta property="og:site_name" content="Attendance Tracker" />
 
-    <!-- Twitter -->
+    
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={url} />
     <meta property="twitter:title" content={fullTitle} />
@@ -61,7 +61,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
     <meta name="apple-mobile-web-app-title" content="Tracker" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Google tag (gtag.js) — GA4 measurement ID G-LD2PJN4TXN. -->
+    
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LD2PJN4TXN"></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
@@ -78,7 +78,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
     />
 
     <script is:inline>
-      // Theme and Sidebar bootstrap — runs before paint to prevent FOUC
+      
       (function () {
         document.documentElement.classList.remove('no-js');
 
@@ -98,7 +98,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           document.documentElement.classList.add('dark');
         }
 
-        // Sidebar state detection
+        
         try {
           var sidebarState = localStorage.getItem('sidebar-state');
           if (sidebarState === 'closed' && window.innerWidth >= 768) {
@@ -106,10 +106,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           }
         } catch (_) {}
 
-        // i18n early bootstrap. Set <html lang>/dir from saved locale so
-        // the browser applies the right font/style before paint and so
-        // the LocaleSwitcher can read it back. The full text swap is
-        // done by i18n-runtime on astro:page-load.
+        
+        
+        
+        
         try {
           var savedLocale = localStorage.getItem('at75_locale') || 'en';
           var rtlCodes = { ar: 1 };
@@ -117,7 +117,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           document.documentElement.setAttribute('dir', rtlCodes[savedLocale] ? 'rtl' : 'ltr');
         } catch (_) {}
 
-        // Global theme toggle listener
+        
         document.addEventListener('click', function(e) {
           var btn = e.target.closest('.theme-toggle-btn');
           if (btn) {
@@ -127,7 +127,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           }
         });
 
-        // Re-apply theme on View Transitions navigation
+        
         document.addEventListener('astro:after-swap', function() {
           var t = localStorage.getItem('at75:theme') || 'system';
           applyTheme(t);
@@ -139,7 +139,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
           } catch (_) {}
         });
 
-        // Navigation Progress and Logging
+        
         var navTimeout;
         document.addEventListener('astro:before-preparation', function() {
           var bar = document.getElementById('nav-progress');
@@ -147,7 +147,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://attendan
             bar.style.transition = 'transform 10s cubic-bezier(0, 0.4, 0.4, 1)';
             bar.style.transform = 'translateX(-5%)';
           }
-          // If navigation takes > 8s, show a hint
+          
           navTimeout = setTimeout(function() {
              console.warn('[Nav] Navigation is taking a long time. Check server status.');
           }, 8000);

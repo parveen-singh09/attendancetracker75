@@ -58,7 +58,7 @@ if (activeSession) {
     status: d.status as any,
   }));
 
-  const jsDow = new Date().getDay(); // 0=Sun..6=Sat
+  const jsDow = new Date().getDay(); 
   const subjectsWithRegularSlotToday = new Set(
     allSlots
       .filter((s: any) => s.dayOfWeek === jsDow)
@@ -172,14 +172,14 @@ function isActive(href: string): boolean {
 ---
 
 <div class="flex min-h-screen flex-col md:flex-row">
-  <!-- Mobile Sidebar Overlay (Backdrop) -->
+  
   <div
     id="sidebar-backdrop"
     class="fixed inset-0 z-20 bg-black/50 opacity-0 pointer-events-none transition-opacity md:hidden"
   >
   </div>
 
-  <!-- Sidebar (Dashboard section) -->
+  
   <aside
     id="app-sidebar"
     class="fixed inset-y-0 left-0 z-30 w-72 -translate-x-full transition-all duration-300 flex flex-col md:relative md:w-80 md:translate-x-0 border-r group"
@@ -380,7 +380,7 @@ function isActive(href: string): boolean {
   </aside>
 
   <div class="flex flex-1 flex-col min-w-0">
-    <!-- Top bar (mobile) -->
+    
     <header
       class="sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 md:hidden"
       style="border-color: var(--color-border); background-color: color-mix(in oklab, var(--color-bg) 80%, transparent); backdrop-filter: blur(8px);"
@@ -469,7 +469,7 @@ function isActive(href: string): boolean {
 </div>
 
 <script is:inline>
-  // Sidebar Toggle logic with Persistence
+  
   function initSidebar() {
     var openBtn = document.getElementById("open-sidebar");
     var toggleBtn = document.getElementById("toggle-sidebar");
@@ -488,7 +488,7 @@ function isActive(href: string): boolean {
       else newState = currentState === "open" ? "closed" : "open";
 
       if (isMobile) {
-        // Mobile Drawer behavior
+        
         if (newState === "open") {
           sidebar.classList.remove("-translate-x-full");
           sidebar.setAttribute("data-state", "open");
@@ -503,17 +503,17 @@ function isActive(href: string): boolean {
           document.body.style.overflow = "";
         }
       } else {
-        // Desktop: explicitly hide the logout form when collapsed via
-        // inline style — guaranteed to win over any class-based style.
+        
+        
         var logoutForm = document.getElementById("logout-form");
         if (logoutForm) {
           logoutForm.style.display = newState === "closed" ? "none" : "";
         }
-        // Same inline-style trick for the profile info + theme toggle in
-        // the bottom card: when the sidebar is collapsed, only the avatar
-        // should remain visible. The class-based variants are unreliable
-        // for the dynamic [data-state=closed] attribute, so drive display
-        // directly here.
+        
+        
+        
+        
+        
         var profileInfo = document.getElementById("sidebar-profile-info");
         if (profileInfo) {
           profileInfo.style.display = newState === "closed" ? "none" : "";
@@ -522,10 +522,10 @@ function isActive(href: string): boolean {
         if (profileTheme) {
           profileTheme.style.display = newState === "closed" ? "none" : "";
         }
-        // Same inline-style trick for the expanded session info block:
-        // Tailwind's group-[data-state=closed]:hidden is unreliable across
-        // SSR/hydration, so drive display directly. The collapsed % block
-        // stays visible via its own group-[data-state=closed]:block class.
+        
+        
+        
+        
         var sessionInfoExpanded = document.getElementById(
           "session-info-expanded",
         );
@@ -540,7 +540,7 @@ function isActive(href: string): boolean {
           sessionInfoCollapsed.style.display =
             newState === "closed" ? "block" : "none";
         }
-        // Desktop Collapsible behavior
+        
         sidebar.setAttribute("data-state", newState);
         document.documentElement.setAttribute("data-sidebar", newState);
         if (newState === "closed") {
@@ -548,17 +548,17 @@ function isActive(href: string): boolean {
         } else {
           sidebar.classList.replace("md:w-16", "md:w-80");
         }
-        // Persist only on desktop
+        
         if (!skipSave) {
           localStorage.setItem("sidebar-state", newState);
         }
       }
     }
 
-    // Initialize state from localStorage (already detected in head).
-    // Markup data-state is "closed" so mobile first-paint is consistent
-    // with the visual (-translate-x-full) state. On desktop we need to
-    // flip it to "open" unless the user previously collapsed it.
+    
+    
+    
+    
     if (sidebar) {
       var state = "open";
       var savedState;
@@ -572,34 +572,34 @@ function isActive(href: string): boolean {
         state = "closed";
         sidebar.setAttribute("data-state", "closed");
         sidebar.classList.replace("md:w-80", "md:w-16");
-        // Also hide the logout form on initial collapsed render.
+        
         var logoutForm0 = document.getElementById("logout-form");
         if (logoutForm0) logoutForm0.style.display = "none";
-        // Profile info and theme toggle should also hide on initial render
-        // (only the avatar stays visible when the sidebar is collapsed).
+        
+        
         var profileInfo0 = document.getElementById("sidebar-profile-info");
         if (profileInfo0) profileInfo0.style.display = "none";
         var profileTheme0 = document.getElementById("sidebar-profile-theme");
         if (profileTheme0) profileTheme0.style.display = "none";
-        // (No card styling to strip — the card has no .card class.)
-        // Same for the expanded session info — hide it inline so it doesn't
-        // briefly show before the Tailwind group variant kicks in.
+        
+        
+        
         var sessionInfo0 = document.getElementById("session-info-expanded");
         if (sessionInfo0) sessionInfo0.style.display = "none";
-        // And force the collapsed % block to be visible on initial collapsed
-        // render — Tailwind's group-[data-state=closed]:block may not have
-        // generated, and we want this to appear even before hydration.
+        
+        
+        
         var sessionInfoCollapsed0 = document.getElementById(
           "sidebar-session-pct-collapsed",
         );
         if (sessionInfoCollapsed0)
           sessionInfoCollapsed0.style.display = "block";
       } else {
-        // Desktop default: expanded.
+        
         sidebar.setAttribute("data-state", "open");
       }
       document.documentElement.setAttribute("data-sidebar", state);
-      // Remove the init class after a short delay to allow the script to take over fully
+      
       setTimeout(function () {
         document.documentElement.classList.remove("sidebar-init-closed");
       }, 0);
@@ -618,7 +618,7 @@ function isActive(href: string): boolean {
         updateSidebarState(false);
       };
 
-    // Close on link click (for mobile drawer)
+    
     if (sidebar) {
       sidebar.querySelectorAll("a").forEach(function (link) {
         link.onclick = function () {
@@ -627,7 +627,7 @@ function isActive(href: string): boolean {
       });
     }
 
-    // Logout: Astro 6's CSRF protection blocks native <form method="post">
+    
     var logoutForm = document.getElementById("logout-form");
     if (logoutForm) {
       logoutForm.onsubmit = function (e) {
@@ -664,16 +664,16 @@ function isActive(href: string): boolean {
     }
   }
 
-  // Run on page load and on each navigation
+  
   document.addEventListener("astro:page-load", initSidebar);
 </script>
 
 <style is:global>
-  /* Prevent layout shift (flicker) on page load for the collapsed sidebar */
+  
   html.sidebar-init-closed #app-sidebar {
-    width: 4rem !important; /* md:w-16 */
+    width: 4rem !important; 
   }
-  /* Ensure text and other elements are hidden immediately if sidebar is closed */
+  
   html.sidebar-init-closed
     #app-sidebar
     .group-\[\[data-state\=closed\]\]\:opacity-0,

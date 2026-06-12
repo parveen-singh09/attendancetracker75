@@ -42,9 +42,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
 };
 
-// Hard delete of the current user. Requires a confirmation body so a
-// logged-in user can't be tricked into deleting their account via CSRF
-// (defense-in-depth on top of the Origin check in middleware).
 const deleteSchema = z.object({
   confirm: z.literal('DELETE MY ACCOUNT'),
   email: z.email(),
@@ -71,18 +68,18 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   }
 
-  // Hard delete the user and all associated data. We use a transaction
-  // with foreign keys enabled to ensure the cascade delete on AcademicSession
-  // successfully wipes all child tables (Subject, TimetableSlot, Day, AttendanceLog).
+  
+  
+  
   await inTransaction(async (tx) => {
     await tx.delete(Session).where(eq(Session.userId, user.id));
     await tx.delete(Account).where(eq(Account.userId, user.id));
     await tx.delete(AcademicSession).where(eq(AcademicSession.userId, user.id));
     await tx.delete(User).where(eq(User.id, user.id));
   });
-  // Expire the session cookie so the browser doesn't carry a dead token.
-  // Flags must match the original cookie (HttpOnly, SameSite=Lax, Path=/)
-  // or the browser won't replace it. `Secure` is added for HTTPS requests.
+  
+  
+  
   const url = new URL(request.url);
   const clearCookie =
     `at75_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` +

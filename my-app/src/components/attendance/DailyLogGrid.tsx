@@ -4,7 +4,7 @@ import { t, resolveLocale, STORAGE_KEY, fmt, type Locale } from '../../lib/i18n'
 type Status = 'present' | 'absent' | 'extra' | 'off';
 
 interface Slot {
-  id: string; // timetable slot id
+  id: string; 
   subjectId: string;
   subjectName: string;
   subjectColor: string;
@@ -103,7 +103,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
 
   async function setSlotStatus(slot: Slot, status: Status) {
     const prev = slot.status;
-    // optimistic
+    
     setSlots((arr) => arr.map((s) => (s.id === slot.id ? { ...s, status } : s)));
     try {
       const res = await fetch('/api/attendance', {
@@ -117,7 +117,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
         : undefined
       );
     } catch (e) {
-      // revert
+      
       setSlots((arr) => arr.map((s) => (s.id === slot.id ? { ...s, status: prev } : s)));
       showToast(tr('dailyGrid.toast.saveFailed'));
     }

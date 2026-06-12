@@ -19,7 +19,6 @@ if (!sess) return Astro.redirect('/onboarding/session');
 
 const today = toDateString(new Date());
 
-// Validate the requested date. If missing or out of [startDate, today], snap to today.
 const requested = Astro.url.searchParams.get('date') ?? today;
 const isValid = /^\d{4}-\d{2}-\d{2}$/.test(requested) &&
   requested >= sess.startDate &&
@@ -63,8 +62,6 @@ const items = todays.map((r: any) => {
   };
 });
 
-// Build prev/next day links (prev is always in range if date > startDate;
-// next is allowed only if next date <= today).
 const prevDate = toDateString(addDays(parseDate(date), -1));
 const nextDate = toDateString(addDays(parseDate(date), 1));
 const canGoPrev = prevDate >= sess.startDate;
@@ -86,7 +83,7 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
       Backfill or correct attendance for any past date in this session.
     </p>
 
-    <!-- Date picker + prev/next/today -->
+    
     <div class="card mt-5">
       <div class="flex flex-wrap items-center gap-2">
         <a
