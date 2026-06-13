@@ -8,7 +8,6 @@ const wranglerJsonPath = path.resolve(__dirname, '../dist/server/wrangler.json')
 if (fs.existsSync(wranglerJsonPath)) {
   try {
     const data = JSON.parse(fs.readFileSync(wranglerJsonPath, 'utf8'));
-    // Remove unused SESSION KV namespace that lacks an ID
     if (data.kv_namespaces) {
       delete data.kv_namespaces;
       console.log('Successfully removed "kv_namespaces" binding.');
