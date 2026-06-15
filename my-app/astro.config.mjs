@@ -11,6 +11,7 @@ const PRIVATE_PREFIXES = ['/app', '/onboarding', '/api'];
 
 export default defineConfig({
   site: SITE,
+  trailingSlash: 'never',
   output: 'server',
   adapter: cloudflare(),
   integrations: [
