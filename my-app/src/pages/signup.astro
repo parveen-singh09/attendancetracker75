@@ -382,7 +382,6 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     const form = document.getElementById('signup-form') as HTMLFormElement;
     const errorDiv = document.getElementById('form-error') as HTMLDivElement;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-    const next = new URLSearchParams(window.location.search).get('next') || '/onboarding/welcome';
 
     
     
@@ -395,19 +394,18 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     
     
     const resolveDestination = async (): Promise<string> => {
-      if (next && next !== '/signup' && next !== '/login') return next;
       try {
         const res = await fetch('/api/auth/get-session', { credentials: 'same-origin' });
         if (res.ok) {
           const body = (await res.json()) as { user?: { onboardingStep?: string } };
-          if (body.user?.onboardingStep && body.user.onboardingStep !== 'done') {
-            return '/onboarding/welcome';
+          if (!body.user?.onboardingStep || body.user.onboardingStep === 'done') {
+            return '/app/today';
           }
         }
       } catch {
         
       }
-      return next || '/onboarding/welcome';
+      return '/onboarding/welcome';
     };
 
     const setError = (msg: string) => {
