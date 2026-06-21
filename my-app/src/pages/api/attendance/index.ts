@@ -10,7 +10,7 @@ const putSchema = z.object({
   subjectId: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   status: z.enum(['present', 'absent', 'extra', 'off']),
-  op: z.enum(['add', 'remove', 'clear']).default('add'),
+  op: z.enum(['add', 'remove', 'clear', 'set']).default('add'),
 });
 
 export const GET: APIRoute = async ({ url, locals }) => {
@@ -117,6 +117,27 @@ export const PUT: APIRoute = async ({ request, locals }) => {
           eq(AttendanceLog.date, parsed.data.date)
         )
       );
+  } else if (parsed.data.op === 'set') {
+
+
+    await db
+      .delete(AttendanceLog)
+      .where(
+        and(
+          eq(AttendanceLog.subjectId, parsed.data.subjectId),
+          eq(AttendanceLog.date, parsed.data.date)
+        )
+      );
+    const now = new Date();
+    await db.insert(AttendanceLog).values({
+      id: crypto.randomUUID(),
+      sessionId: subj.sessionId,
+      subjectId: parsed.data.subjectId,
+      date: parsed.data.date,
+      status: parsed.data.status,
+      createdAt: now,
+      updatedAt: now,
+    });
   } else if (parsed.data.op === 'remove') {
     const candidates = await db
       .select()

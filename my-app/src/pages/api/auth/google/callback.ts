@@ -49,7 +49,19 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     if (!userRes.ok) throw new Error('Failed to fetch user info');
-    const googleUser = await userRes.json() as { email: string; sub: string; name?: string; picture?: string };
+    const googleUser = await userRes.json() as { email: string; email_verified?: boolean; sub: string; name?: string; picture?: string };
+
+    // Only trust a Google identity whose email Google itself has verified.
+    // Otherwise an attacker could set an unverified Google email to a victim's
+    // address and get auto-linked into the victim's existing account.
+    if (googleUser.email_verified === false || !googleUser.email) {
+      return new Response('Google account email is not verified.', {
+        status: 403,
+        headers: {
+          'Set-Cookie': 'google_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
+        },
+      });
+    }
 
     const email = googleUser.email.trim().toLowerCase();
     const googleId = googleUser.sub;

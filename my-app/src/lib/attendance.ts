@@ -46,14 +46,22 @@ export function computeStats(
 
   const pct = held === 0 ? 0 : Math.min(100, (attended / held) * 100);
 
-  const regularAttended = attended - extra;
+  // canMiss / mustAttend project from the SAME basis as pct (attended, which
+  // includes extras). If currently >= target you can skip some future classes;
+  // if below, you must attend some to recover.
+  //   miss k:   attended / (held + k) >= T   ->  k <= attended*100/target - held
+  //   attend k: (attended + k)/(held + k) >= T -> k >= (target*held - attended*100)/(100 - target)
   let canMiss = 0;
-  if (regularAttended > 0) {
-    canMiss = Math.max(0, Math.floor((regularAttended * 100) / target - held));
-  }
   let mustAttend = 0;
-  if (held > 0 && (regularAttended / held) * 100 < target) {
-    mustAttend = Math.max(1, Math.ceil((held * target) / 100 - regularAttended));
+  if (held > 0) {
+    if (pct >= target) {
+      canMiss = Math.max(0, Math.floor((attended * 100) / target - held));
+    } else if (target < 100) {
+      mustAttend = Math.max(
+        1,
+        Math.ceil((target * held - attended * 100) / (100 - target))
+      );
+    }
   }
 
   let safe: Stats['safe'] = 'none';

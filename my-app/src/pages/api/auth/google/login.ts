@@ -26,6 +26,6 @@ export const GET: APIRoute = async ({ url }) => {
     });
   } catch (err: any) {
     console.error('OAuth Login Error:', err);
-    return new Response(`OAuth Login Error: ${err?.message || err}\n${err?.stack || ''}`, { status: 500 });
+    return new Response('OAuth login failed.', { status: 500 });
   }
 };

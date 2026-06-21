@@ -17,6 +17,7 @@ interface Slot {
 
 interface Props {
   date: string;
+  sessionId: string;
   slots: Slot[];
   dayStatus: 'normal' | 'holiday' | 'sick' | 'event';
 }
@@ -57,7 +58,7 @@ function formatTimeRange(start: string, end: string) {
   return `${s}–${e}`;
 }
 
-export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: initialDayStatus }: Props) {
+export default function DailyLogGrid({ date, sessionId, slots: initialSlots, dayStatus: initialDayStatus }: Props) {
   const [locale, setLocale] = useState<Locale>('en');
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
       const res = await fetch('/api/attendance', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ subjectId: slot.subjectId, date, status }),
+        body: JSON.stringify({ subjectId: slot.subjectId, date, status, op: 'set' }),
       });
       if (!res.ok) throw new Error('Save failed');
       showToast(tr('dailyGrid.toast.marked', { name: slot.subjectName, status: labels[status] }), prev
@@ -129,7 +130,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
     setDayStatus('holiday');
     setSlots((arr) => arr.map((s) => ({ ...s, status: 'off' })));
     try {
-      const res = await fetch('/api/days', {
+      const res = await fetch(`/api/days?sessionId=${encodeURIComponent(sessionId)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ date, status: 'holiday' }),
@@ -138,7 +139,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
       showToast(tr('dailyGrid.toast.dayMarkedHoliday'), () => {
         setDayStatus(prevDay);
         setSlots(prevSlots);
-        void fetch('/api/days', {
+        void fetch(`/api/days?sessionId=${encodeURIComponent(sessionId)}&date=${encodeURIComponent(date)}`, {
           method: 'DELETE',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ date }),
@@ -155,7 +156,7 @@ export default function DailyLogGrid({ date, slots: initialSlots, dayStatus: ini
     const prevDay = dayStatus;
     setDayStatus('normal');
     try {
-      const res = await fetch('/api/days', {
+      const res = await fetch(`/api/days?sessionId=${encodeURIComponent(sessionId)}&date=${encodeURIComponent(date)}`, {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ date }),

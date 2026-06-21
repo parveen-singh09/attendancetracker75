@@ -34,6 +34,22 @@ function kindToDbStatus(k: CounterKind): DbStatus {
   return k === 'regular' ? 'present' : (k as DbStatus);
 }
 
+// Held/attended contributed by *today's* marks only. The subject's `held`/`attended`
+// props are cumulative (whole-term) totals, so the overall delta must be computed from
+// today-only contributions on both the current and initial state — otherwise the two
+// sides are on different bases and the overall fraction jumps/resets.
+function todayHeldContrib(s: Pick<Subject, 'regular' | 'absent' | 'extra' | 'off' | 'hasRegularSlot'>): number {
+  if (s.off) return 0;
+  const explicitHeld = s.regular + s.absent;
+  const isDefaultAbsent = s.regular + s.absent + s.extra === 0 && s.hasRegularSlot;
+  return isDefaultAbsent ? explicitHeld + 1 : explicitHeld;
+}
+
+function todayAttendedContrib(s: Pick<Subject, 'regular' | 'extra' | 'off'>): number {
+  if (s.off) return 0;
+  return s.regular + s.extra;
+}
+
 export default function SubjectQuickMarks({ date, subjects: initial, targetPct, calcMode, initialOverall }: Props) {
   const [locale, setLocale] = useState<Locale>('en');
 
@@ -79,8 +95,8 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
           (calcMode === 'subject' && !s.isLab);
 
         if (shouldInclude) {
-          deltaHeld += (s.held - init.held);
-          deltaAttended += (s.attended - init.attended);
+          deltaHeld += todayHeldContrib(s) - todayHeldContrib(init);
+          deltaAttended += todayAttendedContrib(s) - todayAttendedContrib(init);
           deltaExtra += (s.extra - init.extra);
         }
       }

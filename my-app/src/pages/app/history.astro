@@ -157,7 +157,7 @@ const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'sho
       </div>
     ) : (
       <div class="mt-6">
-        <DailyLogGrid client:load date={date} slots={items} dayStatus={dayStatus} />
+        <DailyLogGrid client:load date={date} sessionId={sess.id} slots={items} dayStatus={dayStatus} />
       </div>
     )}
   </div>

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { db, User, Session, Account, AcademicSession, eq } from 'astro:db';
+import { db, User, Session, Account, AcademicSession, Subject, TimetableSlot, Day, AttendanceLog, eq, inArray } from 'astro:db';
 import { rateLimitResponse } from '../../lib/ratelimit';
 import { inTransaction } from '../../lib/tx';
 
@@ -8,9 +8,11 @@ export const prerender = false;
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100),
-  image: z.string().refine((val) => !val || val.startsWith('data:image/'), {
-    message: 'Only image data URLs are allowed'
-  }).nullable().optional(),
+  image: z.string()
+    .max(1_500_000, { message: 'Image is too large' })
+    .refine((val) => !val || val.startsWith('data:image/'), {
+      message: 'Only image data URLs are allowed'
+    }).nullable().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -71,10 +73,26 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   
   
   
+  // Delete child rows explicitly. We can't rely on FK cascade here because
+  // `PRAGMA foreign_keys = ON` is a no-op inside an open transaction, so the
+  // session->subject/slot/day/log cascades may not fire on libSQL/SQLite.
   await inTransaction(async (tx) => {
+    const userSessions = await tx
+      .select({ id: AcademicSession.id })
+      .from(AcademicSession)
+      .where(eq(AcademicSession.userId, user.id));
+    const sessionIds = userSessions.map((s) => s.id);
+
+    if (sessionIds.length > 0) {
+      await tx.delete(AttendanceLog).where(inArray(AttendanceLog.sessionId, sessionIds));
+      await tx.delete(TimetableSlot).where(inArray(TimetableSlot.sessionId, sessionIds));
+      await tx.delete(Day).where(inArray(Day.sessionId, sessionIds));
+      await tx.delete(Subject).where(inArray(Subject.sessionId, sessionIds));
+      await tx.delete(AcademicSession).where(inArray(AcademicSession.id, sessionIds));
+    }
+
     await tx.delete(Session).where(eq(Session.userId, user.id));
     await tx.delete(Account).where(eq(Account.userId, user.id));
-    await tx.delete(AcademicSession).where(eq(AcademicSession.userId, user.id));
     await tx.delete(User).where(eq(User.id, user.id));
   });
   
