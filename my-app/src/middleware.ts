@@ -41,7 +41,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 }
 
-  const session = await getSession(context.request);
+  let session: Awaited<ReturnType<typeof getSession>> = null;
+  try {
+    session = await getSession(context.request);
+  } catch (err) {
+    console.error('[middleware] getSession failed:', err);
+  }
 
   if (session) {
     context.locals.user = session.user;
@@ -62,5 +67,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(`/login?next=${encodeURIComponent(path)}`);
   }
 
-  return next();
+  const response = await next();
+
+  if (isProtectedRoute && !isApiRoute) {
+    response.headers.set('Cache-Control', 'no-store, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+  }
+
+  return response;
 });

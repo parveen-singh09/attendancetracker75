@@ -1,4 +1,5 @@
 import { db, User, Session, Account, AcademicSession, Subject, TimetableSlot, Day, AttendanceLog, eq } from 'astro:db';
+import { validateEmail, validateName, validatePassword, validatePasswordPresent } from './validation';
 
 const SESSION_COOKIE = 'at75_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; 
@@ -198,12 +199,13 @@ export async function signUp(
 ): Promise<{ ok: true; result: AuthResult } | { ok: false; status: number; message: string }> {
   const email = input.email.trim().toLowerCase();
   const name = input.name.trim();
-  if (!email || !input.password || !name) {
-    return { ok: false, status: 400, message: 'Email, name, and password are required.' };
-  }
-  if (input.password.length < 8) {
-    return { ok: false, status: 400, message: 'Password must be at least 8 characters.' };
-  }
+
+  const emailErr = validateEmail(email);
+  if (emailErr) return { ok: false, status: 400, message: emailErr.message };
+  const nameErr = validateName(name);
+  if (nameErr) return { ok: false, status: 400, message: nameErr.message };
+  const passwordErr = validatePassword(input.password);
+  if (passwordErr) return { ok: false, status: 400, message: passwordErr.message };
 
   const existing = await db.select().from(User).where(eq(User.email, email));
   if (existing.length > 0) {
@@ -246,6 +248,12 @@ export async function signIn(
   input: SignInInput
 ): Promise<{ ok: true; result: AuthResult } | { ok: false; status: number; message: string }> {
   const email = input.email.trim().toLowerCase();
+
+  const emailErr = validateEmail(email);
+  if (emailErr) return { ok: false, status: 400, message: emailErr.message };
+  const passwordErr = validatePasswordPresent(input.password);
+  if (passwordErr) return { ok: false, status: 400, message: passwordErr.message };
+
   const userRows = await db.select().from(User).where(eq(User.email, email));
   const userRow = userRows[0];
   if (!userRow) {

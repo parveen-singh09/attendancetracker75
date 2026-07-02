@@ -360,6 +360,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
 <script>
   import { authClient } from '../lib/auth-client';
   import { t, STORAGE_KEY, resolveLocale, type Locale } from '../lib/i18n';
+  import { validateEmail, validatePasswordPresent } from '../lib/validation';
 
   document.addEventListener('astro:page-load', () => {
     const form = document.getElementById('login-form') as HTMLFormElement;
@@ -420,8 +421,9 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
       const email = (formData.get('email') as string).trim();
       const password = formData.get('password') as string;
 
-      if (!email || !password) {
-        setError(tr('auth.login.error.missingFields'));
+      const fieldError = validateEmail(email) ?? validatePasswordPresent(password);
+      if (fieldError) {
+        setError(tr(fieldError.key));
         setSubmitting(submitBtn, false, tr('btn.logIn'));
         return;
       }

@@ -70,12 +70,6 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   }
 
-  
-  
-  
-  // Delete child rows explicitly. We can't rely on FK cascade here because
-  // `PRAGMA foreign_keys = ON` is a no-op inside an open transaction, so the
-  // session->subject/slot/day/log cascades may not fire on libSQL/SQLite.
   await inTransaction(async (tx) => {
     const userSessions = await tx
       .select({ id: AcademicSession.id })

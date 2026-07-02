@@ -377,6 +377,7 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
 <script>
   import { authClient } from '../lib/auth-client';
   import { t, STORAGE_KEY, resolveLocale, type Locale } from '../lib/i18n';
+  import { validateEmail, validateName, validatePassword } from '../lib/validation';
 
   document.addEventListener('astro:page-load', () => {
     const form = document.getElementById('signup-form') as HTMLFormElement;
@@ -436,8 +437,9 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
       const email = (formData.get('email') as string).trim();
       const password = formData.get('password') as string;
 
-      if (password.length < 8) {
-        setError(tr('auth.signup.error.shortPassword'));
+      const fieldError = validateName(name) ?? validateEmail(email) ?? validatePassword(password);
+      if (fieldError) {
+        setError(tr(fieldError.key));
         setSubmitting(submitBtn, false, tr('btn.createAccount'));
         return;
       }

@@ -74,6 +74,14 @@ const en: Dict = {
   'auth.signup.error.shortPassword': 'Password must be at least 8 characters.',
   'auth.signup.error.generic': 'Signup failed. Please check your info.',
 
+  'auth.error.emailRequired': 'Please enter your email address.',
+  'auth.error.emailInvalid': 'Please enter a valid email address.',
+  'auth.error.nameRequired': 'Please enter your name.',
+  'auth.error.nameTooLong': 'Name must be 80 characters or fewer.',
+  'auth.error.passwordRequired': 'Please enter a password.',
+  'auth.error.passwordTooShort': 'Password must be at least 8 characters.',
+  'auth.error.passwordTooLong': 'Password must be 128 characters or fewer.',
+
   'auth.forgot.title': 'Reset your password',
   'auth.forgot.subtitle': 'Enter your email and we will send a reset link.',
   'auth.forgot.sendButton': 'Send reset link',

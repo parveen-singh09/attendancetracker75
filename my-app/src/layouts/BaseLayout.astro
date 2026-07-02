@@ -175,6 +175,27 @@ const canonicalURL = new URL(cleanPathname, Astro.site || 'https://attendancetra
             }
           }, 100);
         });
+
+
+
+
+
+        window.addEventListener('pageshow', function (event) {
+          if (!event.persisted) return;
+          var p = window.location.pathname;
+          if (p.indexOf('/app') !== 0 && p.indexOf('/onboarding') !== 0) return;
+          fetch('/api/auth/get-session', { credentials: 'same-origin' })
+            .then(function (res) {
+              if (!res.ok) throw new Error('no session');
+              return res.json();
+            })
+            .then(function (json) {
+              if (!json || !json.user) window.location.replace('/login');
+            })
+            .catch(function () {
+              window.location.replace('/login');
+            });
+        });
       })();
     </script>
     <ClientRouter />
