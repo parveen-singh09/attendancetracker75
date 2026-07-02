@@ -183,6 +183,7 @@ const features = [
 
 <script>
   import { authClient } from '../lib/auth-client';
+  import { initI18n } from '../lib/i18n-runtime';
 
   document.addEventListener('astro:page-load', () => {
     const btn = document.getElementById('guest-btn') as HTMLButtonElement | null;
@@ -204,5 +205,17 @@ const features = [
         window.location.href = '/app/today';
       });
     }
+  });
+
+  // When the page is restored from the back/forward cache (e.g. pressing the
+  // back arrow after logging out), the DOM is frozen in whatever state it was
+  // left in — so the guest button stays disabled and stuck on "Continuing…".
+  // astro:page-load does not fire on a bfcache restore, so reset it here.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const btn = document.getElementById('guest-btn') as HTMLButtonElement | null;
+    if (btn) btn.disabled = false;
+    // Re-apply the correct translated label from data-i18n.
+    initI18n();
   });
 </script>
