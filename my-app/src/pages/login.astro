@@ -367,8 +367,6 @@ if (Astro.locals.user && !Astro.locals.user.isAnonymous) {
     const errorDiv = document.getElementById('form-error') as HTMLDivElement;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
-    
-    
     const currentLocale = (): Locale => {
       try { return resolveLocale(localStorage.getItem(STORAGE_KEY)); }
       catch { return 'en'; }
