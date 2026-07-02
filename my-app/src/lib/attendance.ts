@@ -46,11 +46,6 @@ export function computeStats(
 
   const pct = held === 0 ? 0 : Math.min(100, (attended / held) * 100);
 
-  // canMiss / mustAttend project from the SAME basis as pct (attended, which
-  // includes extras). If currently >= target you can skip some future classes;
-  // if below, you must attend some to recover.
-  //   miss k:   attended / (held + k) >= T   ->  k <= attended*100/target - held
-  //   attend k: (attended + k)/(held + k) >= T -> k >= (target*held - attended*100)/(100 - target)
   let canMiss = 0;
   let mustAttend = 0;
   if (held > 0) {

@@ -16,7 +16,7 @@ const path = Astro.url.pathname;
 ---
 <BaseLayout title={title} description={description} keywords={keywords} image={image}>
   <header class="border-b" style="border-color: var(--color-border); background-color: color-mix(in oklab, var(--color-bg) 80%, transparent); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10;">
-    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <div class="flex w-full items-center justify-between gap-3 px-8 py-3">
       <a href="/" class="flex shrink-0 items-center gap-2 font-semibold tracking-tight" aria-label="Attendance Tracker home">
         <Logo class="h-7 w-7" />
         <span class="hidden text-base sm:inline">Attendance Tracker</span>
@@ -39,7 +39,7 @@ const path = Astro.url.pathname;
   <slot />
 
   <footer class="border-t mt-24" style="border-color: var(--color-border);">
-    <div class="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-8 px-4 py-10 sm:px-6 md:grid-cols-4">
+    <div class="grid w-full grid-cols-2 gap-x-6 gap-y-8 px-8 py-10 md:grid-cols-4">
       <div class="col-span-2 md:col-span-1">
         <div class="flex items-center gap-2 font-semibold"><Logo class="h-6 w-6" /> Attendance Tracker</div>
         <p class="mt-2 text-sm" style="color: var(--color-text-subtle);">

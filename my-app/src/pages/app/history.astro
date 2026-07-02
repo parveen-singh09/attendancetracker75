@@ -71,7 +71,7 @@ const isToday = date === today;
 const longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }).format(parseDate(date));
 ---
 <AppLayout title="Edit attendance">
-  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+  <div class="min-h-screen w-full px-8 py-8">
     <nav class="text-sm" style="color: var(--color-text-subtle);">
       <a href="/app/today" class="hover:underline" data-i18n="history.breadcrumb.today">Today</a> <span aria-hidden="true">/</span> <span data-i18n="history.breadcrumb.editPast">Edit a past day</span>
     </nav>

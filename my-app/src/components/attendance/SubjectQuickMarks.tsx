@@ -34,10 +34,6 @@ function kindToDbStatus(k: CounterKind): DbStatus {
   return k === 'regular' ? 'present' : (k as DbStatus);
 }
 
-// Held/attended contributed by *today's* marks only. The subject's `held`/`attended`
-// props are cumulative (whole-term) totals, so the overall delta must be computed from
-// today-only contributions on both the current and initial state — otherwise the two
-// sides are on different bases and the overall fraction jumps/resets.
 function todayHeldContrib(s: Pick<Subject, 'regular' | 'absent' | 'extra' | 'off' | 'hasRegularSlot'>): number {
   if (s.off) return 0;
   const explicitHeld = s.regular + s.absent;
