@@ -1,22 +1,10 @@
 ---
 import MarketingLayout from '../layouts/MarketingLayout.astro';
 import FaqSection from '../components/marketing/FaqSection.astro';
-import { db, AcademicSession, eq, and, desc } from 'astro:db';
 
 const authedUser = Astro.locals.user;
 if (authedUser && authedUser.onboardingStep === 'done') {
   return Astro.redirect('/app/today');
-}
-
-let activeSessionIdForAuthed: string | null = null;
-if (authedUser && (authedUser.onboardingStep === 'session' || authedUser.onboardingStep === 'timetable')) {
-  const rows = await db
-    .select({ id: AcademicSession.id })
-    .from(AcademicSession)
-    .where(and(eq(AcademicSession.userId, authedUser.id), eq(AcademicSession.isArchived, false)))
-    .orderBy(desc(AcademicSession.createdAt))
-    .limit(1);
-  activeSessionIdForAuthed = rows[0]?.id ?? null;
 }
 
 const features = [
@@ -36,31 +24,31 @@ const features = [
   <section class="flex min-h-screen w-full flex-col justify-center px-4 py-4 sm:px-8 sm:py-0">
 
 
-    <div class="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
-      
-      <div class="order-1 lg:order-1">
-        <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium" style="border-color: var(--color-border); color: var(--color-text-muted);">
-          <span aria-hidden="true">🎓</span> <span data-i18n="landing.badge">Built for everyone</span>
-        </span>
-        <h1 class="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-          <span data-i18n="landing.headline1">The Easiest Way to</span> <br class="hidden sm:block"/><span class="text-brand-500" style="color: var(--color-brand-600);" data-i18n="landing.headline2">Track Attendance.</span>
-        </h1>
-        <p class="mt-4 max-w-xl text-base sm:text-lg" style="color: var(--color-text-muted);" data-i18n="landing.subheadline">
-          Attendance Tracker turns your timetable into a daily 30-second habit. Tap Present, Absent, or Off for each class. The best free student attendance tracker for busy students.
-        </p>
+    <div class="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-12">
+
+      <div class="flex flex-col gap-8 lg:order-1 lg:justify-between">
+        <div>
+          <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium" style="border-color: var(--color-border); color: var(--color-text-muted);">
+            <span aria-hidden="true">🎓</span> <span data-i18n="landing.badge">Built for everyone</span>
+          </span>
+          <h1 class="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <span data-i18n="landing.headline1">The Easiest Way to</span> <br class="hidden sm:block"/><span class="text-brand-500" style="color: var(--color-brand-600);" data-i18n="landing.headline2">Track Attendance.</span>
+          </h1>
+          <p class="mt-4 max-w-xl text-base sm:text-lg" style="color: var(--color-text-muted);" data-i18n="landing.subheadline">
+            Attendance Tracker turns your timetable into a daily 30-second habit. Tap Present, Absent, or Off for each class. The best free student attendance tracker for busy students.
+          </p>
+        </div>
+
+        <div class="flex flex-row flex-wrap gap-3">
+          <a href="/signup" class="btn btn-primary flex-1 sm:flex-none text-center justify-center" data-i18n="landing.ctaPrimary">Start Tracking</a>
+          <button id="guest-btn" class="btn btn-secondary flex-1 sm:flex-none text-center justify-center" data-authed={authedUser ? '1' : '0'} data-i18n={authedUser ? 'btn.loginAsGuest' : 'btn.continueAsGuest'}>
+            {authedUser ? 'Login as Guest' : 'Continue as Guest'}
+          </button>
+        </div>
       </div>
 
-      
-      
-      <div class="order-2 flex flex-row flex-wrap gap-3 lg:order-3">
-        <a href="/signup" class="btn btn-primary flex-1 sm:flex-none text-center justify-center" data-i18n="landing.ctaPrimary">Start Tracking</a>
-        <button id="guest-btn" class="btn btn-secondary flex-1 sm:flex-none text-center justify-center" data-authed={authedUser ? '1' : '0'} data-onboarding-step={authedUser?.onboardingStep ?? ''} data-onboarding-session-id={activeSessionIdForAuthed ?? ''} data-i18n={authedUser ? 'btn.loginAsGuest' : 'btn.continueAsGuest'}>
-          {authedUser ? 'Login as Guest' : 'Continue as Guest'}
-        </button>
-      </div>
 
-      
-      <div class="order-3 card relative overflow-hidden p-0 mx-auto w-full max-w-md lg:max-w-none lg:order-2">
+      <div class="card relative overflow-hidden p-0 mx-auto w-full max-w-md lg:max-w-none lg:order-2">
         <div class="flex items-center gap-2 border-b px-4 py-3 text-xs" style="border-color: var(--color-border); color: var(--color-text-subtle);">
           <span class="size-2 rounded-full" style="background-color: var(--color-danger)"></span>
           <span class="size-2 rounded-full" style="background-color: var(--color-warn)"></span>
@@ -201,37 +189,19 @@ const features = [
     if (btn) {
       btn.addEventListener('click', async () => {
         btn.disabled = true;
-        const isAuthed = btn.dataset.authed === '1';
-        const step = btn.dataset.onboardingStep || '';
         btn.textContent = 'Continuing…';
-        if (isAuthed) {
-          
-          
-          
-          if (step === 'timetable') {
-            
-            
-            
-            
-            const sid = (btn as HTMLElement).dataset.onboardingSessionId || '';
-            window.location.href = '/onboarding/timetable' + (sid ? '?sessionId=' + encodeURIComponent(sid) : '');
-          } else if (step === 'session') {
-            window.location.href = '/onboarding/session';
-          } else {
-            window.location.href = '/onboarding/welcome';
-          }
-          return;
-        }
-        try {
+
+
+        if (btn.dataset.authed !== '1') {
           const { data } = await authClient.signInAnonymous();
-          if (data) {
-            window.location.href = '/app/today';
-          } else {
+          if (!data) {
             window.location.href = '/login';
+            return;
           }
-        } catch (e) {
-          window.location.href = '/login';
         }
+
+
+        window.location.href = '/app/today';
       });
     }
   });
