@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { db, AttendanceLog, Subject, TimetableSlot, Day, AcademicSession, eq, and } from 'astro:db';
-import { computeStats } from '../../../lib/attendance';
+import { computeStats, backfillAbsences, toDateString, addDays } from '../../../lib/attendance';
 import { json, requireUser, readJson } from '../../../lib/api';
 
 export const prerender = false;
@@ -211,19 +211,42 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const allLogs = await db
-    .select()
-    .from(AttendanceLog)
-    .where(eq(AttendanceLog.subjectId, parsed.data.subjectId));
-  const dayOverrides = await db
-    .select()
-    .from(Day)
-    .where(eq(Day.sessionId, subj.sessionId));
-  const stats = computeStats(
-    allLogs.map((l) => ({ date: l.date, status: l.status as 'present' | 'absent' | 'extra' | 'off' })),
-    dayOverrides.map((d) => ({ date: d.date, status: d.status as 'normal' | 'holiday' | 'sick' | 'event' })),
-    sess.targetPct
+  const [allLogs, dayOverrides, subjSlots] = await Promise.all([
+    db.select().from(AttendanceLog).where(eq(AttendanceLog.subjectId, parsed.data.subjectId)),
+    db.select().from(Day).where(eq(Day.sessionId, subj.sessionId)),
+    db.select().from(TimetableSlot).where(eq(TimetableSlot.subjectId, parsed.data.subjectId)),
+  ]);
+
+  const today = toDateString(new Date());
+  const dayArr = dayOverrides.map((d) => ({
+    date: d.date,
+    status: d.status as 'normal' | 'holiday' | 'sick' | 'event',
+  }));
+  const logArr = allLogs
+    .filter((l) => l.date <= today)
+    .map((l) => ({ date: l.date, status: l.status as 'present' | 'absent' | 'extra' | 'off' }));
+
+  // Fill past scheduled-but-unlogged classes so the denominator reflects the
+  // whole session, not just logged days. Current session backfills through
+  // yesterday and keeps today's phantom-held; an ended session through endDate.
+  const isCurrent = today >= sess.startDate && today <= sess.endDate;
+  const backfillEnd = isCurrent ? toDateString(addDays(new Date(), -1)) : sess.endDate;
+  const backfilled = backfillAbsences(
+    logArr,
+    subjSlots.map((s) => s.dayOfWeek),
+    dayArr,
+    sess.startDate,
+    backfillEnd
   );
+
+  const jsToday = new Date(today + 'T00:00:00').getDay();
+  const hasRegularToday = subjSlots.some((s) => s.dayOfWeek === jsToday);
+  const todayRows = logArr.filter((l) => l.date === today).length;
+  if (isCurrent && hasRegularToday && todayRows === 0) {
+    backfilled.push({ date: today, status: 'absent' });
+  }
+
+  const stats = computeStats(backfilled, dayArr, sess.targetPct);
 
   return json({ data: { ok: true, stats } });
 };

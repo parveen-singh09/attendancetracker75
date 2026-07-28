@@ -14,7 +14,13 @@ import {
   and,
   desc,
 } from "astro:db";
-import { computeStats, overallStats, toDateString } from "../../lib/attendance";
+import {
+  computeStats,
+  overallStats,
+  toDateString,
+  addDays,
+  backfillAbsences,
+} from "../../lib/attendance";
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login?next=/app/calculator");
@@ -50,10 +56,18 @@ const dayArr = dayOverrides.map((d) => ({
   status: d.status as "normal" | "holiday" | "sick" | "event",
 }));
 
-const jsDow = new Date().getDay(); 
+const jsDow = new Date().getDay();
 const subjectsWithRegularSlotToday = new Set(
   allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
 );
+
+const yesterday = toDateString(addDays(new Date(), -1));
+const slotDowBySubj = new Map<string, number[]>();
+for (const s of allSlots) {
+  const arr = slotDowBySubj.get(s.subjectId) ?? [];
+  arr.push(s.dayOfWeek);
+  slotDowBySubj.set(s.subjectId, arr);
+}
 
 const todaysCounts = new Map<
   string,
@@ -84,7 +98,13 @@ const perSubject: Record<
   { name: string; color: string; stats: ReturnType<typeof computeStats> }
 > = {};
 for (const s of subjRows) {
-  const sLogs = logsBySubj.get(s.id) ?? [];
+  const sLogs = backfillAbsences(
+    logsBySubj.get(s.id) ?? [],
+    slotDowBySubj.get(s.id) ?? [],
+    dayArr,
+    sess.startDate,
+    yesterday,
+  );
   const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
   

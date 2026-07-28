@@ -14,7 +14,13 @@ import {
   desc,
   lte,
 } from "astro:db";
-import { computeStats, overallStats, toDateString } from "../lib/attendance";
+import {
+  computeStats,
+  overallStats,
+  toDateString,
+  addDays,
+  backfillAbsences,
+} from "../lib/attendance";
 
 interface Props {
   user: { id: string; name: string; email: string; image?: string | null };
@@ -58,12 +64,20 @@ if (activeSession) {
     status: d.status as any,
   }));
 
-  const jsDow = new Date().getDay(); 
+  const jsDow = new Date().getDay();
   const subjectsWithRegularSlotToday = new Set(
     allSlots
       .filter((s: any) => s.dayOfWeek === jsDow)
       .map((s: any) => s.subjectId),
   );
+
+  const yesterday = toDateString(addDays(new Date(), -1));
+  const slotDowBySubj = new Map<string, number[]>();
+  for (const s of allSlots as any[]) {
+    const arr = slotDowBySubj.get(s.subjectId) ?? [];
+    arr.push(s.dayOfWeek);
+    slotDowBySubj.set(s.subjectId, arr);
+  }
 
   const todaysCounts = new Map<
     string,
@@ -91,7 +105,13 @@ if (activeSession) {
 
   const perSubjectStats: Record<string, any> = {};
   for (const s of subjRows) {
-    const sLogs = logsBySubj.get(s.id) ?? [];
+    const sLogs = backfillAbsences(
+      logsBySubj.get(s.id) ?? [],
+      slotDowBySubj.get(s.id) ?? [],
+      dayArr,
+      activeSession.startDate,
+      yesterday,
+    );
     const stats = computeStats(sLogs, dayArr, activeSession.targetPct);
 
     const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);

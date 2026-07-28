@@ -16,6 +16,8 @@ import {
   computeStats,
   overallStats,
   toDateString,
+  addDays,
+  backfillAbsences,
 } from "../../../lib/attendance";
 
 const user = Astro.locals.user;
@@ -45,10 +47,21 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
     status: d.status as "normal" | "holiday" | "sick" | "event",
   }));
 
-  const jsDow = new Date().getDay(); 
+  const jsDow = new Date().getDay();
   const subjectsWithRegularSlotToday = new Set(
     allSlots.filter((s) => s.dayOfWeek === jsDow).map((s) => s.subjectId),
   );
+
+  const isCurrent = today >= sess.startDate && today <= sess.endDate;
+  const backfillEnd = isCurrent
+    ? toDateString(addDays(new Date(), -1))
+    : sess.endDate;
+  const slotDowBySubj = new Map<string, number[]>();
+  for (const s of allSlots) {
+    const arr = slotDowBySubj.get(s.subjectId) ?? [];
+    arr.push(s.dayOfWeek);
+    slotDowBySubj.set(s.subjectId, arr);
+  }
 
   const todaysCounts = new Map<
     string,
@@ -69,20 +82,27 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
 
   const perSubj: Record<string, ReturnType<typeof computeStats>> = {};
   for (const s of subjRows) {
-    const sLogs = logs
+    const rawLogs = logs
       .filter((l: any) => l.subjectId === s.id)
       .map((l: any) => ({
         date: l.date,
         status: l.status as "present" | "absent" | "extra" | "off",
       }));
+    const sLogs = backfillAbsences(
+      rawLogs,
+      slotDowBySubj.get(s.id) ?? [],
+      dayArr,
+      sess.startDate,
+      backfillEnd,
+    );
     const stats = computeStats(sLogs, dayArr, sess.targetPct);
 
-    
+
     const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
     const counts = todaysCounts.get(s.id)!;
     const totalRows =
       counts.regular + counts.absent + counts.extra + (counts.off ? 1 : 0);
-    if (hasRegularToday && totalRows === 0) {
+    if (isCurrent && hasRegularToday && totalRows === 0) {
       stats.held += 1;
       stats.pct = stats.held === 0 ? 0 : (stats.attended / stats.held) * 100;
     }

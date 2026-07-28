@@ -16,7 +16,13 @@ import {
   desc,
   lte,
 } from "astro:db";
-import { computeStats, overallStats, toDateString } from "../../lib/attendance";
+import {
+  computeStats,
+  overallStats,
+  toDateString,
+  addDays,
+  backfillAbsences,
+} from "../../lib/attendance";
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login?next=/app/today");
@@ -91,6 +97,14 @@ const subjectsWithRegularSlotToday = new Set(
     .map((s: any) => s.slot.subjectId),
 );
 
+const yesterday = toDateString(addDays(new Date(), -1));
+const slotDowBySubj = new Map<string, number[]>();
+for (const s of allSlots as any[]) {
+  const arr = slotDowBySubj.get(s.slot.subjectId) ?? [];
+  arr.push(s.slot.dayOfWeek);
+  slotDowBySubj.set(s.slot.subjectId, arr);
+}
+
 interface TodayClass {
   slotId: string;
   subjectId: string;
@@ -151,7 +165,13 @@ const dayArr = dayOverrides.map((d: any) => ({
 }));
 
 for (const sid of subjById.keys()) {
-  const subjLogs = logsBySubj.get(sid) ?? [];
+  const subjLogs = backfillAbsences(
+    logsBySubj.get(sid) ?? [],
+    slotDowBySubj.get(sid) ?? [],
+    dayArr,
+    sess.startDate,
+    yesterday,
+  );
   perSubjectStats[sid] = computeStats(subjLogs, dayArr, sess.targetPct);
   
   

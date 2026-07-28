@@ -107,6 +107,62 @@ export function whatIf(base: Stats, n: number, mode: 'attend' | 'miss'): Stats {
   }
 }
 
+/**
+ * Synthesizes `absent` logs for scheduled classes that were never marked, so
+ * the denominator ("held") reflects every class the timetable says was held —
+ * not just the days the user happened to log. Without this, an unlogged week is
+ * invisible to the stats and attendance appears to "start" from the first day
+ * the user marked anything.
+ *
+ * Only fills the closed range [startDate, endDate]; callers should pass
+ * endDate = yesterday for the active session (today keeps its own phantom-held
+ * handling in the page/client) and endDate = the session end for past sessions.
+ *
+ * A day is skipped when it has a non-normal day override (holiday/sick/event)
+ * or an `off` log for the subject (class cancelled). `extra` logs do not consume
+ * a scheduled slot, matching computeStats (extra boosts attended, not held).
+ */
+export function backfillAbsences(
+  logs: AttendanceLog[],
+  slotDaysOfWeek: number[],
+  days: DayOverride[],
+  startDate: string,
+  endDate: string
+): AttendanceLog[] {
+  if (slotDaysOfWeek.length === 0 || endDate < startDate) return logs;
+
+  const scheduledPerDow = [0, 0, 0, 0, 0, 0, 0];
+  for (const dow of slotDaysOfWeek) {
+    if (dow >= 0 && dow <= 6) scheduledPerDow[dow] += 1;
+  }
+
+  const dayMap = new Map(days.map((d) => [d.date, d.status] as const));
+
+  // present/absent logs consume a scheduled slot on their date; off cancels the day.
+  const consumedByDate = new Map<string, number>();
+  const offDates = new Set<string>();
+  for (const l of logs) {
+    if (l.status === 'off') offDates.add(l.date);
+    else if (l.status === 'present' || l.status === 'absent') {
+      consumedByDate.set(l.date, (consumedByDate.get(l.date) ?? 0) + 1);
+    }
+  }
+
+  const out = [...logs];
+  const end = parseDate(endDate);
+  for (let d = parseDate(startDate); d <= end; d = addDays(d, 1)) {
+    const scheduled = scheduledPerDow[d.getDay()]!;
+    if (scheduled === 0) continue;
+    const ds = toDateString(d);
+    const override = dayMap.get(ds);
+    if (override && override !== 'normal') continue;
+    if (offDates.has(ds)) continue;
+    const missing = scheduled - (consumedByDate.get(ds) ?? 0);
+    for (let i = 0; i < missing; i++) out.push({ date: ds, status: 'absent' });
+  }
+  return out;
+}
+
 export function toDateString(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
