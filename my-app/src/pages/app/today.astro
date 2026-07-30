@@ -172,7 +172,12 @@ for (const sid of subjById.keys()) {
     sess.startDate,
     yesterday,
   );
-  perSubjectStats[sid] = computeStats(subjLogs, dayArr, sess.targetPct);
+  perSubjectStats[sid] = computeStats(
+    subjLogs,
+    dayArr,
+    sess.targetPct,
+    subjById.get(sid),
+  );
   
   
   const hasRegularToday = subjectsWithRegularSlotToday.has(sid);

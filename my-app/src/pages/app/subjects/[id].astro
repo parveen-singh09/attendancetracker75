@@ -17,10 +17,12 @@ import {
 } from "astro:db";
 import {
   computeStats,
+  deriveStats,
   toDateString,
   addDays,
   backfillAbsences,
 } from "../../../lib/attendance";
+import SubjectAdjust from "../../../components/attendance/SubjectAdjust";
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login?next=/app/subjects");
@@ -93,7 +95,17 @@ if (hasRegularToday && totalRows === 0) {
   backfilled.push({ date: today, status: "absent" });
 }
 
-const stats = computeStats(backfilled, dayArr, sess.targetPct);
+// Base = logged + backfilled, before the manual correction. The adjust widget
+// needs both so it can preview a new delta without a round trip.
+const base = computeStats(backfilled, dayArr, sess.targetPct);
+const adjHeld = subj.adjHeld ?? 0;
+const adjAttended = subj.adjAttended ?? 0;
+const stats = deriveStats(
+  Math.max(0, base.held + adjHeld),
+  Math.max(0, base.attended + adjAttended),
+  base.extra,
+  sess.targetPct,
+);
 
 const recent = [...logs]
   .sort((a, b) => b.date.localeCompare(a.date))
@@ -174,6 +186,20 @@ const recent = [...logs]
       <div class="mt-4">
         <PercentageBar pct={stats.pct} target={sess.targetPct} />
       </div>
+    </div>
+
+    <div class="mt-6">
+      <SubjectAdjust
+        client:load
+        subjectId={subj.id}
+        baseHeld={base.held}
+        baseAttended={base.attended}
+        baseExtra={base.extra}
+        adjHeld={adjHeld}
+        adjAttended={adjAttended}
+        target={sess.targetPct}
+        isLab={subj.isLab}
+      />
     </div>
 
     <div class="mt-6">

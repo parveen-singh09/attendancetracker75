@@ -95,7 +95,7 @@ async function rollup(sess: typeof AcademicSession.$inferSelect) {
       sess.startDate,
       backfillEnd,
     );
-    const stats = computeStats(sLogs, dayArr, sess.targetPct);
+    const stats = computeStats(sLogs, dayArr, sess.targetPct, s);
 
 
     const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);

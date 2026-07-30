@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
   const perSubject: Record<string, ReturnType<typeof computeStats>> = {};
   for (const s of subjs) {
-    perSubject[s.id] = computeStats(logsBySubject[s.id] ?? [], daysArr, sess.targetPct);
+    perSubject[s.id] = computeStats(logsBySubject[s.id] ?? [], daysArr, sess.targetPct, s);
   }
 
   const filtered: Record<string, ReturnType<typeof computeStats>> = {};

@@ -12,6 +12,8 @@ const patchSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   credits: z.number().min(0).max(20).optional(),
   isLab: z.boolean().optional(),
+  adjHeld: z.number().int().min(-999).max(999).optional(),
+  adjAttended: z.number().int().min(-999).max(999).optional(),
 });
 
 async function loadOwnedSubject(locals: App.Locals, subjectId: string) {

@@ -112,7 +112,7 @@ if (activeSession) {
       activeSession.startDate,
       yesterday,
     );
-    const stats = computeStats(sLogs, dayArr, activeSession.targetPct);
+    const stats = computeStats(sLogs, dayArr, activeSession.targetPct, s);
 
     const hasRegularToday = subjectsWithRegularSlotToday.has(s.id);
     const counts = todaysCounts.get(s.id)!;

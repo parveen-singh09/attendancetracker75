@@ -423,6 +423,9 @@ export default function SubjectQuickMarks({ date, subjects: initial, targetPct, 
   );
 }
 
+// Shared cell height so the three counters and the Off toggle line up in the grid.
+const CELL_H = 62;
+
 function Counter({
   label, value, onAdd, onRemove, tone, disabled = false, disabledReason, tr
 }: {
@@ -443,38 +446,49 @@ function Counter({
   const plusDisabled = disabled;
   return (
     <span
-      className="rounded-lg border flex items-center justify-between gap-1"
-      style={{ borderColor: value > 0 ? activeColor : 'var(--color-border)', padding: '0.25rem 0.5rem', minHeight: 44, opacity: disabled ? 0.55 : 1 }}
+      className="rounded-lg border flex flex-col items-stretch justify-center"
+      style={{
+        borderColor: value > 0 ? activeColor : 'var(--color-border)',
+        padding: '0.25rem 0.375rem',
+        minHeight: CELL_H,
+        minWidth: 0,
+        opacity: disabled ? 0.55 : 1,
+      }}
       title={disabled ? disabledReason : undefined}
       aria-disabled={disabled || undefined}
     >
-      <button
-        type="button"
-        onClick={onRemove}
-        disabled={minusDisabled}
-        aria-label={tr('quickMarks.ariaLabelRemove', { label })}
-        className="num"
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 6,
-          border: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-bg)',
-          color: minusDisabled ? 'var(--color-text-subtle)' : 'var(--color-text)',
-          fontSize: 18,
-          fontWeight: 600,
-          cursor: minusDisabled ? 'not-allowed' : 'pointer',
-          opacity: minusDisabled ? 0.5 : 1,
-          flexShrink: 0,
-        }}
-      >
-        −
-      </button>
-      <span className="text-center flex-1">
-        <span
-          className="num block"
+      {/* − value + on one row; the label sits below so it can never squeeze the buttons out of the cell. */}
+      <span className="flex items-center justify-between gap-1">
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={minusDisabled}
+          aria-label={tr('quickMarks.ariaLabelRemove', { label })}
+          className="num"
           style={{
+            width: 30,
+            height: 30,
+            borderRadius: 6,
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-bg)',
+            color: minusDisabled ? 'var(--color-text-subtle)' : 'var(--color-text)',
             fontSize: 18,
+            fontWeight: 600,
+            lineHeight: 1,
+            cursor: minusDisabled ? 'not-allowed' : 'pointer',
+            opacity: minusDisabled ? 0.5 : 1,
+            flexShrink: 0,
+          }}
+        >
+          −
+        </button>
+        <span
+          className="num"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            textAlign: 'center',
+            fontSize: 17,
             fontWeight: 700,
             lineHeight: 1,
             color: value > 0 ? activeColor : 'var(--color-text)',
@@ -482,36 +496,37 @@ function Counter({
         >
           {value}
         </span>
-        <span
-          className="text-[10px] uppercase tracking-wide mt-0.5 block"
-          style={{ color: 'var(--color-text-subtle)' }}
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={plusDisabled}
+          aria-label={tr('quickMarks.ariaLabelAdd', { label })}
+          title={plusDisabled ? disabledReason : undefined}
+          className="num"
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 6,
+            border: `1px solid ${activeColor}`,
+            backgroundColor: activeColor,
+            color: 'white',
+            fontSize: 18,
+            fontWeight: 600,
+            lineHeight: 1,
+            cursor: plusDisabled ? 'not-allowed' : 'pointer',
+            opacity: plusDisabled ? 0.5 : 1,
+            flexShrink: 0,
+          }}
         >
-          {label}
-        </span>
+          +
+        </button>
       </span>
-      <button
-        type="button"
-        onClick={onAdd}
-        disabled={plusDisabled}
-        aria-label={tr('quickMarks.ariaLabelAdd', { label })}
-        title={plusDisabled ? disabledReason : undefined}
-        className="num"
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 6,
-          border: `1px solid ${activeColor}`,
-          backgroundColor: activeColor,
-          color: 'white',
-          fontSize: 18,
-          fontWeight: 600,
-          cursor: plusDisabled ? 'not-allowed' : 'pointer',
-          opacity: plusDisabled ? 0.5 : 1,
-          flexShrink: 0,
-        }}
+      <span
+        className="block truncate text-center text-[10px] uppercase tracking-wide mt-1"
+        style={{ color: 'var(--color-text-subtle)' }}
       >
-        +
-      </button>
+        {label}
+      </span>
     </span>
   );
 }
@@ -525,17 +540,19 @@ function OffToggle({ on, onToggle, tr }: { on: boolean; onToggle: () => void; tr
       aria-label={on ? tr('quickMarks.ariaLabelRemove', { label: tr('quickMarks.labelOff') }) : tr('quickMarks.ariaLabelAdd', { label: tr('quickMarks.labelOff') })}
       className="rounded-lg border flex flex-col items-center justify-center"
       style={{
-        minHeight: 44,
+        minHeight: CELL_H,
+        minWidth: 0,
+        padding: '0.25rem 0.375rem',
         borderColor: on ? 'var(--color-text-subtle)' : 'var(--color-border)',
         backgroundColor: on ? 'var(--color-text-subtle)' : 'var(--color-bg)',
         color: on ? 'white' : 'var(--color-text)',
         cursor: 'pointer',
       }}
     >
-      <span style={{ fontWeight: 600, fontSize: 14 }}>
+      <span className="truncate" style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>
         {on ? (<><span aria-hidden="true">✓</span> {tr('quickMarks.labelOff')}</>) : tr('quickMarks.labelOff')}
       </span>
-      <span className="text-[10px] uppercase tracking-wide mt-0.5" style={{ color: on ? 'white' : 'var(--color-text-subtle)', opacity: on ? 0.85 : 1 }}>
+      <span className="block truncate text-[10px] uppercase tracking-wide mt-1" style={{ color: on ? 'white' : 'var(--color-text-subtle)', opacity: on ? 0.85 : 1 }}>
         {tr('quickMarks.labelNoClass')}
       </span>
     </button>

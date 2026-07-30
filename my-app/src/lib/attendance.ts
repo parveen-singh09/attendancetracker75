@@ -21,10 +21,17 @@ export interface Stats {
   safe: 'safe' | 'warn' | 'danger' | 'none';
 }
 
+/** Manual per-subject correction, stored on the Subject row. */
+export interface Adjustment {
+  adjHeld?: number | null;
+  adjAttended?: number | null;
+}
+
 export function computeStats(
   logs: AttendanceLog[],
   days: DayOverride[],
-  target: number
+  target: number,
+  adj?: Adjustment
 ): Stats {
   const dayMap = new Map(days.map((d) => [d.date, d.status] as const));
 
@@ -44,6 +51,22 @@ export function computeStats(
     if (log.status === 'present') attended += 1;
   }
 
+  return deriveStats(
+    Math.max(0, held + (adj?.adjHeld ?? 0)),
+    Math.max(0, attended + (adj?.adjAttended ?? 0)),
+    extra,
+    target
+  );
+}
+
+/** Stats math with the counts already known — shared by the server pages and
+ * the client-side manual-adjust preview so both agree. */
+export function deriveStats(
+  held: number,
+  attended: number,
+  extra: number,
+  target: number
+): Stats {
   const pct = held === 0 ? 0 : Math.min(100, (attended / held) * 100);
 
   let canMiss = 0;

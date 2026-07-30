@@ -64,6 +64,10 @@ const Subject = defineTable({
     credits: column.number({ default: 0 }),
     minPct: column.number({ optional: true }),
     isLab: column.boolean({ default: false }),
+    // Manual correction applied on top of the logged/backfilled counts, for when
+    // the college register disagrees with what was marked here.
+    adjHeld: column.number({ default: 0 }),
+    adjAttended: column.number({ default: 0 }),
     createdAt: column.date({ default: NOW }),
   },
 });

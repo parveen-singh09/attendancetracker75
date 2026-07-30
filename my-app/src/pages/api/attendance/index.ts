@@ -246,7 +246,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     backfilled.push({ date: today, status: 'absent' });
   }
 
-  const stats = computeStats(backfilled, dayArr, sess.targetPct);
+  const stats = computeStats(backfilled, dayArr, sess.targetPct, subj);
 
   return json({ data: { ok: true, stats } });
 };
